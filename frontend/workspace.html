@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Nutmeg · Workspace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Tailwind config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        nutBlack: "#0b0f1a",
+                        nutDeep: "#121a3a",
+                        nutBlue: "#1e2a78",
+                        nutViolet: "#6d5dfc",
+                        nutNeon: "#9d8cff",
+                        nutSoft: "#b8b0ff"
+                    },
+                    boxShadow: {
+                        glow: "0 0 40px rgba(109,93,252,0.35)",
+                        cardGlow: "0 8px 32px rgba(109,93,252,0.2)",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp 0.6s ease-out forwards;
+        }
+
+        .fade-up-delay-1 {
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .fade-up-delay-2 {
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .fade-up-delay-3 {
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .fade-up-delay-4 {
+            animation-delay: 0.4s;
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-nutBlack via-nutDeep to-black text-white">
+
+    <!-- Background ambient -->
+    <div class="fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(109,93,252,0.12),transparent_50%)]"></div>
+    <div class="fixed inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(30,42,120,0.15),transparent_50%)]"></div>
+
+    <!-- Top Navigation -->
+    <nav class="relative z-10 flex items-center justify-between px-8 py-6">
+        <!-- Logo -->
+        <div class="flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-gradient-to-br from-nutViolet to-nutBlue flex items-center justify-center shadow-glow">
+                <span class="text-white font-bold text-lg">N</span>
+            </div>
+            <span class="text-xl font-semibold tracking-wide">Nutmeg</span>
+        </div>
+
+        <!-- User & Logout -->
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
+                <div id="userInitial"
+                    class="w-8 h-8 rounded-full bg-gradient-to-br from-nutViolet to-nutNeon flex items-center justify-center text-sm font-semibold">
+                    ?
+                </div>
+                <span id="userName" class="text-sm text-nutSoft">loading…</span>
+            </div>
+            <button onclick="logout()" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
+                logout
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 px-8 py-8 max-w-6xl mx-auto">
+
+        <!-- Welcome Section -->
+        <div class="fade-up fade-up-delay-1 mb-12">
+            <h1 class="text-4xl font-light mb-2">
+                good <span id="timeOfDay">morning</span>,
+                <span id="userFirstName" class="font-semibold text-nutNeon">friend</span>
+            </h1>
+            <p class="text-gray-400 text-lg">
+                your shared workspace awaits
+            </p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="fade-up fade-up-delay-2 grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-cardGlow">
+                <div class="text-3xl font-light text-nutNeon mb-1" id="projectCount">–</div>
+                <div class="text-sm text-gray-400">shared projects</div>
+            </div>
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-cardGlow">
+                <div class="text-3xl font-light text-nutNeon mb-1" id="taskCount">–</div>
+                <div class="text-sm text-gray-400">open tasks</div>
+            </div>
+            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-cardGlow">
+                <div class="text-3xl font-light text-nutNeon mb-1">4</div>
+                <div class="text-sm text-gray-400">team members</div>
+            </div>
+        </div>
+
+        <!-- Navigation Cards -->
+        <div class="fade-up fade-up-delay-3 grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
+
+            <!-- Projects Card -->
+            <a href="projects_index.html"
+                class="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-cardGlow hover:shadow-glow hover:scale-[1.02] transition-all cursor-pointer block">
+                <div class="flex items-center gap-4 mb-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-nutViolet to-nutBlue flex items-center justify-center text-2xl">
+                        📁
+                    </div>
+                    <h2 class="text-xl font-semibold group-hover:text-nutNeon transition-colors">Projects</h2>
+                </div>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    View and manage shared projects. Create new workspaces for your team's ideas.
+                </p>
+                <div class="mt-4 text-nutNeon text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    enter →
+                </div>
+            </a>
+
+            <!-- Calendar Card -->
+            <a href="calendar.html"
+                class="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-cardGlow hover:shadow-glow hover:scale-[1.02] transition-all cursor-pointer block">
+                <div class="flex items-center gap-4 mb-4">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-nutBlue to-nutViolet flex items-center justify-center text-2xl">
+                        📅
+                    </div>
+                    <h2 class="text-xl font-semibold group-hover:text-nutNeon transition-colors">Calendar</h2>
+                </div>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                    See what's happening when. A time-based view of shared tasks and milestones.
+                </p>
+                <div class="mt-4 text-nutNeon text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                    enter →
+                </div>
+            </a>
+        </div>
+
+        <!-- Philosophy Reminder -->
+        <div class="fade-up fade-up-delay-4 text-center py-8">
+            <p class="text-gray-500 text-sm italic">
+                no admins · no noise · just progress
+            </p>
+        </div>
+
+    </main>
+
+    <script src="api.js"></script>
+    <script>
+        // -------- AUTH CHECK --------
+        if (!isAuthenticated()) {
+            window.location.href = "index.html";
+        }
+
+        // -------- POPULATE USER INFO --------
+        const user = getCurrentUser();
+        const firstName = user ? user.split("@")[0] : "friend";
+        const initial = firstName.charAt(0).toUpperCase();
+
+        document.getElementById("userName").textContent = user || "guest";
+        document.getElementById("userInitial").textContent = initial;
+        document.getElementById("userFirstName").textContent = firstName;
+
+        // -------- TIME OF DAY GREETING --------
+        const hour = new Date().getHours();
+        let greeting = "morning";
+        if (hour >= 12 && hour < 17) greeting = "afternoon";
+        else if (hour >= 17 && hour < 21) greeting = "evening";
+        else if (hour >= 21 || hour < 5) greeting = "night";
+        document.getElementById("timeOfDay").textContent = greeting;
+
+        // -------- LOAD STATS --------
+        async function loadStats() {
+            try {
+                const projects = await apiGet("/projects");
+                document.getElementById("projectCount").textContent = projects.length || 0;
+
+                // Count all tasks across projects
+                let taskCount = 0;
+                for (const project of projects) {
+                    try {
+                        const tasks = await apiGet(`/projects/${project.id}/tasks`);
+                        taskCount += tasks.filter(t => t.status !== "done").length;
+                    } catch (e) {
+                        // Skip if can't load tasks
+                    }
+                }
+                document.getElementById("taskCount").textContent = taskCount;
+            } catch (err) {
+                console.error("Could not load stats:", err);
+                document.getElementById("projectCount").textContent = "–";
+                document.getElementById("taskCount").textContent = "–";
+            }
+        }
+
+        loadStats();
+    </script>
+
+</body>
+
+</html>

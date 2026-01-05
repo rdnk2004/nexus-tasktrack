@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel, Session, select
+from pydantic import BaseModel
 from app.jwt_utils import create_access_token
 from app.db import engine, get_session
 from app.models import User
@@ -27,6 +28,13 @@ FIXED_USERS = [
 
 DEFAULT_PASSWORD = "nutmeg123"
 
+
+# -------- Request Models --------
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
@@ -46,24 +54,29 @@ def on_startup():
                 session.add(user)
         session.commit()
 
+
 @app.get("/")
 def root():
     return {"status": "Nutmeg backend running"}
 
-# -------- LOGIN ONLY --------
+
+# -------- LOGIN --------
 @app.post("/login")
-def login(email: str, password: str, session: Session = Depends(get_session)):
+def login(request: LoginRequest, session: Session = Depends(get_session)):
     user = session.exec(
-        select(User).where(User.email == email)
+        select(User).where(User.email == request.email)
     ).first()
 
-    if not user or not verify_password(password, user.password):
+    if not user or not verify_password(request.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"email": email})
+    # Extract name from email for friendly greeting
+    name = request.email.split("@")[0].capitalize()
+    token = create_access_token({"email": request.email})
 
     return {
-        "message": f"Welcome back, {email}",
+        "message": f"Welcome back, {name}",
+        "email": request.email,
         "access_token": token,
         "token_type": "bearer"
     }
