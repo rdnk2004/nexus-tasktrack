@@ -87,14 +87,18 @@ def read_me(current_user: str = Depends(get_current_user)):
         "email": current_user,
         "status": "authenticated"
     }
+class ProjectCreate(BaseModel):
+    name: str
+
+
 @app.post("/projects")
 def create_project(
-    name: str,
+    project_data: ProjectCreate,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     project = Project(
-        name=name,
+        name=project_data.name,
         created_by=current_user
     )
     session.add(project)

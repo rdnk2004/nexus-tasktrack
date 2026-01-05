@@ -1,356 +1,302 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<title>Nutmeg Calendar</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8" />
+  <title>Nutmeg · Calendar</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-:root {
-  --bg-deep: #0b1020;
-  --bg-mid: #1a1f3f;
-  --bg-soft: #2a2f5f;
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-  --accent: #6f63ff;
-  --accent-soft: rgba(111, 99, 255, 0.18);
+  <!-- Custom Tailwind config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            nutBlack: "#0b0f1a",
+            nutDeep: "#121a3a",
+            nutBlue: "#1e2a78",
+            nutViolet: "#6d5dfc",
+            nutNeon: "#9d8cff",
+            nutSoft: "#b8b0ff"
+          },
+          boxShadow: {
+            glow: "0 0 40px rgba(109,93,252,0.35)",
+            cardGlow: "0 8px 32px rgba(109,93,252,0.2)",
+          }
+        }
+      }
+    }
+  </script>
 
-  --white: #ffffff;
-  --cell-bg: #f7f8fd;
+  <style>
+    .fade-up {
+      animation: fadeUp 0.6s ease-out forwards;
+      opacity: 0;
+    }
 
-  --text-main: #2a2f5f;
-  --text-soft: #6b6f9d;
-}
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
 
-* {
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
 
-body {
-  margin: 0;
-  height: 100vh;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at top left, var(--bg-soft), transparent 55%),
-    radial-gradient(circle at bottom right, var(--bg-mid), transparent 60%),
-    linear-gradient(180deg, var(--bg-deep), var(--bg-mid));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+    .delay-100 {
+      animation-delay: 0.1s;
+    }
 
-/* ================= CALENDAR ================= */
-
-.calendar {
-  width: 800px;
-  background: var(--white);
-  border-radius: 26px;
-  padding: 30px;
-  box-shadow: 0 50px 120px rgba(0,0,0,0.45);
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
-.header h2 {
-  margin: 0;
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.nav {
-  background: none;
-  border: none;
-  font-size: 1.6rem;
-  color: var(--accent);
-  cursor: pointer;
-}
-
-.weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: var(--text-soft);
-  margin-bottom: 14px;
-}
-
-.days {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 18px;
-}
-
-/* ================= DAY CELL ================= */
-
-.day {
-  height: 96px;
-  background: var(--cell-bg);
-  border-radius: 16px;
-  padding: 10px;
-  cursor: pointer;
-  border: 1px solid rgba(111,99,255,0.14);
-  display: flex;
-  flex-direction: column;
-}
-
-.day:hover {
-  box-shadow: 0 8px 18px rgba(111,99,255,0.18);
-}
-
-.day.other {
-  opacity: 0.35;
-}
-
-.date-number {
-  font-size: 0.9rem;
-  color: var(--accent);
-  margin-bottom: 6px;
-}
-
-/* TASK STRIPS ON CALENDAR */
-.task-strip {
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 0.65rem;
-  padding: 4px 6px;
-  border-radius: 6px;
-  margin-bottom: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ================= MODAL ================= */
-
-.modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(11,16,32,0.55);
-  display: none;
-  align-items: center;
-  justify-content: center;
-}
-
-.modal.active {
-  display: flex;
-}
-
-.modal-content {
-  width: 420px;
-  min-height: 380px;   /* MORE DOWNWARD SPACE */
-  background: var(--white);
-  border-radius: 16px; /* RECTANGULAR */
-  padding: 22px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal h3 {
-  margin: 0 0 6px;
-  color: var(--accent);
-}
-
-.modal-date {
-  font-size: 0.75rem;
-  color: var(--text-soft);
-  margin-bottom: 14px;
-}
-
-.task-list {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.task {
-  background: var(--accent-soft);
-  color: var(--accent);
-  padding: 8px 10px;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  margin-bottom: 8px;
-}
-
-/* ADD BUTTON */
-.add-btn {
-  position: absolute;
-  bottom: 18px;
-  right: 18px;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  font-size: 1.3rem;
-  cursor: pointer;
-}
-
-/* INPUT */
-.task-input {
-  margin-top: 10px;
-}
-
-.task-input input {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(111,99,255,0.3);
-}
-</style>
+    .delay-200 {
+      animation-delay: 0.2s;
+    }
+  </style>
 </head>
 
-<body>
+<body class="min-h-screen bg-gradient-to-br from-nutBlack via-nutDeep to-black text-white flex flex-col">
 
-<div class="calendar">
-  <div class="header">
-    <button class="nav" id="prev">‹</button>
-    <h2 id="monthYear"></h2>
-    <button class="nav" id="next">›</button>
+  <!-- Background ambient -->
+  <div class="fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(109,93,252,0.12),transparent_50%)] z-0"></div>
+  <div class="fixed inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(30,42,120,0.15),transparent_50%)] z-0">
   </div>
 
-  <div class="weekdays">
-    <div>Sun</div><div>Mon</div><div>Tue</div>
-    <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+  <!-- Top Navigation -->
+  <nav class="relative z-10 flex items-center justify-between px-8 py-6 shrink-0">
+    <a href="workspace.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+      <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+        <span class="text-xl">←</span>
+      </div>
+      <span class="text-sm text-gray-400">back to workspace</span>
+    </a>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="relative z-10 px-8 pb-8 max-w-6xl mx-auto w-full flex-1 flex flex-col">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8 fade-up delay-100">
+      <h1 class="text-3xl font-light text-white" id="monthYear">Loading…</h1>
+      <div class="flex items-center gap-2">
+        <button id="prev"
+          class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors">‹</button>
+        <div class="w-px h-6 bg-white/10"></div>
+        <button id="next"
+          class="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center transition-colors">›</button>
+      </div>
+    </div>
+
+    <!-- Calendar Grid -->
+    <div
+      class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl fade-up delay-200 flex-1 flex flex-col">
+
+      <!-- Weekdays -->
+      <div class="grid grid-cols-7 mb-4 text-center">
+        <div class="text-xs uppercase tracking-widest text-gray-500">Sun</div>
+        <div class="text-xs uppercase tracking-widest text-gray-500">Mon</div>
+        <div class="text-xs uppercase tracking-widest text-gray-500">Tue</div>
+        <div class="text-xs uppercase tracking-widest text-gray-500">Wed</div>
+        <div class="text-xs uppercase tracking-widest text-gray-500">Thu</div>
+        <div class="text-xs uppercase tracking-widest text-gray-500">Fri</div>
+        <div class="text-xs uppercase tracking-widest text-gray-500">Sat</div>
+      </div>
+
+      <!-- Days -->
+      <div id="days" class="grid grid-cols-7 gap-2 flex-1 auto-rows-fr">
+        <!-- Days injected by JS -->
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Task Modal -->
+  <div id="modal" class="fixed inset-0 z-50 hidden flex items-center justify-center bg-nutBlack/80 backdrop-blur-sm">
+    <div
+      class="bg-[#1a1f3c] border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl scale-95 opacity-0 transition-all duration-300 transform"
+      id="modalContent">
+
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-xl font-light text-white">Tasks</h3>
+        <span class="text-xs font-mono text-nutNeon px-2 py-1 bg-nutNeon/10 rounded-md" id="modalDate">2024-01-01</span>
+      </div>
+
+      <div class="task-list space-y-2 max-h-60 overflow-y-auto mb-4 min-h-[100px]" id="taskList">
+        <!-- Tasks go here -->
+      </div>
+
+      <div class="relative">
+        <input type="text" id="newTaskInput" placeholder="Add a new task…"
+          class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors pr-10">
+        <button id="addBtn"
+          class="absolute right-2 top-2 w-8 h-8 flex items-center justify-center rounded-lg bg-nutViolet text-white hover:bg-white hover:text-nutViolet transition-colors">
+          +
+        </button>
+      </div>
+
+    </div>
   </div>
 
-  <div class="days" id="days"></div>
-</div>
+  <script src="api.js"></script>
+  <script>
+    // -------- AUTH CHECK --------
+    if (!requireAuth()) return;
 
-<!-- MODAL -->
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <h3>Tasks</h3>
-    <div class="modal-date" id="modalDate"></div>
-    <div class="task-list" id="taskList"></div>
-    <button class="add-btn" id="addBtn">+</button>
-  </div>
-</div>
+    const daysEl = document.getElementById("days");
+    const monthYearEl = document.getElementById("monthYear");
+    const modal = document.getElementById("modal");
+    const modalContent = document.getElementById("modalContent");
+    const modalDate = document.getElementById("modalDate");
+    const taskList = document.getElementById("taskList");
+    const addBtn = document.getElementById("addBtn");
+    const newTaskInput = document.getElementById("newTaskInput");
 
-<script>
-const daysEl = document.getElementById("days");
-const monthYearEl = document.getElementById("monthYear");
-const modal = document.getElementById("modal");
-const modalDate = document.getElementById("modalDate");
-const taskList = document.getElementById("taskList");
-const addBtn = document.getElementById("addBtn");
+    let currentDate = new Date();
+    let activeKey = null;
 
-let currentDate = new Date();
-let activeKey = null;
+    // In-memory task store (Phase 1.5 - later connect to API)
+    const tasks = {};
 
-// In-memory task store
-const tasks = {};
+    function renderCalendar() {
+      daysEl.innerHTML = "";
 
-function renderCalendar() {
-  daysEl.innerHTML = "";
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
 
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
+      monthYearEl.textContent = currentDate.toLocaleDateString("en-US", {
+        month: "long",
+        year: "numeric"
+      });
 
-  monthYearEl.textContent = currentDate.toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric"
-  });
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const prevDays = new Date(year, month, 0).getDate();
 
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const prevDays = new Date(year, month, 0).getDate();
+      // Previous month fill
+      for (let i = firstDay; i > 0; i--) {
+        createDay(prevDays - i + 1, true);
+      }
 
-  for (let i = firstDay; i > 0; i--) {
-    createDay(prevDays - i + 1, true);
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    createDay(d, false);
-  }
-}
-
-function createDay(day, other) {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const key = `${year}-${month + 1}-${day}`;
-
-  const el = document.createElement("div");
-  el.className = "day" + (other ? " other" : "");
-  el.onclick = () => openModal(key);
-
-  const num = document.createElement("div");
-  num.className = "date-number";
-  num.textContent = day;
-  el.appendChild(num);
-
-  (tasks[key] || []).slice(0, 2).forEach(t => {
-    const strip = document.createElement("div");
-    strip.className = "task-strip";
-    strip.textContent = t;
-    el.appendChild(strip);
-  });
-
-  daysEl.appendChild(el);
-}
-
-function openModal(key) {
-  activeKey = key;
-  modalDate.textContent = key;
-  renderTasks();
-  modal.classList.add("active");
-}
-
-function renderTasks() {
-  taskList.innerHTML = "";
-  (tasks[activeKey] || []).forEach(t => {
-    const div = document.createElement("div");
-    div.className = "task";
-    div.textContent = t;
-    taskList.appendChild(div);
-  });
-}
-
-addBtn.onclick = () => {
-  if (taskList.querySelector("input")) return;
-
-  const wrap = document.createElement("div");
-  wrap.className = "task-input";
-
-  const input = document.createElement("input");
-  input.placeholder = "Add task…";
-
-  input.onkeydown = e => {
-    if (e.key === "Enter" && input.value.trim()) {
-      tasks[activeKey] ??= [];
-      tasks[activeKey].push(input.value.trim());
-      renderTasks();
-      renderCalendar();
+      // Current month
+      for (let d = 1; d <= daysInMonth; d++) {
+        createDay(d, false);
+      }
     }
-  };
 
-  wrap.appendChild(input);
-  taskList.appendChild(wrap);
-  input.focus();
-};
+    function createDay(day, other) {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const key = `${year}-${month + 1}-${day}`;
 
-modal.onclick = e => {
-  if (e.target === modal) modal.classList.remove("active");
-};
+      const el = document.createElement("div");
+      // Tailwind classes for day cell
+      el.className = `
+                relative p-3 rounded-xl border border-white/5 bg-white/0 hover:bg-white/5 hover:border-white/10 hover:scale-[1.02] transition-all cursor-pointer flex flex-col min-h-[100px]
+                ${other ? 'opacity-30' : ''}
+            `;
+      el.onclick = () => openModal(key);
 
-document.getElementById("prev").onclick = () => {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  renderCalendar();
-};
+      const num = document.createElement("div");
+      num.className = "text-sm font-medium text-nutSoft mb-2";
+      num.textContent = day;
+      el.appendChild(num);
 
-document.getElementById("next").onclick = () => {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  renderCalendar();
-};
+      // Render existing tasks preview (max 2)
+      (tasks[key] || []).slice(0, 2).forEach(t => {
+        const strip = document.createElement("div");
+        strip.className = "text-[10px] bg-nutViolet/20 text-nutNeon px-1.5 py-0.5 rounded mb-1 truncate";
+        strip.textContent = t;
+        el.appendChild(strip);
+      });
 
-renderCalendar();
-</script>
+      // overflow indicator
+      if ((tasks[key] || []).length > 2) {
+        const more = document.createElement("div");
+        more.className = "w-1 h-1 rounded-full bg-gray-500 mx-auto mt-1";
+        el.appendChild(more);
+      }
+
+      daysEl.appendChild(el);
+    }
+
+    function openModal(key) {
+      activeKey = key;
+      modalDate.textContent = key;
+      renderTasks();
+
+      modal.classList.remove("hidden");
+      setTimeout(() => {
+        modalContent.classList.remove("scale-95", "opacity-0");
+        modalContent.classList.add("scale-100", "opacity-100");
+        newTaskInput.focus();
+      }, 10);
+    }
+
+    function closeModal() {
+      modalContent.classList.remove("scale-100", "opacity-100");
+      modalContent.classList.add("scale-95", "opacity-0");
+      setTimeout(() => {
+        modal.classList.add("hidden");
+      }, 300);
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = "";
+      const dayTasks = tasks[activeKey] || [];
+
+      if (dayTasks.length === 0) {
+        taskList.innerHTML = `<div class="text-gray-500 text-sm italic text-center py-4">No tasks yet</div>`;
+        return;
+      }
+
+      dayTasks.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "bg-black/20 text-white text-sm px-3 py-2 rounded-lg border border-white/5 flex items-center gap-2";
+        div.innerHTML = `<div class="w-1.5 h-1.5 rounded-full bg-nutNeon"></div> ${t}`;
+        taskList.appendChild(div);
+      });
+    }
+
+    // Add Task Logic
+    function addTask() {
+      const val = newTaskInput.value.trim();
+      if (val) {
+        tasks[activeKey] ??= [];
+        tasks[activeKey].push(val);
+        renderTasks();
+        renderCalendar();
+        newTaskInput.value = "";
+      }
+    }
+
+    addBtn.onclick = addTask;
+    newTaskInput.onkeydown = e => {
+      if (e.key === "Enter") addTask();
+    };
+
+    // Close modal on outside click
+    modal.onclick = e => {
+      if (e.target === modal) closeModal();
+    };
+
+    // Navigation
+    document.getElementById("prev").onclick = () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    };
+
+    document.getElementById("next").onclick = () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    };
+
+    renderCalendar();
+  </script>
 
 </body>
+
 </html>
