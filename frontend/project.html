@@ -5,166 +5,81 @@
     <meta charset="UTF-8">
     <title>Nutmeg · Project Board</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Custom Tailwind config -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        nutBlack: "#0b0f1a",
-                        nutDeep: "#121a3a",
-                        nutBlue: "#1e2a78",
-                        nutViolet: "#6d5dfc",
-                        nutNeon: "#9d8cff",
-                        nutSoft: "#b8b0ff"
-                    },
-                    boxShadow: {
-                        glow: "0 0 40px rgba(109,93,252,0.35)",
-                        cardGlow: "0 8px 32px rgba(109,93,252,0.2)",
-                    }
-                }
-            }
-        }
-    </script>
-
-    <style>
-        .fade-up {
-            animation: fadeUp 0.6s ease-out forwards;
-            opacity: 0;
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .delay-100 {
-            animation-delay: 0.1s;
-        }
-
-        .delay-200 {
-            animation-delay: 0.2s;
-        }
-
-        .delay-300 {
-            animation-delay: 0.3s;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .dragging {
-            opacity: 0.5;
-            transform: scale(0.95);
-        }
-
-        .drag-over {
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            border-color: #9d8cff !important;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
+    <script src="api.js"></script>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-nutBlack via-nutDeep to-black text-white overflow-x-hidden">
+<body>
+    <div class="ambient-light"></div>
 
-    <!-- Background ambient -->
-    <div
-        class="fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(109,93,252,0.12),transparent_50%)] pointer-events-none">
-    </div>
-    <div
-        class="fixed inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(30,42,120,0.15),transparent_50%)] pointer-events-none">
-    </div>
-
-    <!-- Navigation -->
-    <nav class="relative z-10 flex items-center justify-between px-8 py-6">
-        <a href="projects_index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
-                <span class="text-xl">←</span>
-            </div>
-            <span class="text-sm text-gray-400">Back to Projects</span>
-        </a>
-        <div class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-nutSoft">
+    <nav class="container pt-6 pb-2 flex items-center justify-between z-10 relative">
+        <div class="flex gap-4">
+            <a href="workspace.html" class="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+                <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <span class="text-sm">🏠</span>
+                </div>
+                <span class="text-xs">Home</span>
+            </a>
+            <a href="projects_index.html"
+                class="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+                <span class="text-xs">← Projects</span>
+            </a>
+        </div>
+        <div class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-soft">
             <span id="userEmail">loading…</span>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="relative z-10 px-8 py-4 max-w-7xl mx-auto">
+    <main class="container py-6 relative z-10 max-w-[1400px]"> <!-- Wider container for kanban -->
 
-        <div class="flex items-end justify-between mb-8 fade-up delay-100">
+        <div class="flex items-end justify-between mb-8 animate-fade-up delay-100">
             <div>
                 <h1 class="text-3xl font-light mb-1" id="projectTitle">Loading...</h1>
-                <p class="text-gray-400 text-sm">Task Board</p>
+                <p class="text-sm text-gray-400">Task Board</p>
             </div>
-            <button onclick="openCreateTaskModal()"
-                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-nutViolet to-nutBlue hover:shadow-glow hover:scale-105 transition-all text-white font-medium flex items-center gap-2 text-sm">
+            <button onclick="openCreateTaskModal()" class="btn btn-primary">
                 <span>+</span> New Task
             </button>
         </div>
 
         <!-- Kanban Board -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-up delay-200 h-[calc(100vh-200px)]">
+        <div class="kanban-board animate-fade-up delay-200">
 
             <!-- Column: To Do -->
             <div id="col-todo" ondrop="drop(event, 'todo')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"
-                class="flex flex-col bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 transition-colors">
+                class="kanban-col transition-colors">
 
-                <div class="p-4 border-b border-white/10 flex items-center justify-between">
-                    <h3 class="font-medium text-gray-300">To Do</h3>
-                    <span class="bg-white/10 px-2 py-0.5 rounded text-xs text-gray-400" id="count-todo">0</span>
+                <div class="kanban-header">
+                    <h3 class="text-sm font-medium text-gray-300">To Do</h3>
+                    <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-todo">0</span>
                 </div>
-                <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[100px]" id="list-todo">
+                <div class="kanban-list" id="list-todo">
+                    <!-- Tasks injected -->
                 </div>
             </div>
 
             <!-- Column: Doing -->
             <div id="col-doing" ondrop="drop(event, 'doing')" ondragover="allowDrop(event)"
-                ondragleave="leaveDrop(event)"
-                class="flex flex-col bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 transition-colors">
+                ondragleave="leaveDrop(event)" class="kanban-col transition-colors">
 
-                <div class="p-4 border-b border-white/10 flex items-center justify-between">
-                    <h3 class="font-medium text-nutNeon">In Progress</h3>
-                    <span class="bg-white/10 px-2 py-0.5 rounded text-xs text-gray-400" id="count-doing">0</span>
+                <div class="kanban-header">
+                    <h3 class="text-sm font-medium text-neon">In Progress</h3>
+                    <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-doing">0</span>
                 </div>
-                <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[100px]" id="list-doing">
+                <div class="kanban-list" id="list-doing">
                 </div>
             </div>
 
             <!-- Column: Done -->
             <div id="col-done" ondrop="drop(event, 'done')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"
-                class="flex flex-col bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 transition-colors">
+                class="kanban-col transition-colors">
 
-                <div class="p-4 border-b border-white/10 flex items-center justify-between">
-                    <h3 class="font-medium text-green-400">Done</h3>
-                    <span class="bg-white/10 px-2 py-0.5 rounded text-xs text-gray-400" id="count-done">0</span>
+                <div class="kanban-header">
+                    <h3 class="text-sm font-medium text-success">Done</h3>
+                    <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-done">0</span>
                 </div>
-                <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[100px]" id="list-done">
+                <div class="kanban-list" id="list-done">
                 </div>
             </div>
 
@@ -173,45 +88,40 @@
     </main>
 
     <!-- Create Task Modal -->
-    <div id="createTaskModal"
-        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-nutBlack/80 backdrop-blur-sm">
-        <div class="bg-[#1a1f3c] border border-white/10 p-8 rounded-2xl w-full max-w-md shadow-2xl scale-95 opacity-0 transition-all duration-300"
-            id="taskModalContent">
-            <h2 class="text-xl font-light text-white mb-6">Add New Task</h2>
-            <form id="createTaskForm" class="space-y-4">
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Title</label>
-                    <input type="text" id="taskTitle" required
-                        class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors"
-                        placeholder="What needs to be done?">
+    <div id="createTaskModal" class="modal-overlay">
+        <div id="taskModalContent" class="modal-content p-8 rounded-2xl w-full max-w-md shadow-card">
+            <h2 class="text-xl font-light mb-6">Add New Task</h2>
+            <form id="createTaskForm" class="flex flex-col gap-4">
+
+                <div class="form-group">
+                    <label class="input-label">Title</label>
+                    <input type="text" id="taskTitle" required class="input-field" placeholder="What needs to be done?">
                 </div>
+
                 <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Assigned To</label>
-                        <select id="taskAssignee"
-                            class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors appearance-none">
+                    <div class="form-group">
+                        <label class="input-label">Assigned To</label>
+                        <select id="taskAssignee" class="input-field" style="padding: 0.8rem;">
                             <option value="">Unassigned</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Deadline</label>
-                        <input type="datetime-local" id="taskDeadline"
-                            class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors">
+                    <div class="form-group">
+                        <label class="input-label">Deadline</label>
+                        <input type="datetime-local" id="taskDeadline" class="input-field" style="padding: 0.8rem;">
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Description</label>
-                    <textarea id="taskDesc" rows="3"
-                        class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors resize-none"
+
+                <div class="form-group animate-none"> <!-- override potential global animations -->
+                    <label class="input-label">Description</label>
+                    <textarea id="taskDesc" rows="3" class="input-field resize-none"
                         placeholder="Add details..."></textarea>
                 </div>
+
                 <div class="flex gap-3 pt-4">
-                    <button type="button" onclick="closeCreateTaskModal()"
-                        class="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                    <button type="button" onclick="closeCreateTaskModal()" class="btn btn-secondary flex-1">
                         Cancel
                     </button>
-                    <button type="submit"
-                        class="flex-1 py-3 rounded-xl bg-gradient-to-r from-nutViolet to-nutBlue text-white font-medium hover:shadow-glow transition-all">
+                    <button type="submit" class="btn btn-primary flex-1">
                         Add Task
                     </button>
                 </div>
@@ -219,15 +129,15 @@
         </div>
     </div>
 
-    <!-- Minimal Scripts -->
-    <script src="api.js"></script>
     <script>
         let currentProjectId = null;
 
         document.addEventListener("DOMContentLoaded", async () => {
             // Check Auth
             if (!requireAuth()) return;
-            document.getElementById("userEmail").textContent = getCurrentUser();
+            const user = getCurrentUser();
+            const emailEl = document.getElementById("userEmail");
+            if (emailEl) emailEl.textContent = user;
 
             // Load Users for Selector
             loadUsers();
@@ -259,27 +169,22 @@
 
             // Modal Logic
             const modal = document.getElementById("createTaskModal");
-            const modalContent = document.getElementById("taskModalContent");
 
             window.openCreateTaskModal = function () {
-                modal.classList.remove("hidden");
-                // Pre-set deadline to 2 days from now (custom business rule)
+                modal.classList.add("open");
+
                 const date = new Date();
                 date.setDate(date.getDate() + 2);
                 document.getElementById("taskDeadline").value = date.toISOString().slice(0, 16);
 
                 setTimeout(() => {
-                    modalContent.classList.remove("scale-95", "opacity-0");
-                    modalContent.classList.add("scale-100", "opacity-100");
                     document.getElementById("taskTitle").focus();
-                }, 10);
+                }, 50);
             };
 
             window.closeCreateTaskModal = function () {
-                modalContent.classList.remove("scale-100", "opacity-100");
-                modalContent.classList.add("scale-95", "opacity-0");
+                modal.classList.remove("open");
                 setTimeout(() => {
-                    modal.classList.add("hidden");
                     document.getElementById("createTaskForm").reset();
                 }, 300);
             };
@@ -317,8 +222,8 @@
             try {
                 const users = await apiGet("/users");
                 const select = document.getElementById("taskAssignee");
-                // Clear except first
-                select.innerHTML = '<option value="">Unassigned</option>';
+                // Reset with Unassigned and All options
+                select.innerHTML = '<option value="">Unassigned</option><option value="ALL">All Collaborators</option>';
                 users.forEach(email => {
                     const opt = document.createElement("option");
                     opt.value = email;
@@ -332,21 +237,21 @@
 
         // -------- DRAG & DROP LOGIC --------
 
-        function allowDrop(ev) {
+        window.allowDrop = function (ev) {
             ev.preventDefault();
             ev.currentTarget.classList.add("drag-over");
         }
 
-        function leaveDrop(ev) {
+        window.leaveDrop = function (ev) {
             ev.currentTarget.classList.remove("drag-over");
         }
 
-        function drag(ev) {
+        window.drag = function (ev) {
             ev.dataTransfer.setData("text", ev.target.id);
             ev.target.classList.add("dragging");
         }
 
-        async function drop(ev, newStatus) {
+        window.drop = async function (ev, newStatus) {
             ev.preventDefault();
             const col = document.getElementById(`col-${newStatus}`);
             if (col) col.classList.remove("drag-over");
@@ -361,9 +266,11 @@
 
             draggedElement.classList.remove("dragging");
 
-            const dot = draggedElement.querySelector(".w-1\\.5");
+            // Update status indicator dot in card
+            const dot = draggedElement.querySelector(".status-dot");
             if (dot) {
-                dot.className = `w-1.5 h-1.5 rounded-full ${getStatusColor(newStatus)}`;
+                // Reset classes
+                dot.className = "status-dot w-2 h-2 rounded-full " + getStatusColor(newStatus);
             }
 
             updateCounts();
@@ -416,10 +323,10 @@
         function createTaskCard(task) {
             const div = document.createElement("div");
             div.id = `task-${task.id}`;
-            div.className = "bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl p-4 cursor-grab active:cursor-grabbing transition-all group mb-3";
+            div.className = "task-card group"; // classes defined in style.css
 
             div.draggable = true;
-            div.addEventListener("dragstart", drag);
+            div.addEventListener("dragstart", window.drag);
             div.addEventListener("dragend", (e) => e.target.classList.remove("dragging"));
 
             const creator = task.created_by ? task.created_by.split("@")[0] : 'unknown';
@@ -432,15 +339,14 @@
                 const d = new Date(task.deadline);
                 const now = new Date();
                 const diff = (d - now) / (1000 * 3600 * 24); // days
-
                 const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
                 let colorClass = "text-gray-500";
                 if (diff < 0) {
-                    colorClass = "text-red-400 font-bold";
-                    backlogWarning = `<div class="text-[10px] text-red-500 mt-1 uppercase tracking-wide">Overdue</div>`;
+                    colorClass = "text-error font-bold";
+                    backlogWarning = `<div class="text-[10px] text-error mt-1 uppercase tracking-wide font-bold">Overdue</div>`;
                 }
-                else if (diff < 2) colorClass = "text-orange-300";
+                else if (diff < 2) colorClass = "text-warning";
 
                 deadlineHtml = `<span class="text-[10px] flex items-center gap-1 ${colorClass}">
                     ⏱ ${dateStr}
@@ -449,26 +355,26 @@
 
             div.innerHTML = `
                 <div class="flex justify-between items-start mb-2 pointer-events-none">
-                    <h4 class="font-medium text-sm text-gray-200 group-hover:text-white">${task.title}</h4>
+                    <h4 class="font-medium text-sm text-white group-hover:text-neon transition-colors">${task.title}</h4>
                     ${deadlineHtml}
                 </div>
-                ${task.description ? `<p class="text-xs text-gray-500 mb-3 line-clamp-2 pointer-events-none">${task.description}</p>` : ''}
+                ${task.description ? `<p class="text-xs text-gray-400 mb-3 line-clamp-2 pointer-events-none">${task.description}</p>` : ''}
                 ${backlogWarning}
-                <div class="flex items-center justify-between mt-2 pointer-events-none">
+                <div class="flex items-center justify-between mt-2 pointer-events-none pt-2 border-t border-white/5">
                    <div class="flex items-center gap-2 text-[10px] text-gray-500">
                         <span class="tracking-wider font-bold uppercase text-gray-400">${assignee}</span>
                         <span class="text-gray-700">|</span>
                         <span class="italic text-gray-600">by ${creator}</span>
                    </div>
-                   <div class="w-1.5 h-1.5 rounded-full ${getStatusColor(task.status)}"></div>
+                   <div class="status-dot w-2 h-2 rounded-full ${getStatusColor(task.status)}"></div>
                 </div>
             `;
             return div;
         }
 
         function getStatusColor(status) {
-            if (status === 'done') return "bg-green-400";
-            if (status === 'doing') return "bg-nutNeon shadow-[0_0_5px_#9d8cff]";
+            if (status === 'done') return "bg-success";
+            if (status === 'doing') return "bg-nut-neon shadow-glow";
             return "bg-gray-500";
         }
     </script>

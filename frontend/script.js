@@ -70,17 +70,17 @@ function showMessage(text, isError = false) {
     phraseEl.textContent = text;
 
     if (isError) {
-        phraseEl.classList.remove("text-nutNeon");
-        phraseEl.classList.add("text-red-400");
+        phraseEl.classList.remove("text-neon");
+        phraseEl.classList.add("text-error");
     } else {
-        phraseEl.classList.remove("text-red-400");
-        phraseEl.classList.add("text-nutNeon");
+        phraseEl.classList.remove("text-error");
+        phraseEl.classList.add("text-neon");
     }
 }
 
 function resetMessage() {
-    phraseEl.classList.remove("text-red-400");
-    phraseEl.classList.add("text-nutNeon");
+    phraseEl.classList.remove("text-error");
+    phraseEl.classList.add("text-neon");
     phraseEl.textContent = "syncing calm with momentum…";
 }
 
@@ -135,11 +135,16 @@ form.addEventListener("submit", async (e) => {
         `;
 
         // Smooth transition to workspace
-        document.body.classList.add("opacity-0", "transition-opacity", "duration-500");
+        document.body.classList.add("opacity-0"); // Uses CSS transition from styles if applied, or just instant hidden
+
+        // Add transition style inline or ensure it's in CSS for body if needed, 
+        // but simple opacity-0 is fine for now as per style.css utility
+        document.body.style.transition = "opacity 0.8s ease";
 
         setTimeout(() => {
             window.location.href = "workspace.html";
         }, 800);
+
 
     } catch (err) {
         stopPhraseLoop();

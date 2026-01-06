@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Nutmeg · Projects</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <script src="api.js"></script>
+</head>
+
+<body>
+    <div class="ambient-light"></div>
+
+    <!-- Navigation -->
+    <nav class="container pt-6 pb-2 flex items-center justify-between z-10 relative">
+        <div class="flex gap-4">
+            <a href="workspace.html" class="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+                <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                    <span class="text-sm">🏠</span>
+                </div>
+                <span class="text-xs">Home</span>
+            </a>
+            <!-- Back to Projects (Initial hidden, shown in board view) -->
+            <button id="navBackProjects" onclick="showList()"
+                class="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity hidden">
+                <span class="text-xs">← Projects</span>
+            </button>
+        </div>
+        <div class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs text-neon">
+            <span id="userEmail">loading…</span>
+        </div>
+    </nav>
+
+    <main class="container py-8 relative z-10 max-w-[1400px]">
+
+        <!-- VIEW: LIST -->
+        <section id="view-list" class="animate-fade-up">
+            <div class="flex items-end justify-between mb-8">
+                <div>
+                    <h1 class="mb-2">Projects</h1>
+                    <div class="flex gap-4 text-sm mt-4">
+                        <button onclick="filterProjects('active')" id="btn-active"
+                            class="text-neon border-b border-neon pb-1"
+                            style="border-width: 0 0 1px 0; border-style: solid;">Active</button>
+                        <button onclick="filterProjects('done')" id="btn-done"
+                            class="text-gray-400 hover:text-white pb-1 transition-colors">Completed</button>
+                    </div>
+                </div>
+                <button onclick="openCreateProjectModal()" class="btn btn-primary">
+                    <span>+</span> New Project
+                </button>
+            </div>
+
+            <div id="projectsGrid" class="grid grid-cols-3 gap-6">
+                <!-- Loading State -->
+                <div class="card p-8 h-64 animate-pulse flex items-center justify-center opacity-50">
+                    <span class="text-xs">Loading projects...</span>
+                </div>
+            </div>
+
+            <div id="emptyState" class="hidden text-center py-20">
+                <div class="text-6xl mb-4 grayscale opacity-50">🌱</div>
+                <h3 class="text-xl mb-2">No projects found</h3>
+                <p class="text-sm text-gray-500 max-w-sm mx-auto">No projects in this category.</p>
+            </div>
+        </section>
+
+        <!-- VIEW: BOARD -->
+        <section id="view-board" class="hidden animate-fade-up">
+            <div class="flex items-end justify-between mb-8">
+                <div>
+                    <h1 class="text-3xl font-light mb-1" id="projectTitle">Loading...</h1>
+                    <p class="text-sm text-gray-400">Task Board</p>
+                </div>
+                <button onclick="openCreateTaskModal()" class="btn btn-primary">
+                    <span>+</span> New Task
+                </button>
+            </div>
+
+            <div class="kanban-board">
+                <!-- Todo -->
+                <div id="col-todo" ondrop="drop(event, 'todo')" ondragover="allowDrop(event)"
+                    ondragleave="leaveDrop(event)" class="kanban-col transition-colors">
+                    <div class="kanban-header">
+                        <h3 class="text-sm font-medium text-gray-300">To Do</h3>
+                        <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-todo">0</span>
+                    </div>
+                    <div class="kanban-list" id="list-todo"></div>
+                </div>
+
+                <!-- Doing -->
+                <div id="col-doing" ondrop="drop(event, 'doing')" ondragover="allowDrop(event)"
+                    ondragleave="leaveDrop(event)" class="kanban-col transition-colors">
+                    <div class="kanban-header">
+                        <h3 class="text-sm font-medium text-neon">In Progress</h3>
+                        <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-doing">0</span>
+                    </div>
+                    <div class="kanban-list" id="list-doing"></div>
+                </div>
+
+                <!-- Done -->
+                <div id="col-done" ondrop="drop(event, 'done')" ondragover="allowDrop(event)"
+                    ondragleave="leaveDrop(event)" class="kanban-col transition-colors">
+                    <div class="kanban-header">
+                        <h3 class="text-sm font-medium text-success">Done</h3>
+                        <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-done">0</span>
+                    </div>
+                    <div class="kanban-list" id="list-done"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: Create Project -->
+    <div id="createProjectModal" class="modal-overlay">
+        <div class="modal-content p-8 rounded-2xl w-full max-w-md shadow-card">
+            <h2 class="text-xl mb-6 font-light">New Project</h2>
+            <form id="createProjectForm" class="flex flex-col gap-4">
+                <div class="form-group">
+                    <label class="input-label">Project Name</label>
+                    <input type="text" id="newProjectName" required class="input-field" placeholder="e.g. Q1 Marketing">
+                </div>
+                <div class="form-group">
+                    <label class="input-label">Collaborators</label>
+                    <select id="newProjectCollaborators" multiple class="input-field h-24"
+                        style="padding:0.5rem"></select>
+                    <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeCreateProjectModal()"
+                        class="btn btn-secondary flex-1">Cancel</button>
+                    <button type="submit" class="btn btn-primary flex-1">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Create Task -->
+    <div id="createTaskModal" class="modal-overlay">
+        <div class="modal-content p-8 rounded-2xl w-full max-w-md shadow-card">
+            <h2 class="text-xl font-light mb-6">Add New Task</h2>
+            <form id="createTaskForm" class="flex flex-col gap-4">
+                <div class="form-group">
+                    <label class="input-label">Title</label>
+                    <input type="text" id="newTaskTitle" required class="input-field"
+                        placeholder="What needs to be done?">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="input-label">Assigned To</label>
+                        <select id="newTaskAssignee" class="input-field" style="padding:0.8rem">
+                            <option value="">Unassigned</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label">Deadline</label>
+                        <input type="datetime-local" id="newTaskDeadline" class="input-field" style="padding:0.8rem">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="input-label">Description</label>
+                    <textarea id="newTaskDesc" rows="3" class="input-field resize-none"
+                        placeholder="Details..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeCreateTaskModal()"
+                        class="btn btn-secondary flex-1">Cancel</button>
+                    <button type="submit" class="btn btn-primary flex-1">Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentFilter = 'active';
+        let currentProjectId = null;
+        let cachedProjects = [];
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!requireAuth()) return;
+            const user = getCurrentUser();
+            document.getElementById("userEmail").textContent = user;
+
+            // Check URL for direct board access
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (id) {
+                await showBoard(id);
+            } else {
+                showList();
+            }
+
+            loadCollaborators(); // For project modal
+        });
+
+        // ================= NAVIGATION =================
+
+        async function showList() {
+            currentProjectId = null;
+
+            // UI Toggle
+            document.getElementById("view-list").classList.remove("hidden");
+            document.getElementById("view-board").classList.add("hidden");
+            document.getElementById("navBackProjects").classList.add("hidden");
+
+            // URL Cleanup
+            window.history.pushState({}, "", "projects.html");
+
+            await loadProjects();
+        }
+
+        async function showBoard(id) {
+            currentProjectId = id;
+
+            // UI Toggle
+            document.getElementById("view-list").classList.add("hidden");
+            document.getElementById("view-board").classList.remove("hidden");
+            document.getElementById("navBackProjects").classList.remove("hidden");
+
+            // URL Update
+            window.history.pushState({}, "", `projects.html?id=${id}`);
+
+            // Fetch Project Details
+            try {
+                // If we don't have cached projects, fetch them (or fetch single if endpoints existed)
+                // For now, fetch all is fine
+                const projects = await apiGet("/projects");
+                const p = projects.find(proj => proj.id == id);
+                if (p) {
+                    document.getElementById("projectTitle").textContent = p.name;
+                } else {
+                    document.getElementById("projectTitle").textContent = "Project Not Found";
+                }
+            } catch (e) { console.error(e); }
+
+            // Load Tasks
+            await loadTasks(id);
+            loadTaskUsers(); // For task modal
+        }
+
+
+        // ================= PROJECT LIST LOGIC =================
+
+        async function loadProjects() {
+            const grid = document.getElementById("projectsGrid");
+            const emptyState = document.getElementById("emptyState");
+
+            try {
+                // Check limit logic
+                const stats = await apiGet("/user/stats");
+                const createBtn = document.querySelector("#view-list button.btn-primary");
+                if (stats.active_count >= 2) {
+                    createBtn.style.opacity = "0.5";
+                    createBtn.style.cursor = "not-allowed";
+                    createBtn.removeAttribute("onclick");
+                    createBtn.innerHTML = "<span>🔒</span> Limit Reached";
+                } else {
+                    createBtn.style.opacity = "1";
+                    createBtn.style.cursor = "pointer";
+                    createBtn.setAttribute("onclick", "openCreateProjectModal()");
+                    createBtn.innerHTML = "<span>+</span> New Project";
+                }
+
+                // Load Data
+                const projects = await apiGet(`/projects?status=${currentFilter}`);
+                cachedProjects = projects;
+
+                grid.innerHTML = "";
+                if (!projects || projects.length === 0) {
+                    emptyState.classList.remove("hidden");
+                    return;
+                }
+                emptyState.classList.add("hidden");
+
+                projects.forEach(p => {
+                    const card = document.createElement("div");
+                    card.className = "card p-6 flex flex-col justify-between h-64 group cursor-pointer hover:-translate-y-1 transition-transform";
+
+                    card.onclick = (e) => {
+                        if (e.target.closest('button')) return;
+                        showBoard(p.id);
+                    };
+
+                    const acronym = p.name ? p.name.substring(0, 2).toUpperCase() : "??";
+                    const creator = p.created_by.split("@")[0];
+                    let collabs = 0;
+                    try { collabs = JSON.parse(p.collaborators || "[]").length; } catch { }
+
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center text-neon font-bold group-hover:scale-110 transition-transform">${acronym}</div>
+                                ${p.status !== 'done' ?
+                            `<button onclick="completeProject(event, ${p.id})" class="text-gray-500 hover:text-success transition-colors p-1" title="Mark Done">✓</button>` :
+                            '<span class="text-success text-xs">✓ Done</span>'}
+                            </div>
+                            <h3 class="text-lg text-white group-hover:text-neon transition-colors truncate" title="${p.name}">${p.name}</h3>
+                            <p class="text-xs text-gray-500 mt-2 uppercase tracking-widest font-bold">Created by ${creator}</p>
+                        </div>
+                        <div class="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
+                            <span class="text-xs text-gray-400 group-hover:text-white transition-colors">${collabs > 0 ? collabs + ' collaborators' : 'Private'}</span>
+                            <div class="w-2 h-2 rounded-full ${p.status === 'done' ? 'bg-gray-500' : 'bg-success shadow-glow'}"></div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+            } catch (e) {
+                console.error(e);
+                grid.innerHTML = `<p class="text-error col-span-3 text-center">Failed locally</p>`;
+            }
+        }
+
+        window.filterProjects = function (status) {
+            currentFilter = status;
+            const activeBtn = document.getElementById("btn-active");
+            const doneBtn = document.getElementById("btn-done");
+
+            if (status === 'active') {
+                activeBtn.className = "text-neon border-b border-neon pb-1";
+                activeBtn.style.borderStyle = "solid"; activeBtn.style.borderWidth = "0 0 1px 0";
+                doneBtn.className = "text-gray-400 hover:text-white pb-1 transition-colors";
+                doneBtn.style.borderWidth = "0";
+            } else {
+                doneBtn.className = "text-neon border-b border-neon pb-1";
+                doneBtn.style.borderStyle = "solid"; doneBtn.style.borderWidth = "0 0 1px 0";
+                activeBtn.className = "text-gray-400 hover:text-white pb-1 transition-colors";
+                activeBtn.style.borderWidth = "0";
+            }
+            loadProjects();
+        };
+
+        window.completeProject = async function (e, id) {
+            e.stopPropagation();
+            if (!confirm("Mark project as completed?")) return;
+            try {
+                await apiPut(`/projects/${id}`, { status: "done" });
+                loadProjects();
+            } catch (e) { console.error(e); alert("Failed"); }
+        };
+
+
+        // ================= PROJECT CREATION =================
+
+        async function loadCollaborators() {
+            try {
+                const users = await apiGet("/users");
+                const sel = document.getElementById("newProjectCollaborators");
+                sel.innerHTML = "";
+                users.forEach(u => {
+                    const opt = document.createElement("option");
+                    opt.value = u; opt.textContent = u;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { }
+        }
+
+        const projectModal = document.getElementById("createProjectModal");
+        window.openCreateProjectModal = () => {
+            projectModal.classList.add("open");
+            setTimeout(() => document.getElementById("newProjectName").focus(), 50);
+        };
+        window.closeCreateProjectModal = () => {
+            projectModal.classList.remove("open");
+            document.getElementById("createProjectForm").reset();
+        };
+        document.getElementById("createProjectForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.getElementById("newProjectName").value.trim();
+            const sel = document.getElementById("newProjectCollaborators");
+            const collabs = Array.from(sel.selectedOptions).map(o => o.value);
+            try {
+                await apiPost("/projects", { name, collaborators: collabs });
+                closeCreateProjectModal();
+                loadProjects();
+            } catch (err) { alert("Failed to create project"); }
+        });
+
+
+        // ================= KANBAN BOARD LOGIC =================
+
+        async function loadTasks(projectId) {
+            const lists = {
+                todo: document.getElementById("list-todo"),
+                doing: document.getElementById("list-doing"),
+                done: document.getElementById("list-done")
+            };
+            Object.values(lists).forEach(l => l.innerHTML = "");
+
+            try {
+                const tasks = await apiGet(`/projects/${projectId}/tasks`);
+                tasks.forEach(task => {
+                    const status = task.status || "todo";
+                    if (lists[status]) lists[status].appendChild(createTaskCard(task));
+                });
+                updateCounts();
+            } catch (e) { console.error(e); }
+        }
+
+        function createTaskCard(task) {
+            const div = document.createElement("div");
+            div.id = `task-${task.id}`;
+            div.className = "task-card group";
+            div.draggable = true;
+            div.addEventListener("dragstart", window.drag);
+
+            const assignee = task.assigned_to ? task.assigned_to.split("@")[0] : 'Unassigned';
+
+            let deadlineHtml = "";
+            let warning = "";
+            if (task.deadline) {
+                const d = new Date(task.deadline);
+                const diff = (d - new Date()) / (1000 * 3600 * 24);
+                let color = "text-gray-500";
+                if (diff < 0) { color = "text-error font-bold"; warning = `<div class="text-[10px] text-error mt-1 uppercase font-bold">Overdue</div>`; }
+                else if (diff < 2) color = "text-warning";
+                deadlineHtml = `<span class="text-[10px] ${color}">⏱ ${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>`;
+            }
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-2 pointer-events-none">
+                    <h4 class="font-medium text-sm text-white group-hover:text-neon transition-colors">${task.title}</h4>
+                    ${deadlineHtml}
+                </div>
+                ${warning}
+                <div class="flex items-center justify-between mt-2 pt-2 border-t border-white/5 pointer-events-none">
+                     <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">${assignee}</span>
+                     <div class="status-dot w-2 h-2 rounded-full ${task.status === 'done' ? 'bg-success' : (task.status === 'doing' ? 'bg-nut-neon shadow-glow' : 'bg-gray-500')}"></div>
+                </div>
+            `;
+            return div;
+        }
+
+        function updateCounts() {
+            ['todo', 'doing', 'done'].forEach(s => {
+                const c = document.getElementById(`list-${s}`).children.length;
+                document.getElementById(`count-${s}`).textContent = c;
+            });
+        }
+
+        // Drag & Drop
+        window.allowDrop = (ev) => { ev.preventDefault(); ev.currentTarget.classList.add("drag-over"); };
+        window.leaveDrop = (ev) => { ev.currentTarget.classList.remove("drag-over"); };
+        window.drag = (ev) => { ev.dataTransfer.setData("text", ev.target.id); ev.target.classList.add("dragging"); };
+
+        window.drop = async (ev, newStatus) => {
+            ev.preventDefault();
+            document.getElementById(`col-${newStatus}`).classList.remove("drag-over");
+            const data = ev.dataTransfer.getData("text");
+            const el = document.getElementById(data);
+            if (!el) return;
+
+            document.getElementById(`list-${newStatus}`).appendChild(el);
+            el.classList.remove("dragging");
+            updateCounts(); // fast UI update
+
+            // Check dot
+            const dot = el.querySelector(".status-dot");
+            if (dot) {
+                dot.className = "status-dot w-2 h-2 rounded-full " + (newStatus === 'done' ? 'bg-success' : (newStatus === 'doing' ? 'bg-nut-neon shadow-glow' : 'bg-gray-500'));
+            }
+
+            // API
+            const taskId = data.replace("task-", "");
+            try {
+                await apiPut(`/tasks/${taskId}`, { status: newStatus });
+            } catch (e) {
+                console.error(e);
+                alert("Failed to move task. Reverting...");
+                loadTasks(currentProjectId);
+            }
+        };
+
+
+        // ================= TASK CREATION =================
+
+        async function loadTaskUsers() {
+            try {
+                const users = await apiGet("/users");
+                const sel = document.getElementById("newTaskAssignee");
+                sel.innerHTML = '<option value="">Unassigned</option><option value="ALL">All Collaborators</option>';
+                users.forEach(u => {
+                    const opt = document.createElement("option");
+                    opt.value = u; opt.textContent = u;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { }
+        }
+
+        const taskModal = document.getElementById("createTaskModal");
+        window.openCreateTaskModal = () => {
+            taskModal.classList.add("open");
+            const d = new Date(); d.setDate(d.getDate() + 2);
+            document.getElementById("newTaskDeadline").value = d.toISOString().slice(0, 16);
+            setTimeout(() => document.getElementById("newTaskTitle").focus(), 50);
+        };
+        window.closeCreateTaskModal = () => {
+            taskModal.classList.remove("open");
+            document.getElementById("createTaskForm").reset();
+        };
+        document.getElementById("createTaskForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const title = document.getElementById("newTaskTitle").value;
+            const assignee = document.getElementById("newTaskAssignee").value;
+            const deadline = document.getElementById("newTaskDeadline").value;
+            const desc = document.getElementById("newTaskDesc").value;
+
+            try {
+                await apiPost(`/projects/${currentProjectId}/tasks`, {
+                    title, description: desc,
+                    assigned_to: assignee || null,
+                    deadline: deadline ? new Date(deadline).toISOString() : null
+                });
+                closeCreateTaskModal();
+                loadTasks(currentProjectId);
+            } catch (err) { alert("Failed to add task"); }
+        });
+
+        // Close all modals on overlay click
+        [projectModal, taskModal].forEach(m => {
+            m.addEventListener("click", e => { if (e.target === m) m.classList.remove("open"); });
+        });
+
+    </script>
+</body>
+
+</html>

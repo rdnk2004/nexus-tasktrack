@@ -1,17 +1,30 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel, Session, select
+from typing import List
 from pydantic import BaseModel
-from app.jwt_utils import create_access_token
-from app.db import engine, get_session
-from app.models import User
-from app.security import hash_password, verify_password
-from app.dependencies import get_current_user
-from app.models import Project, Task
+import json
 from datetime import datetime
 
-app = FastAPI()
+# Local Imports
+from app.jwt_utils import create_access_token
+from app.db import engine, get_session
 
+from app.security import hash_password, verify_password
+from app.dependencies import get_current_user
+from app.models import (
+    User, 
+    Project, ProjectStatus, ProjectCreate, ProjectUpdate,
+    Task, TaskStatus, TaskPriority, TaskCreate, TaskUpdate
+)
+
+app = FastAPI(
+    title="Nutmeg Backend",
+    description="API for Nutmeg Project Management",
+    version="1.0.0"
+)
+
+# -------- Middleware --------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,58 +32,58 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# -------- Constants & Config --------
 FIXED_USERS = [
     "nikhil@nutmeg.com",
     "jayasree@nutmeg.com",
     "nandana@nutmeg.com",
     "hafeez@nutmeg.com",
 ]
-
 DEFAULT_PASSWORD = "nutmeg123"
 
 
-# -------- Request Models --------
+# -------- Request Models (Local) --------
 class LoginRequest(BaseModel):
     email: str
     password: str
 
 
+# -------- Startup --------
 @app.on_event("startup")
 def on_startup():
+    # Database is created here if it doesn't exist
     SQLModel.metadata.create_all(engine)
 
-    # Seed fixed users if not present
+    # Seed fixed users
     with Session(engine) as session:
         for email in FIXED_USERS:
-            existing = session.exec(
-                select(User).where(User.email == email)
-            ).first()
-
+            existing = session.exec(select(User).where(User.email == email)).first()
             if not existing:
-                user = User(
-                    email=email,
-                    password=hash_password(DEFAULT_PASSWORD)
-                )
+                user = User(email=email, password=hash_password(DEFAULT_PASSWORD))
                 session.add(user)
         session.commit()
 
 
-@app.get("/")
+@app.get("/", tags=["Health"])
 def root():
-    return {"status": "Nutmeg backend running"}
+    return {"status": "Nutmeg backend running 🚀"}
 
 
-# -------- LOGIN --------
-@app.post("/login")
+# ==========================================
+# AUTH ENDPOINTS
+# ==========================================
+
+@app.post("/login", tags=["Auth"])
 def login(request: LoginRequest, session: Session = Depends(get_session)):
-    user = session.exec(
-        select(User).where(User.email == request.email)
-    ).first()
+    user = session.exec(select(User).where(User.email == request.email)).first()
 
     if not user or not verify_password(request.password, user.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Invalid credentials"
+        )
 
-    # Extract name from email for friendly greeting
+    # Friendly name logic
     name = request.email.split("@")[0].capitalize()
     token = create_access_token({"email": request.email})
 
@@ -81,64 +94,97 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
         "token_type": "bearer"
     }
 
-@app.get("/me")
+@app.get("/me", tags=["Auth"])
 def read_me(current_user: str = Depends(get_current_user)):
     return {
         "email": current_user,
         "status": "authenticated"
     }
-class ProjectCreate(BaseModel):
-    name: str
 
 
-@app.post("/projects")
-def create_project(
-    project_data: ProjectCreate,
-    current_user: str = Depends(get_current_user),
-    session: Session = Depends(get_session)
-):
-    project = Project(
-        name=project_data.name,
-        created_by=current_user
-    )
-    session.add(project)
-    session.commit()
-    session.refresh(project)
+# ==========================================
+# USER ENDPOINTS
+# ==========================================
 
-    return project
-
-@app.get("/users")
+@app.get("/users", tags=["Users"])
 def list_users(session: Session = Depends(get_session)):
     users = session.exec(select(User)).all()
-    # return list of emails for privacy/simplicity
+    # Return list of emails for simplicity
     return [u.email for u in users]
 
-class ProjectCreate(BaseModel):
-    name: str
-    collaborators: list[str] = []
+@app.get("/user/stats", tags=["Users"])
+def get_user_stats(
+    current_user: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Active Projects created by user
+    active_count = session.exec(
+        select(Project)
+        .where(Project.created_by == current_user)
+        .where(Project.status == ProjectStatus.ACTIVE)
+    ).all()
+    
+    # Done Projects created by user
+    done_count = session.exec(
+        select(Project)
+        .where(Project.created_by == current_user)
+        .where(Project.status == ProjectStatus.DONE)
+    ).all()
+    
+    # Note: total implies total projects involved or created? 
+    # Current logic matches original: total projects created
+    
+    return {
+        "active_count": len(active_count),
+        "done_count": len(done_count),
+        "total": len(active_count) + len(done_count)
+    }
+
+@app.get("/user/tasks", tags=["Users"])
+def get_my_tasks(
+    current_user: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Fetch tasks assigned to current user OR 'ALL'
+    tasks = session.exec(
+        select(Task).where((Task.assigned_to == current_user) | (Task.assigned_to == "ALL"))
+    ).all()
+    return tasks
 
 
-@app.post("/projects")
+# ==========================================
+# PROJECT ENDPOINTS
+# ==========================================
+
+@app.post("/projects", tags=["Projects"], response_model=Project)
 def create_project(
     project_data: ProjectCreate,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    import json
-    project = Project(
-        name=project_data.name,
-        collaborators=json.dumps(project_data.collaborators),
-        created_by=current_user
-    )
-    session.add(project)
-    session.commit()
-    session.refresh(project)
+    try:
+        # Serialize collaborators list to JSON string for DB
+        collabs_json = json.dumps(project_data.collaborators)
+        print(f"DTO Received: {project_data}")
+        print(f"JSON Collaborators: {collabs_json}")
+        
+        project = Project(
+            name=project_data.name,
+            collaborators=collabs_json,
+            created_by=current_user,
+            status=ProjectStatus.ACTIVE
+        )
+        session.add(project)
+        session.commit()
+        session.refresh(project)
+        return project
+    except Exception as e:
+        print(f"❌ Error creating project: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-    return project
-
-@app.get("/projects")
+@app.get("/projects", tags=["Projects"], response_model=list[Project])
 def list_projects(
-    status: str | None = None,
+    status: ProjectStatus | None = None,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
@@ -149,38 +195,100 @@ def list_projects(
     projects = session.exec(query).all()
     return projects
 
-class TaskCreate(BaseModel):
-    title: str
-    description: str | None = None
-    assigned_to: str | None = None
-    deadline: datetime | None = None
-    priority: str = "medium"
+
+@app.put("/projects/{project_id}", tags=["Projects"], response_model=Project)
+def update_project(
+    project_id: int,
+    project_update: ProjectUpdate,
+    current_user: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Only creator can update (simple rule)
+    if project.created_by != current_user:
+         raise HTTPException(status_code=403, detail="Only the creator can modify this project")
+
+    project_data = project_update.dict(exclude_unset=True)
+    for key, value in project_data.items():
+        setattr(project, key, value)
+    
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+    return project
 
 
-@app.post("/projects/{project_id}/tasks")
+# ==========================================
+# TASK ENDPOINTS
+# ==========================================
+
+@app.post("/projects/{project_id}/tasks", tags=["Tasks"], response_model=List[Task])
 def add_task(
     project_id: int,
     task_data: TaskCreate,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    task = Task(
-        project_id=project_id,
-        title=task_data.title,
-        description=task_data.description,
-        assigned_to=task_data.assigned_to,
-        deadline=task_data.deadline,
-        priority=task_data.priority,
-        created_by=current_user
-    )
+    # Validate project exists
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
 
-    session.add(task)
+    created_tasks = []
+
+    # 1. Handle "ALL" Assignment (Clone Strategy)
+    if task_data.assigned_to == "ALL":
+        # Get collaborators
+        import json
+        try:
+            collabs = json.loads(project.collaborators)
+        except:
+            collabs = []
+        
+        # If no collabs, maybe it means "Everyone in the system" or just Creator?
+        # Let's assume it means Collaborators + Creator
+        assignees = set(collabs)
+        assignees.add(project.created_by)
+        
+        for email in assignees:
+            task = Task(
+                project_id=project_id,
+                title=task_data.title,
+                description=task_data.description,
+                assigned_to=email, # Assign clone to individual
+                deadline=task_data.deadline,
+                priority=task_data.priority,
+                status=TaskStatus.TODO,
+                created_by=current_user
+            )
+            session.add(task)
+            created_tasks.append(task)
+            
+    # 2. Handle Specific Assignment
+    else:
+        task = Task(
+            project_id=project_id,
+            title=task_data.title,
+            description=task_data.description,
+            assigned_to=task_data.assigned_to,
+            deadline=task_data.deadline,
+            priority=task_data.priority,
+            status=TaskStatus.TODO,
+            created_by=current_user
+        )
+        session.add(task)
+        created_tasks.append(task)
+
     session.commit()
-    session.refresh(task)
+    for t in created_tasks:
+        session.refresh(t)
+        
+    return created_tasks
 
-    return task
-
-@app.get("/projects/{project_id}/tasks")
+@app.get("/projects/{project_id}/tasks", tags=["Tasks"], response_model=list[Task])
 def list_tasks(
     project_id: int,
     current_user: str = Depends(get_current_user),
@@ -189,45 +297,12 @@ def list_tasks(
     tasks = session.exec(
         select(Task).where(Task.project_id == project_id)
     ).all()
-
     return tasks
 
-@app.get("/user/stats")
-def get_user_stats(
-    current_user: str = Depends(get_current_user),
-    session: Session = Depends(get_session)
-):
-    active_projects = session.exec(
-        select(Project).where(Project.created_by == current_user, Project.status == "active")
-    ).all()
-    
-    done_projects = session.exec(
-        select(Project).where(Project.created_by == current_user, Project.status == "done")
-    ).all()
-    
-    return {
-        "active_count": len(active_projects),
-        "done_count": len(done_projects),
-        "total": len(active_projects) + len(done_projects)
-    }
-
-@app.get("/user/tasks")
-def get_my_tasks(
-    current_user: str = Depends(get_current_user),
-    session: Session = Depends(get_session)
-):
-    # Fetch tasks assigned to the current user
-    tasks = session.exec(
-        select(Task).where(Task.assigned_to == current_user)
-    ).all()
-    return tasks
-@app.put("/tasks/{task_id}")
+@app.put("/tasks/{task_id}", tags=["Tasks"], response_model=Task)
 def update_task(
     task_id: int,
-    title: str | None = None,
-    description: str | None = None,
-    status: str | None = None,
-    assigned_to: str | None = None,
+    task_update: TaskUpdate, 
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
@@ -235,23 +310,25 @@ def update_task(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    if title is not None:
-        task.title = title
-    if description is not None:
-        task.description = description
-    if status is not None:
-        task.status = status
-    if assigned_to is not None:
-        task.assigned_to = assigned_to
+    # PERMISSION CHECK:
+    # Only allow status update if assigned to user OR created by user
+    if task_update.status:
+        if task.assigned_to and task.assigned_to != current_user and task.created_by != current_user:
+             raise HTTPException(status_code=403, detail="You can only move your own tasks")
+
+    # Update only provided fields
+    task_data = task_update.dict(exclude_unset=True)
+    for key, value in task_data.items():
+        setattr(task, key, value)
 
     task.updated_at = datetime.utcnow()
 
     session.add(task)
     session.commit()
     session.refresh(task)
-
     return task
-@app.delete("/tasks/{task_id}")
+
+@app.delete("/tasks/{task_id}", tags=["Tasks"])
 def delete_task(
     task_id: int,
     current_user: str = Depends(get_current_user),
@@ -263,5 +340,4 @@ def delete_task(
 
     session.delete(task)
     session.commit()
-
     return {"message": "Task removed 🌱"}

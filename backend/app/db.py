@@ -1,6 +1,6 @@
 from sqlmodel import SQLModel, create_engine, Session
 
-DATABASE_URL = "sqlite:///./nutmeg.db"
+DATABASE_URL = "sqlite:///./nutmeg_v2.db"
 
 engine = create_engine(
     DATABASE_URL,

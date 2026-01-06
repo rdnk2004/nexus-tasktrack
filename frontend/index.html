@@ -5,81 +5,46 @@
     <meta charset="UTF-8" />
     <title>Nutmeg · Enter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Tailwind CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Custom Tailwind config -->
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        nutBlack: "#0b0f1a",
-                        nutBlue: "#1e2a78",
-                        nutViolet: "#6d5dfc",
-                        nutNeon: "#9d8cff"
-                    },
-                    boxShadow: {
-                        glow: "0 0 40px rgba(109,93,252,0.45)",
-                    },
-                    animation: {
-                        shake: "shake 0.5s ease-in-out",
-                    },
-                    keyframes: {
-                        shake: {
-                            "0%, 100%": { transform: "translateX(0)" },
-                            "20%": { transform: "translateX(-8px)" },
-                            "40%": { transform: "translateX(8px)" },
-                            "60%": { transform: "translateX(-4px)" },
-                            "80%": { transform: "translateX(4px)" },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-nutBlack via-[#121a3a] to-black flex items-center justify-center px-4">
+<body class="flex items-center justify-center">
 
-    <!-- Background grain / retro feel -->
-    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(109,93,252,0.15),transparent_60%)]"></div>
+    <!-- Ambient Light & Grain -->
+    <div class="ambient-light"></div>
 
     <!-- Login Card -->
-    <div
-        class="relative w-full max-w-md bg-white/5 backdrop-blur-xl rounded-2xl p-8 sm:p-10 shadow-glow border border-white/10 transition-all">
+    <div class="card p-10 max-w-md w-full animate-fade-up">
         <!-- Logo -->
-        <h1 class="text-center text-3xl font-semibold text-white tracking-wide">
-            Nutmeg
-        </h1>
+        <h1 class="text-center mb-2">Nutmeg</h1>
 
         <!-- Catchy Phrase -->
-        <p id="phrase" class="mt-2 text-center text-sm text-nutNeon italic transition-opacity duration-500">
+        <p id="phrase" class="text-center text-neon text-sm italic mb-8 transition-opacity">
             syncing calm with momentum…
         </p>
 
         <!-- Form -->
-        <form id="loginForm" class="mt-8 space-y-5">
-            <input type="email" id="email" placeholder="email" required
-                class="w-full px-4 py-3 rounded-xl bg-black/40 text-white placeholder-gray-400 border border-white/10 focus:outline-none focus:ring-2 focus:ring-nutViolet" />
+        <form id="loginForm" class="flex flex-col gap-4">
+            <div class="form-group mb-0">
+                <input type="email" id="email" placeholder="email" required class="input-field" />
+            </div>
 
-            <input type="password" id="password" placeholder="password" required
-                class="w-full px-4 py-3 rounded-xl bg-black/40 text-white placeholder-gray-400 border border-white/10 focus:outline-none focus:ring-2 focus:ring-nutViolet" />
+            <div class="form-group mb-4">
+                <input type="password" id="password" placeholder="password" required class="input-field" />
+            </div>
 
-            <button type="submit"
-                class="w-full py-3 rounded-xl bg-gradient-to-r from-nutViolet to-nutBlue text-white font-medium tracking-wide shadow-lg hover:scale-[1.02] transition-transform">
+            <button type="submit" class="btn btn-primary w-full">
                 Enter Workspace →
             </button>
         </form>
 
         <!-- Footer line -->
-        <p class="mt-6 text-center text-xs text-gray-400">
+        <p class="mt-6 text-center text-xs" style="opacity: 0.5;">
             no admins · no noise · just progress
         </p>
     </div>
 
-    <script src="script.js"></script>
 </body>
 
 </html>

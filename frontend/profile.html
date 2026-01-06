@@ -5,113 +5,168 @@
     <meta charset="UTF-8">
     <title>Nutmeg · Profile</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        nutBlack: "#0b0f1a",
-                        nutDeep: "#121a3a",
-                        nutBlue: "#1e2a78",
-                        nutViolet: "#6d5dfc",
-                        nutNeon: "#9d8cff",
-                        nutSoft: "#b8b0ff"
-                    },
-                    boxShadow: {
-                        glow: "0 0 40px rgba(109,93,252,0.35)",
-                    }
-                }
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="style.css">
+    <script src="api.js"></script>
     <style>
-        .fade-up {
-            animation: fadeUp 0.6s ease-out forwards;
-            opacity: 0;
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--nut-violet) 0%, var(--nut-blue) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+            box-shadow: 0 0 20px rgba(109, 93, 252, 0.4);
         }
 
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: transform 0.3s var(--ease-elastic);
+        }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .badge {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0.4;
+            filter: grayscale(100%);
+            transition: all 0.3s ease;
+        }
+
+        .badge.unlocked {
+            opacity: 1;
+            filter: grayscale(0%);
+            background: rgba(109, 93, 252, 0.1);
+            border-color: rgba(109, 93, 252, 0.3);
+            box-shadow: 0 0 15px rgba(109, 93, 252, 0.2);
+        }
+
+        .progress-track {
+            background: rgba(255, 255, 255, 0.1);
+            height: 4px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            background: var(--nut-neon);
+            transition: width 1s var(--ease-elastic);
+            box-shadow: 0 0 10px var(--nut-neon);
+        }
+
+        .progress-fill.limit-reached {
+            background: var(--error);
+            box-shadow: 0 0 10px var(--error);
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-nutBlack via-nutDeep to-black text-white">
+<body>
+    <div class="ambient-light"></div>
 
-    <div class="fixed inset-0 bg-[radial-gradient(circle_at_top_right,rgba(109,93,252,0.1),transparent_50%)]"></div>
-
-    <nav class="relative z-10 flex items-center justify-between px-8 py-6">
-        <a href="workspace.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            <span class="text-xl">←</span>
-            <span class="text-sm text-gray-400">Back to Workspace</span>
+    <nav class="container pt-6 pb-2 relative z-10">
+        <a href="workspace.html" class="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+            <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+                <span class="text-sm">🏠</span>
+            </div>
+            <span class="text-xs">Home</span>
         </a>
     </nav>
 
-    <main class="relative z-10 px-8 py-8 max-w-4xl mx-auto">
-        <div class="flex items-center gap-6 mb-12 fade-up">
-            <div
-                class="w-24 h-24 rounded-full bg-gradient-to-br from-nutViolet to-nutBlue flex items-center justify-center text-4xl font-light">
+    <main class="container py-8 max-w-4xl relative z-10 animate-fade-up">
+
+        <!-- Header -->
+        <div class="flex items-center gap-6 mb-12">
+            <div class="profile-avatar">
                 <span id="userInitial">?</span>
             </div>
             <div>
-                <h1 class="text-3xl font-light" id="userName">Loading...</h1>
-                <p class="text-nutSoft text-sm mt-1" id="userEmail">...</p>
+                <h1 class="text-3xl mb-1" id="userName">Loading...</h1>
+                <p class="text-sm text-neon opacity-80" id="userEmail">...</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 fade-up animation-delay-100">
-            <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h3 class="text-gray-400 text-xs uppercase tracking-wider mb-2">Active Projects</h3>
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-3 gap-6 mb-12 delay-100 animate-fade-up">
+
+            <!-- Active Stats -->
+            <div class="stat-card">
+                <h3 class="text-xs uppercase tracking-wide text-gray-500 mb-2">Active Projects</h3>
                 <div class="flex items-end gap-2">
                     <span class="text-4xl font-bold text-white" id="statActive">0</span>
-                    <span class="text-sm text-gray-500 mb-1">/ 2 max</span>
+                    <span class="text-sm text-gray-500 mb-2">/ 2 max</span>
                 </div>
-                <div class="w-full bg-white/10 h-1 mt-4 rounded-full overflow-hidden">
-                    <div id="loadingBar" class="h-full bg-nutNeon transition-all duration-1000 w-0"></div>
+                <!-- Progress for limit -->
+                <div class="progress-track">
+                    <div id="loadingBar" class="progress-fill"></div>
                 </div>
             </div>
 
-            <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h3 class="text-gray-400 text-xs uppercase tracking-wider mb-2">Completed</h3>
-                <span class="text-4xl font-bold text-green-400" id="statDone">0</span>
+            <!-- Completed Stats -->
+            <div class="stat-card">
+                <h3 class="text-xs uppercase tracking-wide text-gray-500 mb-2">Completed</h3>
+                <span class="text-4xl font-bold text-success" id="statDone">0</span>
                 <p class="text-xs text-gray-500 mt-2">Projects delivered</p>
             </div>
 
-            <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
-                <h3 class="text-gray-400 text-xs uppercase tracking-wider mb-2">Total Tasks</h3>
-                <span class="text-4xl font-bold text-nutSoft" id="statTasks">0</span>
+            <!-- Total Tasks Stats -->
+            <div class="stat-card">
+                <h3 class="text-xs uppercase tracking-wide text-gray-500 mb-2">Total Tasks</h3>
+                <span class="text-4xl font-bold text-nut-soft" style="color: var(--nut-soft)" id="statTasks">0</span>
                 <p class="text-xs text-gray-500 mt-2">Assigned to you</p>
             </div>
+
         </div>
 
-        <div class="bg-white/5 border border-white/10 rounded-2xl p-8 fade-up animation-delay-200">
+        <!-- Achievements -->
+        <div class="card p-8 delay-200 animate-fade-up">
             <h2 class="text-xl font-light mb-6">Achievements</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="achievementsGrid">
-                <!-- Badges -->
-                <div class="flex flex-col items-center p-4 bg-black/20 rounded-xl opacity-50 grayscale"
-                    id="badge-first">
+            <div class="grid grid-cols-4 gap-4" id="achievementsGrid">
+
+                <!-- Badge 1 -->
+                <div class="badge" id="badge-first">
                     <span class="text-2xl mb-2">🚀</span>
-                    <span class="text-xs text-center font-medium">First Project</span>
+                    <span class="text-xs text-center font-bold text-white">First Project</span>
                 </div>
-                <div class="flex flex-col items-center p-4 bg-black/20 rounded-xl opacity-50 grayscale"
-                    id="badge-master">
+
+                <!-- Badge 2 -->
+                <div class="badge" id="badge-master">
                     <span class="text-2xl mb-2">🏆</span>
-                    <span class="text-xs text-center font-medium">Project Master</span>
+                    <span class="text-xs text-center font-bold text-white">Project Master</span>
                 </div>
+
+                <!-- Placeholders -->
+                <div class="badge opacity-20">
+                    <span class="text-2xl mb-2">⚡</span>
+                    <span class="text-xs text-center">Speed Demon</span>
+                </div>
+                <div class="badge opacity-20">
+                    <span class="text-2xl mb-2">🤝</span>
+                    <span class="text-xs text-center">Team Player</span>
+                </div>
+
             </div>
         </div>
+
     </main>
 
-    <script src="api.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
             if (!requireAuth()) return;
@@ -132,23 +187,20 @@
                 // Progress Bar for Active Projects (Max 2)
                 const percentage = Math.min((stats.active_count / 2) * 100, 100);
                 setTimeout(() => {
-                    document.getElementById("loadingBar").style.width = percentage + "%";
+                    const bar = document.getElementById("loadingBar");
+                    bar.style.width = percentage + "%";
+
                     if (stats.active_count >= 2) {
-                        document.getElementById("loadingBar").classList.add("bg-red-400");
-                        document.getElementById("loadingBar").classList.remove("bg-nutNeon");
+                        bar.classList.add("limit-reached");
                     }
                 }, 100);
 
                 // Badges Logic
                 if (stats.total > 0) {
-                    const b = document.getElementById("badge-first");
-                    b.classList.remove("opacity-50", "grayscale");
-                    b.classList.add("bg-nutViolet/20", "border", "border-nutViolet/30");
+                    document.getElementById("badge-first").classList.add("unlocked");
                 }
                 if (stats.done_count >= 3) {
-                    const b = document.getElementById("badge-master");
-                    b.classList.remove("opacity-50", "grayscale");
-                    b.classList.add("bg-green-500/20", "border", "border-green-500/30");
+                    document.getElementById("badge-master").classList.add("unlocked");
                 }
 
             } catch (err) {
