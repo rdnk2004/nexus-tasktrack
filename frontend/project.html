@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Nutmeg · Project Board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Tailwind config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        nutBlack: "#0b0f1a",
+                        nutDeep: "#121a3a",
+                        nutBlue: "#1e2a78",
+                        nutViolet: "#6d5dfc",
+                        nutNeon: "#9d8cff",
+                        nutSoft: "#b8b0ff"
+                    },
+                    boxShadow: {
+                        glow: "0 0 40px rgba(109,93,252,0.35)",
+                        cardGlow: "0 8px 32px rgba(109,93,252,0.2)",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .fade-up {
+            animation: fadeUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-100 {
+            animation-delay: 0.1s;
+        }
+
+        .delay-200 {
+            animation-delay: 0.2s;
+        }
+
+        .delay-300 {
+            animation-delay: 0.3s;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .drag-over {
+            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-color: #9d8cff !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-nutBlack via-nutDeep to-black text-white overflow-x-hidden">
+
+    <!-- Background ambient -->
+    <div
+        class="fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(109,93,252,0.12),transparent_50%)] pointer-events-none">
+    </div>
+    <div
+        class="fixed inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(30,42,120,0.15),transparent_50%)] pointer-events-none">
+    </div>
+
+    <!-- Navigation -->
+    <nav class="relative z-10 flex items-center justify-between px-8 py-6">
+        <a href="projects_index.html" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+            <div class="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <span class="text-xl">←</span>
+            </div>
+            <span class="text-sm text-gray-400">Back to Projects</span>
+        </a>
+        <div class="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-sm text-nutSoft">
+            <span id="userEmail">loading…</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="relative z-10 px-8 py-4 max-w-7xl mx-auto">
+
+        <div class="flex items-end justify-between mb-8 fade-up delay-100">
+            <div>
+                <h1 class="text-3xl font-light mb-1" id="projectTitle">Loading...</h1>
+                <p class="text-gray-400 text-sm">Task Board</p>
+            </div>
+            <button onclick="openCreateTaskModal()"
+                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-nutViolet to-nutBlue hover:shadow-glow hover:scale-105 transition-all text-white font-medium flex items-center gap-2 text-sm">
+                <span>+</span> New Task
+            </button>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-up delay-200 h-[calc(100vh-200px)]">
+
+            <!-- Column: To Do -->
+            <div id="col-todo" ondrop="drop(event, 'todo')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"
+                class="flex flex-col bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 transition-colors">
+
+                <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="font-medium text-gray-300">To Do</h3>
+                    <span class="bg-white/10 px-2 py-0.5 rounded text-xs text-gray-400" id="count-todo">0</span>
+                </div>
+                <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[100px]" id="list-todo">
+                </div>
+            </div>
+
+            <!-- Column: Doing -->
+            <div id="col-doing" ondrop="drop(event, 'doing')" ondragover="allowDrop(event)"
+                ondragleave="leaveDrop(event)"
+                class="flex flex-col bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 transition-colors">
+
+                <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="font-medium text-nutNeon">In Progress</h3>
+                    <span class="bg-white/10 px-2 py-0.5 rounded text-xs text-gray-400" id="count-doing">0</span>
+                </div>
+                <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[100px]" id="list-doing">
+                </div>
+            </div>
+
+            <!-- Column: Done -->
+            <div id="col-done" ondrop="drop(event, 'done')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"
+                class="flex flex-col bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 transition-colors">
+
+                <div class="p-4 border-b border-white/10 flex items-center justify-between">
+                    <h3 class="font-medium text-green-400">Done</h3>
+                    <span class="bg-white/10 px-2 py-0.5 rounded text-xs text-gray-400" id="count-done">0</span>
+                </div>
+                <div class="flex-1 p-4 space-y-3 overflow-y-auto min-h-[100px]" id="list-done">
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Create Task Modal -->
+    <div id="createTaskModal"
+        class="fixed inset-0 z-50 hidden flex items-center justify-center bg-nutBlack/80 backdrop-blur-sm">
+        <div class="bg-[#1a1f3c] border border-white/10 p-8 rounded-2xl w-full max-w-md shadow-2xl scale-95 opacity-0 transition-all duration-300"
+            id="taskModalContent">
+            <h2 class="text-xl font-light text-white mb-6">Add New Task</h2>
+            <form id="createTaskForm" class="space-y-4">
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Title</label>
+                    <input type="text" id="taskTitle" required
+                        class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors"
+                        placeholder="What needs to be done?">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Assigned To</label>
+                        <select id="taskAssignee"
+                            class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors appearance-none">
+                            <option value="">Unassigned</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Deadline</label>
+                        <input type="datetime-local" id="taskDeadline"
+                            class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase tracking-wider text-gray-500 mb-2">Description</label>
+                    <textarea id="taskDesc" rows="3"
+                        class="w-full bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-nutViolet transition-colors resize-none"
+                        placeholder="Add details..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="closeCreateTaskModal()"
+                        class="flex-1 py-3 rounded-xl border border-white/10 text-gray-400 hover:text-white hover:bg-white/5 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="flex-1 py-3 rounded-xl bg-gradient-to-r from-nutViolet to-nutBlue text-white font-medium hover:shadow-glow transition-all">
+                        Add Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Minimal Scripts -->
+    <script src="api.js"></script>
+    <script>
+        let currentProjectId = null;
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Check Auth
+            if (!requireAuth()) return;
+            document.getElementById("userEmail").textContent = getCurrentUser();
+
+            // Load Users for Selector
+            loadUsers();
+
+            // Get Project ID
+            const urlParams = new URLSearchParams(window.location.search);
+            currentProjectId = urlParams.get('id');
+
+            if (!currentProjectId) {
+                alert("No project specified");
+                window.location.href = "projects_index.html";
+                return;
+            }
+
+            try {
+                const projects = await apiGet("/projects");
+                const p = projects.find(proj => proj.id == currentProjectId);
+                if (p) {
+                    document.getElementById("projectTitle").textContent = p.name;
+                } else {
+                    document.getElementById("projectTitle").textContent = "Project #" + currentProjectId;
+                }
+            } catch (e) {
+                console.error("Failed to load project details", e);
+            }
+
+            // Load Tasks
+            loadTasks(currentProjectId);
+
+            // Modal Logic
+            const modal = document.getElementById("createTaskModal");
+            const modalContent = document.getElementById("taskModalContent");
+
+            window.openCreateTaskModal = function () {
+                modal.classList.remove("hidden");
+                // Pre-set deadline to 2 days from now (custom business rule)
+                const date = new Date();
+                date.setDate(date.getDate() + 2);
+                document.getElementById("taskDeadline").value = date.toISOString().slice(0, 16);
+
+                setTimeout(() => {
+                    modalContent.classList.remove("scale-95", "opacity-0");
+                    modalContent.classList.add("scale-100", "opacity-100");
+                    document.getElementById("taskTitle").focus();
+                }, 10);
+            };
+
+            window.closeCreateTaskModal = function () {
+                modalContent.classList.remove("scale-100", "opacity-100");
+                modalContent.classList.add("scale-95", "opacity-0");
+                setTimeout(() => {
+                    modal.classList.add("hidden");
+                    document.getElementById("createTaskForm").reset();
+                }, 300);
+            };
+
+            modal.addEventListener("click", e => {
+                if (e.target === modal) closeCreateTaskModal();
+            });
+
+            // Form Submit handler
+            document.getElementById("createTaskForm").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const title = document.getElementById("taskTitle").value;
+                const assignee = document.getElementById("taskAssignee").value;
+                const deadline = document.getElementById("taskDeadline").value;
+                const desc = document.getElementById("taskDesc").value;
+
+                try {
+                    await apiPost(`/projects/${currentProjectId}/tasks`, {
+                        title: title,
+                        description: desc,
+                        assigned_to: assignee || null,
+                        deadline: deadline ? new Date(deadline).toISOString() : null
+                    });
+
+                    closeCreateTaskModal();
+                    loadTasks(currentProjectId);
+                } catch (err) {
+                    console.error("Failed to create task", err);
+                    alert("Error creating task");
+                }
+            });
+        });
+
+        async function loadUsers() {
+            try {
+                const users = await apiGet("/users");
+                const select = document.getElementById("taskAssignee");
+                // Clear except first
+                select.innerHTML = '<option value="">Unassigned</option>';
+                users.forEach(email => {
+                    const opt = document.createElement("option");
+                    opt.value = email;
+                    opt.textContent = email;
+                    select.appendChild(opt);
+                });
+            } catch (err) {
+                console.error("Failed to load users", err);
+            }
+        }
+
+        // -------- DRAG & DROP LOGIC --------
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.add("drag-over");
+        }
+
+        function leaveDrop(ev) {
+            ev.currentTarget.classList.remove("drag-over");
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.target.classList.add("dragging");
+        }
+
+        async function drop(ev, newStatus) {
+            ev.preventDefault();
+            const col = document.getElementById(`col-${newStatus}`);
+            if (col) col.classList.remove("drag-over");
+
+            const data = ev.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+
+            if (!draggedElement) return;
+
+            const targetList = document.getElementById(`list-${newStatus}`);
+            targetList.appendChild(draggedElement);
+
+            draggedElement.classList.remove("dragging");
+
+            const dot = draggedElement.querySelector(".w-1\\.5");
+            if (dot) {
+                dot.className = `w-1.5 h-1.5 rounded-full ${getStatusColor(newStatus)}`;
+            }
+
+            updateCounts();
+
+            const taskId = data.replace("task-", "");
+            try {
+                await apiPut(`/tasks/${taskId}`, { status: newStatus });
+            } catch (err) {
+                console.error("Update failed", err);
+                alert("Failed to save move. Refreshing...");
+                loadTasks(currentProjectId);
+            }
+        }
+
+        function updateCounts() {
+            ['todo', 'doing', 'done'].forEach(status => {
+                const list = document.getElementById(`list-${status}`);
+                const count = list ? list.children.length : 0;
+                const el = document.getElementById(`count-${status}`);
+                if (el) el.textContent = count;
+            });
+        }
+
+        async function loadTasks(projectId) {
+            const lists = {
+                todo: document.getElementById("list-todo"),
+                doing: document.getElementById("list-doing"),
+                done: document.getElementById("list-done")
+            };
+
+            Object.values(lists).forEach(el => el.innerHTML = "");
+
+            try {
+                const tasks = await apiGet(`/projects/${projectId}/tasks`);
+
+                tasks.forEach(task => {
+                    const status = task.status || "todo";
+                    if (lists[status]) {
+                        lists[status].appendChild(createTaskCard(task));
+                    }
+                });
+
+                updateCounts();
+
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function createTaskCard(task) {
+            const div = document.createElement("div");
+            div.id = `task-${task.id}`;
+            div.className = "bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl p-4 cursor-grab active:cursor-grabbing transition-all group mb-3";
+
+            div.draggable = true;
+            div.addEventListener("dragstart", drag);
+            div.addEventListener("dragend", (e) => e.target.classList.remove("dragging"));
+
+            const creator = task.created_by ? task.created_by.split("@")[0] : 'unknown';
+            const assignee = task.assigned_to ? task.assigned_to.split("@")[0] : 'Unassigned';
+
+            // Format Deadline
+            let deadlineHtml = "";
+            let backlogWarning = "";
+            if (task.deadline) {
+                const d = new Date(task.deadline);
+                const now = new Date();
+                const diff = (d - now) / (1000 * 3600 * 24); // days
+
+                const dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+                let colorClass = "text-gray-500";
+                if (diff < 0) {
+                    colorClass = "text-red-400 font-bold";
+                    backlogWarning = `<div class="text-[10px] text-red-500 mt-1 uppercase tracking-wide">Overdue</div>`;
+                }
+                else if (diff < 2) colorClass = "text-orange-300";
+
+                deadlineHtml = `<span class="text-[10px] flex items-center gap-1 ${colorClass}">
+                    ⏱ ${dateStr}
+                </span>`;
+            }
+
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-2 pointer-events-none">
+                    <h4 class="font-medium text-sm text-gray-200 group-hover:text-white">${task.title}</h4>
+                    ${deadlineHtml}
+                </div>
+                ${task.description ? `<p class="text-xs text-gray-500 mb-3 line-clamp-2 pointer-events-none">${task.description}</p>` : ''}
+                ${backlogWarning}
+                <div class="flex items-center justify-between mt-2 pointer-events-none">
+                   <div class="flex items-center gap-2 text-[10px] text-gray-500">
+                        <span class="tracking-wider font-bold uppercase text-gray-400">${assignee}</span>
+                        <span class="text-gray-700">|</span>
+                        <span class="italic text-gray-600">by ${creator}</span>
+                   </div>
+                   <div class="w-1.5 h-1.5 rounded-full ${getStatusColor(task.status)}"></div>
+                </div>
+            `;
+            return div;
+        }
+
+        function getStatusColor(status) {
+            if (status === 'done') return "bg-green-400";
+            if (status === 'doing') return "bg-nutNeon shadow-[0_0_5px_#9d8cff]";
+            return "bg-gray-500";
+        }
+    </script>
+</body>
+
+</html>

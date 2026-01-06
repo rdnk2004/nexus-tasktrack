@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
     <title>Nutmeg · Workspace</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -30,208 +30,284 @@
             }
         }
     </script>
-
     <style>
-        @keyframes fadeUp {
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
             }
 
+            to {
+                opacity: 1;
+            }
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes slideUp {
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
 
-        .fade-up {
-            animation: fadeUp 0.6s ease-out forwards;
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .fade-up-delay-1 {
-            animation-delay: 0.1s;
-            opacity: 0;
-        }
-
-        .fade-up-delay-2 {
-            animation-delay: 0.2s;
-            opacity: 0;
-        }
-
-        .fade-up-delay-3 {
-            animation-delay: 0.3s;
-            opacity: 0;
-        }
-
-        .fade-up-delay-4 {
-            animation-delay: 0.4s;
-            opacity: 0;
+        .glass:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-nutBlack via-nutDeep to-black text-white">
+<body class="min-h-screen bg-black text-white font-sans selection:bg-nutViolet selection:text-white overflow-x-hidden">
 
-    <!-- Background ambient -->
-    <div class="fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(109,93,252,0.12),transparent_50%)]"></div>
-    <div class="fixed inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(30,42,120,0.15),transparent_50%)]"></div>
+    <div class="fixed inset-0 bg-gradient-to-br from-nutBlack to-black -z-10"></div>
+    <div
+        class="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-nutBlue/20 blur-[120px] rounded-full pointer-events-none">
+    </div>
+    <div
+        class="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-nutViolet/10 blur-[120px] rounded-full pointer-events-none">
+    </div>
 
-    <!-- Top Navigation -->
-    <nav class="relative z-10 flex items-center justify-between px-8 py-6">
-        <!-- Logo -->
-        <div class="flex items-center gap-3">
-            <div
-                class="w-10 h-10 rounded-xl bg-gradient-to-br from-nutViolet to-nutBlue flex items-center justify-center shadow-glow">
-                <span class="text-white font-bold text-lg">N</span>
+    <div class="max-w-6xl mx-auto px-6 py-12">
+
+        <!-- Header -->
+        <header class="flex justify-between items-end mb-16 slide-up" style="animation-delay: 0.1s;">
+            <div>
+                <p class="text-nutSoft text-sm font-medium tracking-wide mb-2 opacity-80" id="dateDisplay">Wednesday,
+                    Oct 24</p>
+                <h1 class="text-4xl md:text-5xl font-light tracking-tight">
+                    <span id="greeting">Good afternoon</span>, <br />
+                    <span class="font-normal text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400"
+                        id="userName">User</span>
+                </h1>
             </div>
-            <span class="text-xl font-semibold tracking-wide">Nutmeg</span>
-        </div>
+            <div class="flex items-center gap-4">
+                <a href="profile.html"
+                    class="glass px-4 py-2 rounded-full text-sm hover:text-white text-gray-400 transition-colors flex items-center gap-2">
+                    <span>👤</span> Profile & Stats
+                </a>
+                <button onclick="logout()" class="text-sm text-gray-500 hover:text-white transition-colors">Sign
+                    out</button>
+            </div>
+        </header>
 
-        <!-- User & Logout -->
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/10">
-                <div id="userInitial"
-                    class="w-8 h-8 rounded-full bg-gradient-to-br from-nutViolet to-nutNeon flex items-center justify-center text-sm font-semibold">
-                    ?
+        <!-- Main Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+            <!-- Left Col: Stats & Quick Nav -->
+            <div class="col-span-1 md:col-span-4 space-y-6 slide-up" style="animation-delay: 0.2s;">
+
+                <!-- Quick Nav -->
+                <div class="grid grid-cols-2 gap-4">
+                    <a href="projects_index.html"
+                        class="glass rounded-2xl p-6 group cursor-pointer h-40 flex flex-col justify-between relative overflow-hidden">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-br from-nutViolet/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        <div
+                            class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            📂</div>
+                        <div>
+                            <h3 class="text-lg font-medium group-hover:text-nutNeon transition-colors">Projects</h3>
+                            <p class="text-xs text-gray-500 mt-1" id="projectCount">... active</p>
+                        </div>
+                    </a>
+
+                    <a href="calendar.html"
+                        class="glass rounded-2xl p-6 group cursor-pointer h-40 flex flex-col justify-between bg-gradient-to-br from-white/5 to-transparent">
+                        <div
+                            class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
+                            📅</div>
+                        <div>
+                            <h3 class="text-lg font-medium group-hover:text-nutNeon transition-colors">Calendar</h3>
+                            <p class="text-xs text-gray-500 mt-1">Schedule</p>
+                        </div>
+                    </a>
                 </div>
-                <span id="userName" class="text-sm text-nutSoft">loading…</span>
-            </div>
-            <button onclick="logout()" class="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
-                logout
-            </button>
-        </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main class="relative z-10 px-8 py-8 max-w-6xl mx-auto">
-
-        <!-- Welcome Section -->
-        <div class="fade-up fade-up-delay-1 mb-12">
-            <h1 class="text-4xl font-light mb-2">
-                good <span id="timeOfDay">morning</span>,
-                <span id="userFirstName" class="font-semibold text-nutNeon">friend</span>
-            </h1>
-            <p class="text-gray-400 text-lg">
-                your shared workspace awaits
-            </p>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="fade-up fade-up-delay-2 grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-cardGlow">
-                <div class="text-3xl font-light text-nutNeon mb-1" id="projectCount">–</div>
-                <div class="text-sm text-gray-400">shared projects</div>
-            </div>
-            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-cardGlow">
-                <div class="text-3xl font-light text-nutNeon mb-1" id="taskCount">–</div>
-                <div class="text-sm text-gray-400">open tasks</div>
-            </div>
-            <div class="bg-white/5 backdrop-blur-xl rounded-2xl p-6 border border-white/10 shadow-cardGlow">
-                <div class="text-3xl font-light text-nutNeon mb-1">4</div>
-                <div class="text-sm text-gray-400">team members</div>
-            </div>
-        </div>
-
-        <!-- Navigation Cards -->
-        <div class="fade-up fade-up-delay-3 grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12">
-
-            <!-- Projects Card -->
-            <a href="projects_index.html"
-                class="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-cardGlow hover:shadow-glow hover:scale-[1.02] transition-all cursor-pointer block">
-                <div class="flex items-center gap-4 mb-4">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-nutViolet to-nutBlue flex items-center justify-center text-2xl">
-                        📁
+                <!-- Assigned To Me Widget -->
+                <div class="glass rounded-2xl p-6 min-h-[300px]">
+                    <h3 class="text-sm uppercase tracking-wider text-gray-400 mb-6 font-medium">✨ Priority for You</h3>
+                    <div id="myTasksList" class="space-y-4">
+                        <!-- Tasks Injected -->
+                        <div class="animate-pulse flex space-x-4">
+                            <div class="flex-1 space-y-4 py-1">
+                                <div class="h-4 bg-white/10 rounded w-3/4"></div>
+                                <div class="h-4 bg-white/10 rounded"></div>
+                            </div>
+                        </div>
                     </div>
-                    <h2 class="text-xl font-semibold group-hover:text-nutNeon transition-colors">Projects</h2>
-                </div>
-                <p class="text-gray-400 text-sm leading-relaxed">
-                    View and manage shared projects. Create new workspaces for your team's ideas.
-                </p>
-                <div class="mt-4 text-nutNeon text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                    enter →
-                </div>
-            </a>
-
-            <!-- Calendar Card -->
-            <a href="calendar.html"
-                class="group bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl p-8 border border-white/10 shadow-cardGlow hover:shadow-glow hover:scale-[1.02] transition-all cursor-pointer block">
-                <div class="flex items-center gap-4 mb-4">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-gradient-to-br from-nutBlue to-nutViolet flex items-center justify-center text-2xl">
-                        📅
+                    <div id="emptyTasks" class="hidden text-center py-8 text-gray-600 text-sm">
+                        All clear. You are free as a bird.
                     </div>
-                    <h2 class="text-xl font-semibold group-hover:text-nutNeon transition-colors">Calendar</h2>
                 </div>
-                <p class="text-gray-400 text-sm leading-relaxed">
-                    See what's happening when. A time-based view of shared tasks and milestones.
-                </p>
-                <div class="mt-4 text-nutNeon text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                    enter →
+
+            </div>
+
+            <!-- Right Col: Overview / Dashboard -->
+            <div class="col-span-1 md:col-span-8 slide-up" style="animation-delay: 0.3s;">
+                <div
+                    class="glass rounded-3xl p-8 h-full border-white/5 bg-gradient-to-b from-white/[0.02] to-transparent">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-2xl font-light">Team Pulse</h2>
+                        <span
+                            class="text-xs px-3 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20">Live</span>
+                    </div>
+
+                    <!-- Pulse Items -->
+                    <div class="space-y-6">
+                        <div class="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center font-bold text-xs">
+                                NL</div>
+                            <div>
+                                <p class="text-sm text-gray-300"><span class="text-white font-medium">New Project</span>
+                                    created by <span class="text-nutNeon">Nikhil</span></p>
+                                <p class="text-xs text-gray-500 mt-1">"Q1 Marketing Goals" • 4 collaborators</p>
+                            </div>
+                            <span class="ml-auto text-xs text-gray-600">2h ago</span>
+                        </div>
+
+                        <div class="flex items-start gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
+                            <div
+                                class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center font-bold text-xs">
+                                JD</div>
+                            <div>
+                                <p class="text-sm text-gray-300"><span class="text-white font-medium">Completed
+                                        Task</span> in <span class="text-gray-400">Website Redesign</span></p>
+                                <p class="text-xs text-gray-500 mt-1">"Fix Navigation Bug"</p>
+                            </div>
+                            <span class="ml-auto text-xs text-gray-600">4h ago</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-8 border-t border-white/5">
+                        <p class="text-sm text-gray-500 mb-4">Your Recent Activity</p>
+                        <!-- Simple visual graph mock -->
+                        <div class="flex items-end gap-2 h-24">
+                            <div class="w-full bg-white/5 hover:bg-nutViolet/50 transition-colors rounded-t-sm h-[40%]">
+                            </div>
+                            <div class="w-full bg-white/5 hover:bg-nutViolet/50 transition-colors rounded-t-sm h-[70%]">
+                            </div>
+                            <div class="w-full bg-white/5 hover:bg-nutViolet/50 transition-colors rounded-t-sm h-[30%]">
+                            </div>
+                            <div
+                                class="w-full bg-white/5 hover:bg-nutViolet/50 transition-colors rounded-t-sm h-[100%]">
+                            </div>
+                            <div class="w-full bg-white/5 hover:bg-nutViolet/50 transition-colors rounded-t-sm h-[60%]">
+                            </div>
+                            <div class="w-full bg-white/5 hover:bg-nutViolet/50 transition-colors rounded-t-sm h-[80%]">
+                            </div>
+                            <div class="w-full bg-white/5 hover:bg-nutViolet/50 transition-colors rounded-t-sm h-[50%]">
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
-            </a>
-        </div>
+            </div>
 
-        <!-- Philosophy Reminder -->
-        <div class="fade-up fade-up-delay-4 text-center py-8">
-            <p class="text-gray-500 text-sm italic">
-                no admins · no noise · just progress
-            </p>
         </div>
-
-    </main>
+    </div>
 
     <script src="api.js"></script>
     <script>
-        // -------- AUTH CHECK --------
-        if (!isAuthenticated()) {
-            window.location.href = "index.html";
+        async function init() {
+            if (!requireAuth()) return;
+
+            const user = getCurrentUser();
+            document.getElementById("userName").textContent = user.split("@")[0]; // Simple name extraction
+
+            // Date
+            const dateOpts = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById("dateDisplay").textContent = new Date().toLocaleDateString('en-US', dateOpts);
+
+            // Greeting based on time
+            const hour = new Date().getHours();
+            let greet = "Good evening";
+            if (hour < 12) greet = "Good morning";
+            else if (hour < 18) greet = "Good afternoon";
+            document.getElementById("greeting").textContent = greet;
+
+            // Load Data
+            loadDashboardData();
         }
 
-        // -------- POPULATE USER INFO --------
-        const user = getCurrentUser();
-        const firstName = user ? user.split("@")[0] : "friend";
-        const initial = firstName.charAt(0).toUpperCase();
-
-        document.getElementById("userName").textContent = user || "guest";
-        document.getElementById("userInitial").textContent = initial;
-        document.getElementById("userFirstName").textContent = firstName;
-
-        // -------- TIME OF DAY GREETING --------
-        const hour = new Date().getHours();
-        let greeting = "morning";
-        if (hour >= 12 && hour < 17) greeting = "afternoon";
-        else if (hour >= 17 && hour < 21) greeting = "evening";
-        else if (hour >= 21 || hour < 5) greeting = "night";
-        document.getElementById("timeOfDay").textContent = greeting;
-
-        // -------- LOAD STATS --------
-        async function loadStats() {
+        async function loadDashboardData() {
             try {
-                const projects = await apiGet("/projects");
-                document.getElementById("projectCount").textContent = projects.length || 0;
+                // 1. Stats
+                const stats = await apiGet("/user/stats");
+                document.getElementById("projectCount").textContent = `${stats.active_count} active projects`;
 
-                // Count all tasks across projects
-                let taskCount = 0;
-                for (const project of projects) {
-                    try {
-                        const tasks = await apiGet(`/projects/${project.id}/tasks`);
-                        taskCount += tasks.filter(t => t.status !== "done").length;
-                    } catch (e) {
-                        // Skip if can't load tasks
-                    }
-                }
-                document.getElementById("taskCount").textContent = taskCount;
+                // 2. My Tasks
+                const tasks = await apiGet("/user/tasks");
+                renderMyTasks(tasks);
+
             } catch (err) {
-                console.error("Could not load stats:", err);
-                document.getElementById("projectCount").textContent = "–";
-                document.getElementById("taskCount").textContent = "–";
+                console.error("Dashboard load error", err);
             }
         }
 
-        loadStats();
-    </script>
+        function renderMyTasks(tasks) {
+            const container = document.getElementById("myTasksList");
+            const empty = document.getElementById("emptyTasks");
+            container.innerHTML = "";
 
+            if (!tasks || tasks.length === 0) {
+                empty.classList.remove("hidden");
+                return;
+            }
+
+            // Show only first 4
+            tasks.slice(0, 4).forEach(task => {
+                const div = document.createElement("div");
+                div.className = "group flex items-center justify-between p-3 rounded-xl hover:bg-white/5 transition-colors cursor-pointer border border-transparent hover:border-white/5";
+
+                div.onclick = () => window.location.href = `project.html?id=${task.project_id}`;
+
+                let timeHtml = "";
+                if (task.deadline) {
+                    const d = new Date(task.deadline);
+                    const now = new Date();
+                    const diff = (d - now) / (1000 * 3600 * 24);
+                    // Minimal deadline indicator
+                    timeHtml = diff < 0 ? `<span class="text-red-400 text-[10px] font-bold">Overdue</span>` : `<span class="text-orange-300 text-[10px]">${Math.ceil(diff)}d left</span>`;
+                }
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="min-w-[8px] h-[8px] rounded-full ${task.status === 'done' ? 'bg-green-500' : 'bg-nutNeon shadow-[0_0_8px_rgba(157,140,255,0.6)]'}"></div>
+                        <div class="truncate">
+                            <p class="text-sm text-gray-200 group-hover:text-white truncate transition-colors">${task.title}</p>
+                            <p class="text-[10px] text-gray-500"> Assigned by <span class="text-gray-400">${task.created_by ? task.created_by.split("@")[0] : 'Someone'}</span></p>
+                        </div>
+                    </div>
+                    ${timeHtml}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem("nutmeg_token");
+            localStorage.removeItem("nutmeg_user");
+            window.location.href = "index.html";
+        }
+
+        init();
+    </script>
 </body>
 
 </html>

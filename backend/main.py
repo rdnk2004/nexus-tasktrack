@@ -107,27 +107,70 @@ def create_project(
 
     return project
 
-@app.get("/projects")
-def list_projects(
+@app.get("/users")
+def list_users(session: Session = Depends(get_session)):
+    users = session.exec(select(User)).all()
+    # return list of emails for privacy/simplicity
+    return [u.email for u in users]
+
+class ProjectCreate(BaseModel):
+    name: str
+    collaborators: list[str] = []
+
+
+@app.post("/projects")
+def create_project(
+    project_data: ProjectCreate,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    projects = session.exec(select(Project)).all()
+    import json
+    project = Project(
+        name=project_data.name,
+        collaborators=json.dumps(project_data.collaborators),
+        created_by=current_user
+    )
+    session.add(project)
+    session.commit()
+    session.refresh(project)
+
+    return project
+
+@app.get("/projects")
+def list_projects(
+    status: str | None = None,
+    current_user: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    query = select(Project)
+    if status:
+        query = query.where(Project.status == status)
+    
+    projects = session.exec(query).all()
     return projects
+
+class TaskCreate(BaseModel):
+    title: str
+    description: str | None = None
+    assigned_to: str | None = None
+    deadline: datetime | None = None
+    priority: str = "medium"
+
+
 @app.post("/projects/{project_id}/tasks")
 def add_task(
     project_id: int,
-    title: str,
-    description: str | None = None,
-    assigned_to: str | None = None,
+    task_data: TaskCreate,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
     task = Task(
         project_id=project_id,
-        title=title,
-        description=description,
-        assigned_to=assigned_to,
+        title=task_data.title,
+        description=task_data.description,
+        assigned_to=task_data.assigned_to,
+        deadline=task_data.deadline,
+        priority=task_data.priority,
         created_by=current_user
     )
 
@@ -136,6 +179,7 @@ def add_task(
     session.refresh(task)
 
     return task
+
 @app.get("/projects/{project_id}/tasks")
 def list_tasks(
     project_id: int,
@@ -144,6 +188,37 @@ def list_tasks(
 ):
     tasks = session.exec(
         select(Task).where(Task.project_id == project_id)
+    ).all()
+
+    return tasks
+
+@app.get("/user/stats")
+def get_user_stats(
+    current_user: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    active_projects = session.exec(
+        select(Project).where(Project.created_by == current_user, Project.status == "active")
+    ).all()
+    
+    done_projects = session.exec(
+        select(Project).where(Project.created_by == current_user, Project.status == "done")
+    ).all()
+    
+    return {
+        "active_count": len(active_projects),
+        "done_count": len(done_projects),
+        "total": len(active_projects) + len(done_projects)
+    }
+
+@app.get("/user/tasks")
+def get_my_tasks(
+    current_user: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    # Fetch tasks assigned to the current user
+    tasks = session.exec(
+        select(Task).where(Task.assigned_to == current_user)
     ).all()
     return tasks
 @app.put("/tasks/{task_id}")
