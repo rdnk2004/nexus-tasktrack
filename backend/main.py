@@ -145,7 +145,6 @@ def list_tasks(
     tasks = session.exec(
         select(Task).where(Task.project_id == project_id)
     ).all()
-
     return tasks
 @app.put("/tasks/{task_id}")
 def update_task(
