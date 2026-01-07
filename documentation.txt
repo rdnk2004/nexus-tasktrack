@@ -79,3 +79,6 @@ python -m http.server 5500
 ## API Endpoints (Current)
 - `GET /` : Health check ("Nutmeg backend running")
 - `POST /login` : (Referenced in frontend code, meant to handle login)
+
+
+bwhjgdjqdhkqd
