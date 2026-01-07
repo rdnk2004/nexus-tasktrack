@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory Duel - Keyboard Edition</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-wrapper">
+        <!-- Player 1 Side -->
+        <div class="player-side" id="p1-side">
+            <div class="stats">
+                <h2>PLAYER 1 <br><small style="font-size: 0.6em; color: var(--p1-neon)">Keys: 1-4, Q-R, A-F, Z-V</small></h2>
+                <div class="hp-bar"><div id="p1-hp-fill" class="hp-fill"></div></div>
+                <div class="status-row">
+                    <span id="p1-shield" class="badge hidden">🛡️</span>
+                    <span id="p1-power" class="badge hidden">⚡</span>
+                </div>
+            </div>
+            <div class="memory-grid" id="p1-grid"></div>
+        </div>
+
+        <div class="divider">VS</div>
+
+        <!-- Player 2 Side -->
+        <div class="player-side" id="p2-side">
+            <div class="stats">
+                <h2>PLAYER 2 <br><small style="font-size: 0.6em; color: var(--p2-neon)">Keys: 7-0, U-P, J-L, M-?</small></h2>
+                <div class="hp-bar"><div id="p2-hp-fill" class="hp-fill"></div></div>
+                <div class="status-row">
+                    <span id="p2-shield" class="badge hidden">🛡️</span>
+                    <span id="p2-power" class="badge hidden">⚡</span>
+                </div>
+            </div>
+            <div class="memory-grid" id="p2-grid"></div>
+        </div>
+    </div>
+
+    <div id="win-screen" class="hidden">
+        <h1 id="winner-text">PLAYER 1 WINS!</h1>
+        <button onclick="location.reload()">REMATCH</button>
+    </div>
+
+    <!-- Victory Popup -->
+<div id="win-screen" class="hidden">
+    <div class="win-content">
+        <div class="popper-icon">🏆</div>
+        <h1 id="winner-text">PLAYER 1 WINS!</h1>
+        <p>A glorious victory in the neon arena.</p>
+        <button onclick="resetGame()">PLAY AGAIN</button>
+    </div>
+</div>
+
+<!-- Add a canvas for the confetti popper -->
+<canvas id="confetti-canvas"></canvas>
+
+    <script src="script.js"></script>
+</body>
+</html>
