@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <title>Nutmeg · Workspace</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your personal productivity dashboard.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
-    <script src="api.js"></script>
+    <script src="api.js" defer></script>
     <style>
         /* Local overrides for specific chart visualizations */
         .chart-bar {
@@ -50,104 +53,107 @@
         </header>
 
         <!-- Main Grid -->
-        <div class="grid grid-cols-12 animate-fade-up delay-200">
+        <div class="grid grid-cols-1 md:grid-cols-12 animate-fade-up delay-200">
 
             <!-- Left Col: Quick Nav & Tasks -->
-            <div class="col-span-4 flex flex-col gap-4">
+            <div class="col-span-1 md:col-span-4 flex flex-col gap-6 md:gap-8">
 
-                <div class="grid grid-cols-2">
+                <div class="grid grid-cols-2 gap-4 md:gap-6">
                     <a href="projects.html"
-                        class="card p-8 hover:scale-[1.02] transition-transform cursor-pointer flex flex-col justify-between h-40 group">
-                        <div class="text-2xl mb-2">📂</div>
+                        class="card p-6 md:p-8 hover:scale-[1.01] cursor-pointer flex flex-col justify-between h-48 group border-transparent bg-white/5 hover:bg-white/10">
+                        <div class="text-2xl opacity-50 group-hover:opacity-100 transition-opacity">📂</div>
                         <div>
-                            <h3 class="text-lg">Projects</h3>
-                            <p class="text-xs mt-2" id="projectCount">... active</p>
+                            <h3 class="text-lg font-medium">Projects</h3>
+                            <p class="text-sm opacity-50 mt-1" id="projectCount">Loading...</p>
                         </div>
                     </a>
 
                     <a href="calendar.html"
-                        class="card p-8 hover:scale-[1.02] transition-transform cursor-pointer flex flex-col justify-between h-40 group">
-                        <div class="text-2xl mb-2">📅</div>
+                        class="card p-6 md:p-8 hover:scale-[1.01] cursor-pointer flex flex-col justify-between h-48 group border-transparent bg-white/5 hover:bg-white/10">
+                        <div class="text-2xl opacity-50 group-hover:opacity-100 transition-opacity">📅</div>
                         <div>
-                            <h3 class="text-lg">Calendar</h3>
-                            <p class="text-xs mt-2">Schedule</p>
+                            <h3 class="text-lg font-medium">Calendar</h3>
+                            <p class="text-sm opacity-50 mt-1">Schedule</p>
                         </div>
                     </a>
                 </div>
 
-                <!-- Assigned To Me -->
-                <div class="card p-8 flex-1 min-h-[300px]">
-                    <h3 class="text-xs text-neon uppercase tracking-wide mb-6">✨ Priority for You</h3>
+                <!-- Assigned To Me (Cleaner) -->
+                <div class="card p-8 md:p-10 flex-1 min-h-[400px]">
+                    <div class="flex items-center justify-between mb-8">
+                        <h3 class="text-xs uppercase tracking-widest text-gray-500">Your Focus</h3>
+                        <span class="text-xs text-gray-600">Priority</span>
+                    </div>
 
-                    <div id="myTasksList" class="flex flex-col gap-3">
+                    <div id="myTasksList" class="flex flex-col gap-4">
                         <!-- Loading State -->
-                        <div class="animate-pulse">
-                            <div class="h-4 bg-white/10 rounded w-3/4 mb-2"></div>
-                            <div class="h-4 bg-white/10 rounded w-1/2"></div>
+                        <div class="animate-pulse flex flex-col gap-4">
+                            <div class="h-12 bg-white/5 rounded-xl w-full"></div>
+                            <div class="h-12 bg-white/5 rounded-xl w-2/3"></div>
                         </div>
                     </div>
 
-                    <div id="emptyTasks" class="hidden text-center py-8 text-gray-500 text-sm">
-                        All clear. You are free as a bird.
+                    <div id="emptyTasks"
+                        class="hidden flex flex-col items-center justify-center h-full text-gray-500 opacity-50 pb-10">
+                        <span class="text-2xl mb-4">☕</span>
+                        <p class="text-sm">No tasks assigned.</p>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Right Col: Team Pulse -->
-            <div class="col-span-8">
-                <div class="card p-10 h-full">
-                    <div class="flex justify-between items-center mb-8">
-                        <h2 class="text-xl">Team Pulse</h2>
-                        <span
-                            class="text-xs px-2 py-1 rounded bg-green-500/10 text-success border border-green-500/20">Live</span>
+            <!-- Right Col: Team Pulse (Minimal) -->
+            <div class="col-span-1 md:col-span-8">
+                <div class="card p-8 md:p-12 h-full">
+                    <div class="flex justify-between items-baseline mb-10">
+                        <h2 class="text-2xl font-light">Team Pulse</h2>
+                        <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#22c55e]"></span>
                     </div>
 
-                    <div class="flex flex-col gap-4">
-                        <!-- Mock Pulse Item -->
-                        <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
+                    <div class="flex flex-col gap-6">
+                        <!-- Mock Pulse Item - Minimal -->
+                        <div class="flex items-start gap-5 p-4 rounded-2xl hover:bg-white/5 transition-colors group">
                             <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center font-bold text-xs text-white">
-                                NL
+                                class="mt-1 w-2 h-2 rounded-full bg-blue-500 opacity-50 group-hover:opacity-100 transition-opacity">
                             </div>
                             <div class="flex-1">
-                                <p class="text-sm text-white">
-                                    <span class="font-bold">New Project</span> created by <span
-                                        class="text-neon">Nikhil</span>
+                                <p class="text-base text-gray-200">
+                                    <span class="text-white font-medium">New Project</span> added by Nikhil.
                                 </p>
-                                <p class="text-xs text-gray-400">"Q1 Marketing Goals" • 4 collaborators</p>
+                                <p class="text-sm text-gray-600 mt-1">"Q1 Marketing Goals"</p>
                             </div>
-                            <span class="text-xs text-gray-500">2h ago</span>
+                            <span class="text-xs text-gray-700">2h ago</span>
                         </div>
 
-                        <!-- Mock Pulse Item -->
-                        <div class="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/5">
+                        <!-- Mock Pulse Item - Minimal -->
+                        <div class="flex items-start gap-5 p-4 rounded-2xl hover:bg-white/5 transition-colors group">
                             <div
-                                class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center font-bold text-xs text-white">
-                                JD
+                                class="mt-1 w-2 h-2 rounded-full bg-violet-500 opacity-50 group-hover:opacity-100 transition-opacity">
                             </div>
                             <div class="flex-1">
-                                <p class="text-sm text-white">
-                                    <span class="font-bold">Completed Task</span> in <span class="text-gray-400">Website
-                                        Redesign</span>
+                                <p class="text-base text-gray-200">
+                                    <span class="text-white font-medium">Task Completed</span> in Website Redesign.
                                 </p>
-                                <p class="text-xs text-gray-400">"Fix Navigation Bug"</p>
+                                <p class="text-sm text-gray-600 mt-1">"Fix Navigation Bug"</p>
                             </div>
-                            <span class="text-xs text-gray-500">4h ago</span>
+                            <span class="text-xs text-gray-700">4h ago</span>
                         </div>
                     </div>
 
-                    <div class="mt-8 pt-8 border-t border-white/10">
-                        <p class="text-sm text-gray-500 mb-4">Your Recent Activity</p>
-                        <!-- Chart -->
-                        <div class="flex items-end gap-2 h-32">
-                            <div class="chart-bar w-full h-[40%]"></div>
-                            <div class="chart-bar w-full h-[70%]"></div>
-                            <div class="chart-bar w-full h-[30%]"></div>
-                            <div class="chart-bar w-full h-[100%]"></div>
-                            <div class="chart-bar w-full h-[60%]"></div>
-                            <div class="chart-bar w-full h-[80%]"></div>
-                            <div class="chart-bar w-full h-[50%]"></div>
+                    <!-- Chart Area - clean -->
+                    <div class="mt-auto pt-12">
+                        <div
+                            class="flex items-end gap-3 h-40 opacity-30 hover:opacity-100 transition-opacity duration-1000">
+                            <!-- Minimal Bars -->
+                            <div class="flex-1 bg-white rounded-t-lg h-[40%]"></div>
+                            <div class="flex-1 bg-white rounded-t-lg h-[70%]"></div>
+                            <div class="flex-1 bg-white rounded-t-lg h-[30%]"></div>
+                            <div
+                                class="flex-1 bg-violet-500 shadow-[0_0_20px_rgba(109,93,252,0.5)] rounded-t-lg h-[90%]">
+                            </div>
+                            <div class="flex-1 bg-white rounded-t-lg h-[60%]"></div>
+                            <div class="flex-1 bg-white rounded-t-lg h-[50%]"></div>
+                            <div class="flex-1 bg-white rounded-t-lg h-[70%]"></div>
                         </div>
                     </div>
 

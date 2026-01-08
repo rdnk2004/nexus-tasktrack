@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <title>Nutmeg · Profile</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Your detailed stats and achievements.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
-    <script src="api.js"></script>
+    <script src="api.js" defer></script>
     <style>
         .profile-avatar {
             width: 80px;
@@ -104,7 +107,7 @@
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-3 gap-6 mb-12 delay-100 animate-fade-up">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-12 delay-100 animate-fade-up">
 
             <!-- Active Stats -->
             <div class="stat-card">

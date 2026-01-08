@@ -29,20 +29,26 @@
     --glow-primary: 0 0 30px rgba(109, 93, 252, 0.25);
     --glow-strong: 0 0 50px rgba(109, 93, 252, 0.4);
     --shadow-card: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+    --shadow-glow: 0 0 20px rgba(157, 140, 255, 0.4);
 
-    /* Spacing System */
-    --space-2: 0.5rem;
-    /* 8px */
-    --space-3: 0.75rem;
-    /* 12px */
-    --space-4: 1rem;
-    /* 16px */
-    --space-6: 1.5rem;
-    /* 24px */
-    --space-8: 2rem;
-    /* 32px */
-    --space-10: 2.5rem;
-    /* 40px */
+    /* Spacing System - More Generous */
+    --space-2: 0.75rem;
+    /* Increased from 0.5rem */
+    --space-3: 1rem;
+    /* Increased from 0.75rem */
+    --space-4: 1.5rem;
+    /* Increased from 1rem */
+    --space-6: 2rem;
+    /* Increased from 1.5rem */
+    --space-8: 3rem;
+    /* Increased from 2rem */
+    --space-10: 4rem;
+    /* Increased from 2.5rem */
+
+    /* Radii */
+    --radius-sm: 12px;
+    --radius-md: 20px;
+    --radius-lg: 32px;
 
     /* Interactive */
     --ease-elastic: cubic-bezier(0.4, 0, 0.2, 1);
@@ -101,20 +107,20 @@ h6 {
     font-weight: 500;
     letter-spacing: -0.025em;
     color: var(--nut-white);
-}
-
-h1 {
-    font-size: 2.75rem;
     line-height: 1.1;
 }
 
+h1 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    /* Fluid scaling */
+}
+
 h2 {
-    font-size: 2rem;
-    line-height: 1.2;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
 }
 
 h3 {
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
 }
 
 h4 {
@@ -124,13 +130,16 @@ h4 {
 
 p {
     color: var(--nut-gray);
-    font-size: 0.95rem;
+    font-size: clamp(0.95rem, 2vw, 1rem);
 }
 
 a {
     text-decoration: none;
     color: inherit;
     transition: color 0.2s var(--ease-elastic);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    /* Remove mobile tap highlight */
 }
 
 a:hover {
@@ -140,70 +149,95 @@ a:hover {
 /* ---------------- COMPONENTS ---------------- */
 
 /* Glass Card */
+/* Glass Card - Ultra Minimal */
 .card {
     background: var(--card-gradient);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-radius: 20px;
-    box-shadow: var(--shadow-card);
-    transition: transform 0.3s var(--ease-elastic), box-shadow 0.3s var(--ease-elastic), border-color 0.3s;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    /* Lighter border */
+    backdrop-filter: blur(24px);
+    /* Heavier blur for cleaner look */
+    -webkit-backdrop-filter: blur(24px);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5);
+    /* Softer shadow */
+    transition: transform 0.4s var(--ease-elastic), box-shadow 0.4s var(--ease-elastic), border-color 0.3s;
     position: relative;
     overflow: hidden;
     z-index: 1;
 }
 
 .card:hover {
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
+    transform: translateY(-2px);
 }
 
+/* Buttons */
 /* Buttons */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.5rem;
-    border-radius: 14px;
-    font-weight: 500;
-    font-size: 0.95rem;
+    padding: 1rem 2rem;
+    /* More spacing */
+    min-height: 56px;
+    /* Larger hit area */
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 1rem;
     cursor: pointer;
-    transition: all 0.3s var(--ease-bounce);
+    transition: transform 0.2s var(--ease-bounce), box-shadow 0.2s var(--ease-bounce), background-color 0.2s;
     border: none;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.02em;
+}
+
+.btn:active {
+    transform: scale(0.96);
 }
 
 .btn-primary {
-    background: var(--primary-gradient);
-    color: white;
-    box-shadow: 0 4px 15px rgba(109, 93, 252, 0.3);
+    background: var(--nut-white);
+    /* Minimalist: Black on White for primary */
+    color: var(--nut-black);
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 25px rgba(109, 93, 252, 0.4);
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.3);
+    background: #ffffff;
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--nut-white);
+    backdrop-filter: blur(10px);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.2);
 }
 
 .btn-sm {
-    padding: 0.5rem 1rem;
+    padding: 0.75rem 1.25rem;
+    min-height: 42px;
     font-size: 0.85rem;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
+}
+
+.shadow-glow {
+    box-shadow: 0 0 15px rgba(157, 140, 255, 0.3);
 }
 
 /* Inputs */
 .form-group {
     margin-bottom: var(--space-4);
+    position: relative;
 }
 
 .input-label {
@@ -218,14 +252,19 @@ a:hover {
 
 .input-field {
     width: 100%;
-    padding: 1rem 1.25rem;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 14px;
+    padding: 1.25rem 1.75rem;
+    /* More generous padding */
+    min-height: 60px;
+    /* Very tap friendly */
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
     color: var(--nut-white);
-    font-size: 1rem;
+    font-size: 1.05rem;
     outline: none;
     transition: all 0.2s var(--ease-elastic);
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .input-field::placeholder {
@@ -235,7 +274,7 @@ a:hover {
 .input-field:focus {
     border-color: var(--nut-violet);
     box-shadow: 0 0 0 4px rgba(109, 93, 252, 0.15);
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.3);
 }
 
 /* ---------------- LAYOUT UTILITIES ---------------- */
@@ -243,9 +282,16 @@ a:hover {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 var(--space-6);
+    padding: 0 var(--space-4);
+    /* reduced padding for mobile default */
     position: relative;
     z-index: 1;
+}
+
+@media (min-width: 768px) {
+    .container {
+        padding: 0 var(--space-6);
+    }
 }
 
 .max-w-md {
@@ -284,34 +330,47 @@ a:hover {
 
 .grid {
     display: grid;
+    gap: var(--space-6);
 }
 
-.grid-cols-3 {
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-6);
+/* Mobile First Grid System */
+.grid-cols-1 {
+    grid-template-columns: repeat(1, 1fr);
 }
 
 .grid-cols-2 {
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-6);
+    grid-template-columns: repeat(1, 1fr);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-    .grid-cols-3 {
-        grid-template-columns: 1fr;
-    }
+.grid-cols-3 {
+    grid-template-columns: repeat(1, 1fr);
+}
 
+.grid-cols-12 {
+    grid-template-columns: repeat(1, 1fr);
+}
+
+/* Tablet & Up */
+@media (min-width: 768px) {
     .grid-cols-2 {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    .container {
-        padding: 0 var(--space-4);
+    .grid-cols-3 {
+        grid-template-columns: repeat(3, 1fr);
     }
 
-    h1 {
-        font-size: 2rem;
+    /* Complex Grids */
+    .grid-cols-12 {
+        grid-template-columns: repeat(12, 1fr);
+    }
+
+    .col-span-4 {
+        grid-column: span 4;
+    }
+
+    .col-span-8 {
+        grid-column: span 8;
     }
 }
 
@@ -663,6 +722,36 @@ a:hover {
     min-height: 100px;
     overflow: hidden;
     transition: all 0.2s var(--ease-elastic);
+}
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        grid-template-columns: 1fr;
+        /* List view on mobile */
+        gap: var(--space-2);
+        overflow-y: auto;
+    }
+
+    .calendar-header-day {
+        display: none;
+        /* Hide day headers on mobile list view */
+    }
+
+    .calendar-cell {
+        min-height: auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: var(--space-4);
+    }
+
+    .calendar-day-label {
+        margin-bottom: 0;
+        font-size: 1.2rem;
+        width: 40px;
+        text-align: center;
+    }
 }
 
 .calendar-cell:hover {

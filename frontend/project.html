@@ -5,8 +5,11 @@
     <meta charset="UTF-8">
     <title>Nutmeg · Project Board</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Project Kanban board to track your tasks.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="style.css">
-    <script src="api.js"></script>
+    <script src="api.js" defer></script>
 </head>
 
 <body>
@@ -44,13 +47,14 @@
         </div>
 
         <!-- Kanban Board -->
-        <div class="kanban-board animate-fade-up delay-200">
+        <div
+            class="kanban-board overflow-x-auto pb-6 md:pb-0 snap-x snap-mandatory flex md:grid md:grid-cols-3 gap-4 md:gap-6">
 
             <!-- Column: To Do -->
             <div id="col-todo" ondrop="drop(event, 'todo')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"
-                class="kanban-col transition-colors">
+                class="kanban-col transition-colors min-w-[85vw] md:min-w-0 snap-center">
 
-                <div class="kanban-header">
+                <div class="kanban-header sticky top-0 bg-[#0e121e]/95 backdrop-blur z-10">
                     <h3 class="text-sm font-medium text-gray-300">To Do</h3>
                     <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-todo">0</span>
                 </div>
@@ -61,9 +65,9 @@
 
             <!-- Column: Doing -->
             <div id="col-doing" ondrop="drop(event, 'doing')" ondragover="allowDrop(event)"
-                ondragleave="leaveDrop(event)" class="kanban-col transition-colors">
+                ondragleave="leaveDrop(event)" class="kanban-col transition-colors min-w-[85vw] md:min-w-0 snap-center">
 
-                <div class="kanban-header">
+                <div class="kanban-header sticky top-0 bg-[#0e121e]/95 backdrop-blur z-10">
                     <h3 class="text-sm font-medium text-neon">In Progress</h3>
                     <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-doing">0</span>
                 </div>
@@ -73,9 +77,9 @@
 
             <!-- Column: Done -->
             <div id="col-done" ondrop="drop(event, 'done')" ondragover="allowDrop(event)" ondragleave="leaveDrop(event)"
-                class="kanban-col transition-colors">
+                class="kanban-col transition-colors min-w-[85vw] md:min-w-0 snap-center">
 
-                <div class="kanban-header">
+                <div class="kanban-header sticky top-0 bg-[#0e121e]/95 backdrop-blur z-10">
                     <h3 class="text-sm font-medium text-success">Done</h3>
                     <span class="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-400" id="count-done">0</span>
                 </div>
