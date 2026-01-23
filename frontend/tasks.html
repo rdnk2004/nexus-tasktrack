@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks - Nutmeg Task Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <style>
+        .kanban-column {
+            min-height: 500px;
+        }
+
+        .task-card {
+            cursor: grab;
+        }
+
+        .task-card:active {
+            cursor: grabbing;
+        }
+
+        .task-card.not-draggable {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .sortable-ghost {
+            opacity: 0.4;
+            background: #f3f4f6;
+        }
+
+        .sortable-drag {
+            opacity: 0.8;
+            transform: rotate(2deg);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-backdrop {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🥜</span>
+                    <span class="text-xl font-bold text-orange-500">NUTMEG</span>
+                </div>
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="dashboard.html" class="text-gray-600 hover:text-orange-500 transition-colors">Dashboard</a>
+                    <a href="projects.html" class="text-gray-600 hover:text-orange-500 transition-colors">Projects</a>
+                    <a href="profile.html" class="text-gray-600 hover:text-orange-500 transition-colors">Profile</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:block text-right">
+                        <p class="text-sm text-gray-600">Welcome,</p>
+                        <p id="userName" class="text-sm font-semibold text-gray-800">Loading...</p>
+                    </div>
+                    <button id="logoutBtn"
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Page Header -->
+        <div class="mb-8">
+            <a href="projects.html"
+                class="inline-flex items-center gap-2 text-orange-500 hover:text-orange-600 font-semibold mb-4">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                Back to Projects
+            </a>
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 id="projectName" class="text-3xl font-bold text-gray-800 mb-2">Loading...</h1>
+                    <div id="projectMeta" class="flex flex-wrap items-center gap-3 text-sm">
+                        <!-- Project metadata will be inserted here -->
+                    </div>
+                </div>
+                <button id="newTaskBtn"
+                    class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all transform hover:scale-105">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    New Task
+                </button>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-x-auto">
+
+            <!-- TO DO Column -->
+            <div class="bg-white rounded-xl shadow-md p-4">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        📝 TO DO
+                        <span id="todoCount" class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">0</span>
+                    </h2>
+                </div>
+                <div id="todoColumn" class="kanban-column space-y-3 min-h-[400px]">
+                    <div class="text-center py-8 text-gray-400 empty-placeholder">
+                        <p class="text-sm">Drop tasks here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOING Column -->
+            <div class="bg-white rounded-xl shadow-md p-4">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        🔄 DOING
+                        <span id="doingCount" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">0</span>
+                    </h2>
+                </div>
+                <div id="doingColumn" class="kanban-column space-y-3 min-h-[400px]">
+                    <div class="text-center py-8 text-gray-400 empty-placeholder">
+                        <p class="text-sm">Drop tasks here</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DONE Column -->
+            <div class="bg-white rounded-xl shadow-md p-4">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        ✅ DONE
+                        <span id="doneCount" class="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">0</span>
+                    </h2>
+                </div>
+                <div id="doneColumn" class="kanban-column space-y-3 min-h-[400px]">
+                    <div class="text-center py-8 text-gray-400 empty-placeholder">
+                        <p class="text-sm">Drop tasks here</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- New Task Modal -->
+    <div id="newTaskModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50" onclick="closeNewTaskModal()"></div>
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10">
+                <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-gray-800">Create New Task</h3>
+                    <button onclick="closeNewTaskModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <form id="newTaskForm" class="px-6 py-6 space-y-6">
+                    <div>
+                        <label for="taskTitle" class="block text-sm font-medium text-gray-700 mb-2">
+                            Task Title <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="taskTitle" required placeholder="Enter task title"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                    </div>
+
+                    <div>
+                        <label for="taskDescription"
+                            class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea id="taskDescription" rows="3" placeholder="Enter task description (optional)"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Assignment <span
+                                class="text-red-500">*</span></label>
+                        <div class="space-y-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="assignmentType" value="me" checked
+                                    class="w-4 h-4 text-orange-500 focus:ring-orange-500" />
+                                <span>Just me</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="assignmentType" value="specific"
+                                    class="w-4 h-4 text-orange-500 focus:ring-orange-500" />
+                                <span>Specific people</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="assignmentType" value="all"
+                                    class="w-4 h-4 text-orange-500 focus:ring-orange-500" />
+                                <span>Everyone (ALL)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="specificAssigneesSection" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Select Assignees <span
+                                class="text-red-500">*</span></label>
+                        <div id="assigneesList" class="space-y-2 bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Priority</label>
+                        <div class="flex gap-4">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="priority" value="low" class="w-4 h-4 text-orange-500" />
+                                <span class="text-green-600">Low</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="priority" value="medium" checked
+                                    class="w-4 h-4 text-orange-500" />
+                                <span class="text-yellow-600">Medium</span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="radio" name="priority" value="high" class="w-4 h-4 text-orange-500" />
+                                <span class="text-red-600">High</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="taskDeadline" class="block text-sm font-medium text-gray-700 mb-2">
+                            Deadline <span class="text-xs text-gray-500">(optional, max +2 days)</span>
+                        </label>
+                        <input type="date" id="taskDeadline"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                    </div>
+                </form>
+
+                <div class="border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+                    <button onclick="closeNewTaskModal()"
+                        class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold">Cancel</button>
+                    <button id="createTaskBtn"
+                        class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors font-semibold flex items-center gap-2">
+                        <span>Create Task</span>
+                        <svg id="createTaskSpinner" class="hidden animate-spin h-5 w-5 text-white"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                            </circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div id="taskDetailModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50" onclick="closeTaskDetailModal()"></div>
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10">
+                <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-gray-800">Task Details</h3>
+                    <button onclick="closeTaskDetailModal()"
+                        class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <div id="taskDetailContent" class="px-6 py-6">
+                    <!-- Task details will be inserted here -->
+                </div>
+
+                <div class="border-t border-gray-200 px-6 py-4 flex justify-between">
+                    <button id="deleteTaskBtn"
+                        class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-semibold">Delete
+                        Task</button>
+                    <button onclick="closeTaskDetailModal()"
+                        class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors font-semibold">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        let currentUser = null;
+        let currentProject = null;
+        let allTasks = [];
+        let projectId = null;
+        let selectedTaskId = null;
+
+        // Auth Check
+        async function checkAuth() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return null;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Invalid token');
+                return await response.json();
+            } catch (error) {
+                removeToken();
+                removeCurrentUser();
+                window.location.href = 'login.html';
+                return null;
+            }
+        }
+
+        // Utility Functions
+        function getFirstName(email) {
+            return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+        }
+
+        function getAvatarColor(email) {
+            const colors = ['bg-orange-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500'];
+            let hash = 0;
+            for (let i = 0; i < email.length; i++) {
+                hash = email.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        function getDaysUntil(dateString) {
+            const deadline = new Date(dateString);
+            const now = new Date();
+            const diffMs = deadline - now;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) return { text: `${Math.abs(diffDays)} days overdue`, color: 'text-red-600' };
+            if (diffDays === 0) return { text: 'Due today', color: 'text-red-600' };
+            if (diffDays === 1) return { text: 'Tomorrow', color: 'text-yellow-600' };
+            return { text: `${diffDays} days left`, color: 'text-gray-600' };
+        }
+
+        // Fetch Project Details
+        async function fetchProject() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                if (!response.ok) throw new Error('Project not found');
+                currentProject = await response.json();
+                renderProjectHeader();
+            } catch (error) {
+                console.error('Error fetching project:', error);
+                showToast('Error loading project', 'error');
+                setTimeout(() => window.location.href = 'projects.html', 2000);
+            }
+        }
+
+        // Render Project Header
+        function renderProjectHeader() {
+            document.getElementById('projectName').textContent = currentProject.name;
+
+            const typeBadge = currentProject.is_collaborative ?
+                '<span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full font-semibold">Collaborative</span>' :
+                '<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-semibold">Individual</span>';
+
+            const collaborators = currentProject.members.slice(0, 3).map(m => `
+                <div class="${getAvatarColor(m.email)} w-7 h-7 rounded-full flex items-center justify-center text-white font-semibold text-xs -ml-2 border-2 border-white">
+                    ${getFirstName(m.email).charAt(0)}
+                </div>
+            `).join('');
+
+            const moreCount = currentProject.members.length > 3 ?
+                `<div class="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 text-xs font-semibold -ml-2 border-2 border-white">+${currentProject.members.length - 3}</div>` : '';
+
+            const deadline = currentProject.end_date ?
+                `<span class="text-gray-600">Deadline: ${new Date(currentProject.end_date).toLocaleDateString()}</span>` : '';
+
+            document.getElementById('projectMeta').innerHTML = `
+                ${typeBadge}
+                <div class="flex items-center ml-2">${collaborators}${moreCount}</div>
+                ${deadline}
+            `;
+        }
+
+        // Fetch Tasks
+        async function fetchTasks() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch tasks');
+                allTasks = await response.json();
+                renderKanbanBoard();
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+                showToast('Error loading tasks', 'error');
+            }
+        }
+
+        // Render Kanban Board
+        function renderKanbanBoard() {
+            const todoColumn = document.getElementById('todoColumn');
+            const doingColumn = document.getElementById('doingColumn');
+            const doneColumn = document.getElementById('doneColumn');
+
+            // Clear columns
+            todoColumn.innerHTML = '';
+            doingColumn.innerHTML = '';
+            doneColumn.innerHTML = '';
+
+            // Group tasks by current user's status
+            const myTasks = {
+                todo: [],
+                doing: [],
+                done: []
+            };
+
+            allTasks.forEach(task => {
+                const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+                if (myAssignment) {
+                    const status = myAssignment.status;
+                    if (status === 'todo') myTasks.todo.push(task);
+                    else if (status === 'doing') myTasks.doing.push(task);
+                    else if (status === 'done') myTasks.done.push(task);
+                }
+            });
+
+            // Update counts
+            document.getElementById('todoCount').textContent = myTasks.todo.length;
+            document.getElementById('doingCount').textContent = myTasks.doing.length;
+            document.getElementById('doneCount').textContent = myTasks.done.length;
+
+            // Render cards
+            myTasks.todo.forEach(task => todoColumn.appendChild(createTaskCard(task)));
+            myTasks.doing.forEach(task => doingColumn.appendChild(createTaskCard(task)));
+            myTasks.done.forEach(task => doneColumn.appendChild(createTaskCard(task)));
+
+            // Show placeholders if empty
+            if (myTasks.todo.length === 0) todoColumn.innerHTML = '<div class="text-center py-8 text-gray-400 empty-placeholder"><p class="text-sm">Drop tasks here</p></div>';
+            if (myTasks.doing.length === 0) doingColumn.innerHTML = '<div class="text-center py-8 text-gray-400 empty-placeholder"><p class="text-sm">Drop tasks here</p></div>';
+            if (myTasks.done.length === 0) doneColumn.innerHTML = '<div class="text-center py-8 text-gray-400 empty-placeholder"><p class="text-sm">Drop tasks here</p></div>';
+
+            lucide.createIcons();
+        }
+
+        // Create Task Card
+        function createTaskCard(task) {
+            const card = document.createElement('div');
+            const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+            const isMyTask = !!myAssignment;
+
+            const priorityColors = {
+                high: 'bg-red-100 text-red-600',
+                medium: 'bg-yellow-100 text-yellow-600',
+                low: 'bg-blue-100 text-blue-600'
+            };
+
+            const deadline = task.deadline ? getDaysUntil(task.deadline) : null;
+
+            const assigneeAvatars = task.assignees.slice(0, 3).map(a => `
+                <div class="${getAvatarColor(a.email)} w-6 h-6 rounded-full flex items-center justify-center text-white font-semibold text-xs -ml-1 border border-white">
+                    ${getFirstName(a.email).charAt(0)}
+                </div>
+            `).join('');
+
+            const isTeamTask = task.assignees.length > 1;
+            const teamBadge = isTeamTask ? '<span class="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded">👥 Team task</span>' : '';
+            const myTaskBadge = isMyTask ? '<span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">⚠️ Your task</span>' : '';
+
+            card.className = `task-card bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all ${isMyTask ? '' : 'not-draggable'}`;
+            card.dataset.taskId = task.id;
+            card.onclick = () => openTaskDetailModal(task.id);
+
+            card.innerHTML = `
+                <h4 class="font-semibold text-gray-800 mb-2">${task.title}</h4>
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-xs px-2 py-1 rounded font-semibold ${priorityColors[task.priority]}">${task.priority.toUpperCase()}</span>
+                    ${myTaskBadge}
+                    ${teamBadge}
+                </div>
+                ${deadline ? `<p class="text-xs ${deadline.color} font-medium mb-2">${deadline.text}</p>` : ''}
+                <div class="flex items-center mt-3 ml-1">
+                    ${assigneeAvatars}
+                </div>
+                ${isTeamTask ? `<p class="text-xs text-gray-500 mt-2">${task.assignees.filter(a => a.status === 'done').length}/${task.assignees.length} completed</p>` : ''}
+            `;
+
+            return card;
+        }
+
+        // Initialize SortableJS
+        function initializeSortable() {
+            const columns = ['todoColumn', 'doingColumn', 'doneColumn'];
+            const statusMap = {
+                'todoColumn': 'todo',
+                'doingColumn': 'doing',
+                'doneColumn': 'done'
+            };
+
+            columns.forEach(columnId => {
+                new Sortable(document.getElementById(columnId), {
+                    group: 'kanban',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    filter: '.not-draggable, .empty-placeholder',
+                    onEnd: async function (evt) {
+                        const taskId = parseInt(evt.item.dataset.taskId);
+                        const newStatus = statusMap[evt.to.id];
+
+                        await updateTaskStatus(taskId, newStatus);
+                    }
+                });
+            });
+        }
+
+        // Update Task Status
+        async function updateTaskStatus(taskId, newStatus) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/my-status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response.ok) {
+                    const statusTexts = { todo: 'To Do', doing: 'Doing', done: 'Done' };
+                    showToast(`Task moved to ${statusTexts[newStatus]}`, 'success');
+                    await fetchTasks();
+                } else {
+                    throw new Error('Failed to update task status');
+                }
+            } catch (error) {
+                console.error('Error updating task:', error);
+                showToast('Error updating task status', 'error');
+                await fetchTasks(); // Revert UI
+            }
+        }
+
+        // Modal Functions
+        function openNewTaskModal() {
+            document.getElementById('newTaskModal').classList.remove('hidden');
+            setupNewTaskModal();
+            lucide.createIcons();
+        }
+
+        function closeNewTaskModal() {
+            document.getElementById('newTaskModal').classList.add('hidden');
+            document.getElementById('newTaskForm').reset();
+        }
+
+        function setupNewTaskModal() {
+            // Set deadline limits
+            const today = new Date();
+            const maxDate = new Date(today);
+            maxDate.setDate(today.getDate() + 2);
+
+            const deadlineInput = document.getElementById('taskDeadline');
+            deadlineInput.min = today.toISOString().split('T')[0];
+            deadlineInput.max = maxDate.toISOString().split('T')[0];
+
+            // Assignment type handling
+            const assignmentTypes = document.querySelectorAll('input[name="assignmentType"]');
+            assignmentTypes.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    if (e.target.value === 'specific') {
+                        document.getElementById('specificAssigneesSection').classList.remove('hidden');
+                        populateAssignees();
+                    } else {
+                        document.getElementById('specificAssigneesSection').classList.add('hidden');
+                    }
+                });
+            });
+        }
+
+        function populateAssignees() {
+            const container = document.getElementById('assigneesList');
+            container.innerHTML = '';
+
+            currentProject.members.forEach(member => {
+                const checkbox = document.createElement('label');
+                checkbox.className = 'flex items-center gap-3 cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors';
+                checkbox.innerHTML = `
+                    <input type="checkbox" name="assignee" value="${member.email}" class="w-4 h-4 text-orange-500 rounded focus:ring-orange-500" />
+                    <div class="${getAvatarColor(member.email)} w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                        ${getFirstName(member.email).charAt(0)}
+                    </div>
+                    <span class="text-gray-700">${member.email}</span>
+                `;
+                container.appendChild(checkbox);
+            });
+        }
+
+        // Create Task
+        async function createTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDescription').value.trim();
+            const assignmentType = document.querySelector('input[name="assignmentType"]:checked').value;
+            const priority = document.querySelector('input[name="priority"]:checked').value;
+            const deadline = document.getElementById('taskDeadline').value;
+
+            // Validation
+            if (!title) {
+                showToast('Please enter a task title', 'error');
+                return;
+            }
+
+            let assignees = [];
+            if (assignmentType === 'me') {
+                assignees = [currentUser.email];
+            } else if (assignmentType === 'specific') {
+                const checkboxes = document.querySelectorAll('input[name="assignee"]:checked');
+                assignees = Array.from(checkboxes).map(cb => cb.value);
+                if (assignees.length === 0) {
+                    showToast('Please select at least one assignee', 'error');
+                    return;
+                }
+            } else if (assignmentType === 'all') {
+                assignees = ['ALL'];
+            }
+
+            // Show loading
+            const btn = document.getElementById('createTaskBtn');
+            const spinner = document.getElementById('createTaskSpinner');
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        title,
+                        description: description || null,
+                        assignees,
+                        priority,
+                        deadline: deadline ? new Date(deadline).toISOString() : null
+                    })
+                });
+
+                if (response.ok) {
+                    showToast('Task created successfully!', 'success');
+                    closeNewTaskModal();
+                    await fetchTasks();
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.detail || 'Failed to create task');
+                }
+            } catch (error) {
+                console.error('Error creating task:', error);
+                showToast(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // Open Task Detail Modal
+        async function openTaskDetailModal(taskId) {
+            selectedTaskId = taskId;
+            const task = allTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const priorityColors = {
+                high: 'bg-red-100 text-red-600',
+                medium: 'bg-yellow-100 text-yellow-600',
+                low: 'bg-blue-100 text-blue-600'
+            };
+
+            const assigneesList = task.assignees.map(a => {
+                const statusIcons = {
+                    todo: '⏳',
+                    doing: '🔄',
+                    done: '✅'
+                };
+                return `
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div class="flex items-center gap-2">
+                            <div class="${getAvatarColor(a.email)} w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                ${getFirstName(a.email).charAt(0)}
+                            </div>
+                            <span>${a.email}</span>
+                        </div>
+                        <span class="text-sm">${statusIcons[a.status]} ${a.status.toUpperCase()}</span>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('taskDetailContent').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-2xl font-bold text-gray-800">${task.title}</h4>
+                        <span class="inline-block mt-2 text-sm px-3 py-1 rounded font-semibold ${priorityColors[task.priority]}">${task.priority.toUpperCase()} PRIORITY</span>
+                    </div>
+                    ${task.description ? `<div><p class="text-sm font-medium text-gray-700 mb-1">Description:</p><p class="text-gray-600">${task.description}</p></div>` : ''}
+                    ${task.deadline ? `<div><p class="text-sm font-medium text-gray-700 mb-1">Deadline:</p><p class="text-gray-600">${new Date(task.deadline).toLocaleDateString()}</p></div>` : ''}
+                    <div>
+                        <p class="text-sm font-medium text-gray-700 mb-2">Assignees:</p>
+                        <div class="space-y-2">${assigneesList}</div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('taskDetailModal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeTaskDetailModal() {
+            document.getElementById('taskDetailModal').classList.add('hidden');
+            selectedTaskId = null;
+        }
+
+        // Delete Task
+        async function deleteTask() {
+            if (!selectedTaskId) return;
+            if (!confirm('Are you sure you want to delete this task?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/tasks/${selectedTaskId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (response.ok) {
+                    showToast('Task deleted successfully', 'success');
+                    closeTaskDetailModal();
+                    await fetchTasks();
+                } else {
+                    throw new Error('Failed to delete task');
+                }
+            } catch (error) {
+                console.error('Error deleting task:', error);
+                showToast('Error deleting task', 'error');
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('newTaskBtn').addEventListener('click', openNewTaskModal);
+        document.getElementById('createTaskBtn').addEventListener('click', createTask);
+        document.getElementById('deleteTaskBtn').addEventListener('click', deleteTask);
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) logout();
+        });
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', async () => {
+            currentUser = await checkAuth();
+            if (!currentUser) return;
+
+            document.getElementById('userName').textContent = getFirstName(currentUser.email);
+
+            // Get project ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            projectId = parseInt(urlParams.get('project_id'));
+
+            if (!projectId) {
+                showToast('No project selected', 'error');
+                setTimeout(() => window.location.href = 'projects.html', 2000);
+                return;
+            }
+
+            await fetchProject();
+            await fetchTasks();
+            initializeSortable();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+
+</html>

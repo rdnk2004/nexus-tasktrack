@@ -3,212 +3,719 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Nutmeg · Profile</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Your detailed stats and achievements.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="style.css">
-    <script src="api.js" defer></script>
+    <title>Profile - Nutmeg Task Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--nut-violet) 0%, var(--nut-blue) 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            color: white;
-            box-shadow: 0 0 20px rgba(109, 93, 252, 0.4);
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .stat-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 1.5rem;
-            transition: transform 0.3s var(--ease-elastic);
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
         }
 
-        .stat-card:hover {
+        .counter {
+            animation: countUp 0.6s ease-out;
+        }
+
+        .streak-fire {
+            animation: pulse 2s infinite;
+        }
+
+        .heatmap-square {
+            transition: all 0.2s ease;
+        }
+
+        .heatmap-square:hover {
+            transform: scale(1.2);
+            border: 2px solid #f59e0b;
+        }
+
+        .achievement-card:hover {
             transform: translateY(-4px);
-            background: rgba(255, 255, 255, 0.05);
         }
 
-        .badge {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            opacity: 0.4;
+        .achievement-locked {
             filter: grayscale(100%);
-            transition: all 0.3s ease;
-        }
-
-        .badge.unlocked {
-            opacity: 1;
-            filter: grayscale(0%);
-            background: rgba(109, 93, 252, 0.1);
-            border-color: rgba(109, 93, 252, 0.3);
-            box-shadow: 0 0 15px rgba(109, 93, 252, 0.2);
-        }
-
-        .progress-track {
-            background: rgba(255, 255, 255, 0.1);
-            height: 4px;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-top: 1rem;
-        }
-
-        .progress-fill {
-            height: 100%;
-            width: 0;
-            background: var(--nut-neon);
-            transition: width 1s var(--ease-elastic);
-            box-shadow: 0 0 10px var(--nut-neon);
-        }
-
-        .progress-fill.limit-reached {
-            background: var(--error);
-            box-shadow: 0 0 10px var(--error);
+            opacity: 0.5;
         }
     </style>
 </head>
 
-<body>
-    <div class="ambient-light"></div>
+<body class="bg-gray-50 min-h-screen">
 
-    <nav class="container pt-6 pb-2 relative z-10">
-        <a href="workspace.html" class="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
-            <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                <span class="text-sm">🏠</span>
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🥜</span>
+                    <span class="text-xl font-bold text-orange-500">NUTMEG</span>
+                </div>
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="dashboard.html" class="text-gray-600 hover:text-orange-500 transition-colors">Dashboard</a>
+                    <a href="projects.html" class="text-gray-600 hover:text-orange-500 transition-colors">Projects</a>
+                    <a href="profile.html"
+                        class="text-orange-500 font-semibold border-b-2 border-orange-500 pb-1 transition-colors">Profile</a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:block text-right">
+                        <p class="text-sm text-gray-600">Welcome,</p>
+                        <p id="userName" class="text-sm font-semibold text-gray-800">Loading...</p>
+                    </div>
+                    <button id="logoutBtn"
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Logout</span>
+                    </button>
+                </div>
             </div>
-            <span class="text-xs">Home</span>
-        </a>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class="md:hidden border-t border-gray-200 px-4 py-3 flex gap-4">
+            <a href="dashboard.html"
+                class="flex-1 text-center text-gray-600 py-2 hover:bg-gray-100 rounded-lg transition-colors">Dashboard</a>
+            <a href="projects.html"
+                class="flex-1 text-center text-gray-600 py-2 hover:bg-gray-100 rounded-lg transition-colors">Projects</a>
+            <a href="profile.html"
+                class="flex-1 text-center text-orange-500 font-semibold py-2 bg-orange-50 rounded-lg">Profile</a>
+        </div>
     </nav>
 
-    <main class="container py-8 max-w-4xl relative z-10 animate-fade-up">
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        <!-- Header -->
-        <div class="flex items-center gap-6 mb-12">
-            <div class="profile-avatar">
-                <span id="userInitial">?</span>
-            </div>
-            <div>
-                <h1 class="text-3xl mb-1" id="userName">Loading...</h1>
-                <p class="text-sm text-neon opacity-80" id="userEmail">...</p>
+        <!-- Profile Header -->
+        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
+            <div class="flex flex-col sm:flex-row items-center gap-6">
+                <div id="profileAvatar"
+                    class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+                    N
+                </div>
+                <div class="text-center sm:text-left">
+                    <h1 id="profileName" class="text-3xl font-bold text-gray-800 mb-2">NIKHIL</h1>
+                    <p id="profileEmail" class="text-gray-600 mb-1">nikhil@nutmeg.com</p>
+                    <p class="text-sm text-gray-500">Member since: January 2026</p>
+                </div>
             </div>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-12 delay-100 animate-fade-up">
+        <!-- Stats Section -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
-            <!-- Active Stats -->
-            <div class="stat-card">
-                <h3 class="text-xs uppercase tracking-wide text-gray-500 mb-2">Active Projects</h3>
-                <div class="flex items-end gap-2">
-                    <span class="text-4xl font-bold text-white" id="statActive">0</span>
-                    <span class="text-sm text-gray-500 mb-2">/ 2 max</span>
+            <!-- Projects Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">PROJECTS</h3>
+                    <span class="text-3xl">🎯</span>
                 </div>
-                <!-- Progress for limit -->
-                <div class="progress-track">
-                    <div id="loadingBar" class="progress-fill"></div>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Active:</span>
+                        <span id="activeProjects" class="counter text-xl font-bold text-green-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Done:</span>
+                        <span id="doneProjects" class="counter text-xl font-bold text-blue-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <span class="text-gray-700 font-semibold">Total:</span>
+                        <span id="totalProjects" class="counter text-2xl font-bold text-orange-500">0</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- Completed Stats -->
-            <div class="stat-card">
-                <h3 class="text-xs uppercase tracking-wide text-gray-500 mb-2">Completed</h3>
-                <span class="text-4xl font-bold text-success" id="statDone">0</span>
-                <p class="text-xs text-gray-500 mt-2">Projects delivered</p>
+            <!-- Tasks Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-800">TASKS</h3>
+                    <span class="text-3xl">✅</span>
+                </div>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Done:</span>
+                        <span id="doneTasks" class="counter text-xl font-bold text-green-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-600">Doing:</span>
+                        <span id="doingTasks" class="counter text-xl font-bold text-yellow-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-gray-200">
+                        <span class="text-gray-700 font-semibold">Total:</span>
+                        <span id="totalTasks" class="counter text-2xl font-bold text-orange-500">0</span>
+                    </div>
+                </div>
             </div>
 
-            <!-- Total Tasks Stats -->
-            <div class="stat-card">
-                <h3 class="text-xs uppercase tracking-wide text-gray-500 mb-2">Total Tasks</h3>
-                <span class="text-4xl font-bold text-nut-soft" style="color: var(--nut-soft)" id="statTasks">0</span>
-                <p class="text-xs text-gray-500 mt-2">Assigned to you</p>
+            <!-- Streak Card -->
+            <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-md p-6 text-white">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold">STREAK</h3>
+                    <span class="text-3xl streak-fire">🔥</span>
+                </div>
+                <div class="text-center">
+                    <div class="text-5xl font-bold mb-2">
+                        <span id="streakDays" class="counter">0</span>
+                    </div>
+                    <p class="text-orange-100">Days Active</p>
+                </div>
             </div>
 
         </div>
 
-        <!-- Achievements -->
-        <div class="card p-8 delay-200 animate-fade-up">
-            <h2 class="text-xl font-light mb-6">Achievements</h2>
-            <div class="grid grid-cols-4 gap-4" id="achievementsGrid">
-
-                <!-- Badge 1 -->
-                <div class="badge" id="badge-first">
-                    <span class="text-2xl mb-2">🚀</span>
-                    <span class="text-xs text-center font-bold text-white">First Project</span>
+        <!-- Activity Heatmap -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">📈 ACTIVITY HEATMAP</h2>
+            <div class="overflow-x-auto">
+                <div class="inline-flex flex-col gap-1 min-w-max">
+                    <!-- Day labels -->
+                    <div class="flex gap-1">
+                        <div class="w-12"></div>
+                        <div id="heatmapGrid" class="flex gap-1"></div>
+                    </div>
                 </div>
-
-                <!-- Badge 2 -->
-                <div class="badge" id="badge-master">
-                    <span class="text-2xl mb-2">🏆</span>
-                    <span class="text-xs text-center font-bold text-white">Project Master</span>
+                <div class="flex items-center gap-4 mt-4 text-sm text-gray-600">
+                    <span>Less</span>
+                    <div class="flex gap-1">
+                        <div class="w-4 h-4 bg-gray-200 rounded"></div>
+                        <div class="w-4 h-4 bg-green-200 rounded"></div>
+                        <div class="w-4 h-4 bg-green-400 rounded"></div>
+                        <div class="w-4 h-4 bg-green-600 rounded"></div>
+                    </div>
+                    <span>More</span>
                 </div>
-
-                <!-- Placeholders -->
-                <div class="badge opacity-20">
-                    <span class="text-2xl mb-2">⚡</span>
-                    <span class="text-xs text-center">Speed Demon</span>
-                </div>
-                <div class="badge opacity-20">
-                    <span class="text-2xl mb-2">🤝</span>
-                    <span class="text-xs text-center">Team Player</span>
-                </div>
-
             </div>
+        </div>
+
+        <!-- Achievements Section -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">🏆 ACHIEVEMENTS</h2>
+            <div id="achievementsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Achievement cards will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- This Month Stats -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 THIS MONTH</h2>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Projects Created:</span>
+                        <span id="monthProjects" class="font-bold text-orange-500">0</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Tasks Completed:</span>
+                        <span id="monthTasks" class="font-bold text-green-600">0</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Avg Completion Time:</span>
+                        <span id="avgCompletionTime" class="font-bold text-blue-600">0 days</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-700">Most Productive Day:</span>
+                        <span id="mostProductiveDay" class="font-bold text-purple-600">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Comparison -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">🎯 COMPARED TO TEAM</h2>
+                <div id="leaderboard" class="space-y-3">
+                    <!-- Leaderboard will be inserted here -->
+                </div>
+            </div>
+
         </div>
 
     </main>
 
+    <script src="utils.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-            if (!requireAuth()) return;
-            const user = getCurrentUser();
-            document.getElementById("userEmail").textContent = user;
-            document.getElementById("userName").textContent = user.split('@')[0];
-            document.getElementById("userInitial").textContent = user[0].toUpperCase();
+        let currentUser = null;
+        let userStats = null;
+        let userTasks = [];
+        let userActivities = [];
 
-            try {
-                const stats = await apiGet("/user/stats");
-                const tasks = await apiGet("/user/tasks");
-
-                // Update Stats
-                document.getElementById("statActive").textContent = stats.active_count;
-                document.getElementById("statDone").textContent = stats.done_count;
-                document.getElementById("statTasks").textContent = tasks.length;
-
-                // Progress Bar for Active Projects (Max 2)
-                const percentage = Math.min((stats.active_count / 2) * 100, 100);
-                setTimeout(() => {
-                    const bar = document.getElementById("loadingBar");
-                    bar.style.width = percentage + "%";
-
-                    if (stats.active_count >= 2) {
-                        bar.classList.add("limit-reached");
-                    }
-                }, 100);
-
-                // Badges Logic
-                if (stats.total > 0) {
-                    document.getElementById("badge-first").classList.add("unlocked");
-                }
-                if (stats.done_count >= 3) {
-                    document.getElementById("badge-master").classList.add("unlocked");
-                }
-
-            } catch (err) {
-                console.error(err);
+        // Auth Check
+        async function checkAuth() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return null;
             }
+            try {
+                const response = await fetch(`${API_BASE_URL}/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Invalid token');
+                return await response.json();
+            } catch (error) {
+                removeToken();
+                removeCurrentUser();
+                window.location.href = 'login.html';
+                return null;
+            }
+        }
+
+        // Utility Functions
+        function getFirstName(email) {
+            return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+        }
+
+        function getAvatarColor(email) {
+            const colors = ['bg-orange-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500'];
+            let hash = 0;
+            for (let i = 0; i < email.length; i++) {
+                hash = email.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return colors[Math.abs(hash) % colors.length];
+        }
+
+        // Animate Counter
+        function animateCounter(element, target) {
+            let current = 0;
+            const increment = target / 20;
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= target) {
+                    element.textContent = target;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 50);
+        }
+
+        // Fetch User Stats
+        async function fetchStats() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/user/stats`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                if (response.ok) {
+                    userStats = await response.json();
+                    renderStats();
+                }
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+            }
+        }
+
+        // Fetch User Tasks
+        async function fetchTasks() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/user/tasks`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                if (response.ok) {
+                    userTasks = await response.json();
+                    renderTaskStats();
+                    renderMonthlyStats();
+                }
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+            }
+        }
+
+        // Fetch User Activities
+        async function fetchActivities() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/activities/my?limit=100`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+                if (response.ok) {
+                    userActivities = await response.json();
+                    calculateStreak();
+                    renderHeatmap();
+                    checkAchievements();
+                }
+            } catch (error) {
+                console.error('Error fetching activities:', error);
+            }
+        }
+
+        // Render Stats
+        function renderStats() {
+            if (!userStats) return;
+
+            animateCounter(document.getElementById('activeProjects'), userStats.active_count);
+            animateCounter(document.getElementById('doneProjects'), userStats.done_count);
+            animateCounter(document.getElementById('totalProjects'), userStats.total);
+        }
+
+        // Render Task Stats
+        function renderTaskStats() {
+            // Count tasks by user's individual status
+            const doneTasks = userTasks.filter(t => {
+                const myAssignment = t.assignees.find(a => a.email === currentUser.email);
+                return myAssignment && myAssignment.status === 'done';
+            }).length;
+
+            const doingTasks = userTasks.filter(t => {
+                const myAssignment = t.assignees.find(a => a.email === currentUser.email);
+                return myAssignment && myAssignment.status === 'doing';
+            }).length;
+
+            animateCounter(document.getElementById('doneTasks'), doneTasks);
+            animateCounter(document.getElementById('doingTasks'), doingTasks);
+            animateCounter(document.getElementById('totalTasks'), userTasks.length);
+        }
+
+        // Calculate Streak
+        function calculateStreak() {
+            if (userActivities.length === 0) {
+                document.getElementById('streakDays').textContent = '0';
+                return;
+            }
+
+            // Group activities by date
+            const dateMap = {};
+            userActivities.forEach(activity => {
+                const date = new Date(activity.created_at).toDateString();
+                dateMap[date] = true;
+            });
+
+            // Find longest consecutive streak
+            const dates = Object.keys(dateMap).sort((a, b) => new Date(b) - new Date(a));
+            let currentStreak = 0;
+            let maxStreak = 0;
+
+            const today = new Date().toDateString();
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+            // Check if streak is still active (today or yesterday)
+            if (dateMap[today] || dateMap[yesterday]) {
+                currentStreak = 1;
+                let checkDate = new Date(dateMap[today] ? today : yesterday);
+
+                while (true) {
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    const dateStr = checkDate.toDateString();
+                    if (dateMap[dateStr]) {
+                        currentStreak++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            maxStreak = Math.max(currentStreak, maxStreak);
+            animateCounter(document.getElementById('streakDays'), currentStreak);
+        }
+
+        // Render Heatmap
+        function renderHeatmap() {
+            const grid = document.getElementById('heatmapGrid');
+            grid.innerHTML = '';
+
+            // Get last 28 days
+            const days = [];
+            for (let i = 27; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                days.push(date);
+            }
+
+            // Count tasks completed per day
+            const taskCountByDay = {};
+            userActivities.forEach(activity => {
+                if (activity.activity_type === 'task_completed') {
+                    const dateStr = new Date(activity.created_at).toDateString();
+                    taskCountByDay[dateStr] = (taskCountByDay[dateStr] || 0) + 1;
+                }
+            });
+
+            // Create grid (7 rows x 4 columns)
+            for (let week = 0; week < 4; week++) {
+                const weekDiv = document.createElement('div');
+                weekDiv.className = 'flex flex-col gap-1';
+
+                for (let day = 0; day < 7; day++) {
+                    const index = week * 7 + day;
+                    if (index >= days.length) break;
+
+                    const date = days[index];
+                    const dateStr = date.toDateString();
+                    const count = taskCountByDay[dateStr] || 0;
+
+                    let bgColor = 'bg-gray-200';
+                    if (count >= 5) bgColor = 'bg-green-600';
+                    else if (count >= 3) bgColor = 'bg-green-400';
+                    else if (count >= 1) bgColor = 'bg-green-200';
+
+                    const square = document.createElement('div');
+                    square.className = `heatmap-square w-4 h-4 rounded ${bgColor}`;
+                    square.title = `${date.toLocaleDateString()} • ${count} tasks completed`;
+
+                    weekDiv.appendChild(square);
+                }
+
+                grid.appendChild(weekDiv);
+            }
+        }
+
+        // Check Achievements
+        function checkAchievements() {
+            const achievements = [
+                {
+                    id: 'speedrunner',
+                    icon: '🚀',
+                    name: 'SPEEDRUNNER',
+                    description: 'Completed 10 tasks in one day',
+                    check: () => {
+                        const tasksByDay = {};
+                        userActivities.forEach(a => {
+                            if (a.activity_type === 'task_completed') {
+                                const date = new Date(a.created_at).toDateString();
+                                tasksByDay[date] = (tasksByDay[date] || 0) + 1;
+                            }
+                        });
+                        return Object.values(tasksByDay).some(count => count >= 10);
+                    }
+                },
+                {
+                    id: 'teamplayer',
+                    icon: '🤝',
+                    name: 'TEAM PLAYER',
+                    description: 'Collaborated on 5 projects',
+                    check: () => userStats && userStats.total >= 5
+                },
+                {
+                    id: 'onfire',
+                    icon: '🔥',
+                    name: 'ON FIRE',
+                    description: '7-day streak',
+                    check: () => parseInt(document.getElementById('streakDays').textContent) >= 7
+                },
+                {
+                    id: 'perfectionist',
+                    icon: '🎯',
+                    name: 'PERFECTIONIST',
+                    description: 'Completed all tasks in a project',
+                    check: () => userStats && userStats.done_count >= 1
+                },
+                {
+                    id: 'nightowl',
+                    icon: '🌙',
+                    name: 'NIGHT OWL',
+                    description: 'Created task after 10 PM',
+                    check: () => {
+                        return userActivities.some(a => {
+                            const hour = new Date(a.created_at).getHours();
+                            return a.activity_type === 'task_created' && hour >= 22;
+                        });
+                    }
+                },
+                {
+                    id: 'earlybird',
+                    icon: '🌅',
+                    name: 'EARLY BIRD',
+                    description: 'Created task before 6 AM',
+                    check: () => {
+                        return userActivities.some(a => {
+                            const hour = new Date(a.created_at).getHours();
+                            return a.activity_type === 'task_created' && hour < 6;
+                        });
+                    }
+                }
+            ];
+
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '';
+
+            achievements.forEach(achievement => {
+                const unlocked = achievement.check();
+                const card = document.createElement('div');
+                card.className = `achievement-card bg-white border-2 ${unlocked ? 'border-orange-500' : 'border-gray-200'} rounded-lg p-4 transition-all ${unlocked ? '' : 'achievement-locked'}`;
+
+                card.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <span class="text-3xl">${achievement.icon}</span>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-gray-800 mb-1">${achievement.name}</h4>
+                            <p class="text-sm text-gray-600 mb-2">${achievement.description}</p>
+                            <span class="text-xs ${unlocked ? 'text-green-600 font-semibold' : 'text-gray-400'}">
+                                ${unlocked ? '✓ Unlocked' : '🔒 Locked'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        // Render Monthly Stats
+        function renderMonthlyStats() {
+            const now = new Date();
+            const thisMonth = now.getMonth();
+            const thisYear = now.getFullYear();
+
+            // Filter tasks completed this month
+            const monthlyTasks = userActivities.filter(a => {
+                if (a.activity_type !== 'task_completed') return false;
+                const date = new Date(a.created_at);
+                return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+            });
+
+            document.getElementById('monthTasks').textContent = monthlyTasks.length;
+
+            // Count projects created this month
+            const monthlyProjects = userActivities.filter(a => {
+                if (a.activity_type !== 'project_created') return false;
+                const date = new Date(a.created_at);
+                return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+            }).length;
+
+            document.getElementById('monthProjects').textContent = monthlyProjects;
+
+            // Calculate average completion time
+            const completedTasks = userTasks.filter(t => {
+                const myAssignment = t.assignees.find(a => a.email === currentUser.email);
+                return myAssignment && myAssignment.status === 'done' && myAssignment.completed_at;
+            });
+
+            if (completedTasks.length > 0) {
+                const totalDays = completedTasks.reduce((sum, task) => {
+                    const created = new Date(task.created_at);
+                    const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+                    const completed = new Date(myAssignment.completed_at);
+                    const diffDays = Math.ceil((completed - created) / (1000 * 60 * 60 * 24));
+                    return sum + diffDays;
+                }, 0);
+                const avgDays = Math.round(totalDays / completedTasks.length);
+                document.getElementById('avgCompletionTime').textContent = `${avgDays} days`;
+            } else {
+                document.getElementById('avgCompletionTime').textContent = '0 days';
+            }
+
+            // Most productive day
+            const dayCount = {};
+            monthlyTasks.forEach(a => {
+                const day = new Date(a.created_at).toLocaleDateString('en-US', { weekday: 'long' });
+                dayCount[day] = (dayCount[day] || 0) + 1;
+            });
+
+            let maxDay = '-';
+            let maxCount = 0;
+            Object.entries(dayCount).forEach(([day, count]) => {
+                if (count > maxCount) {
+                    maxCount = count;
+                    maxDay = day;
+                }
+            });
+
+            document.getElementById('mostProductiveDay').textContent = maxCount > 0 ? `${maxDay} (${maxCount} tasks)` : '-';
+        }
+
+        // Fetch Team Stats and Render Leaderboard
+        async function renderLeaderboard() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                });
+
+                if (response.ok) {
+                    const teamStats = await response.json();
+                    const members = teamStats.members || [];
+
+                    // Sort by completed tasks
+                    members.sort((a, b) => b.completed_tasks_this_week - a.completed_tasks_this_week);
+
+                    const leaderboard = document.getElementById('leaderboard');
+                    leaderboard.innerHTML = '';
+
+                    const medals = ['🥇', '🥈', '🥉'];
+                    const maxTasks = Math.max(...members.map(m => m.completed_tasks_this_week), 1);
+
+                    members.forEach((member, index) => {
+                        const isCurrentUser = member.email === currentUser.email;
+                        const progressWidth = (member.completed_tasks_this_week / maxTasks) * 100;
+
+                        const row = document.createElement('div');
+                        row.className = `p-3 rounded-lg transition-all ${isCurrentUser ? 'bg-orange-50 border-2 border-orange-500' : 'bg-gray-50'}`;
+
+                        row.innerHTML = `
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-lg font-bold text-gray-400">#${index + 1}</span>
+                                    ${index < 3 ? `<span class="text-2xl">${medals[index]}</span>` : ''}
+                                    <span class="font-semibold ${isCurrentUser ? 'text-orange-600' : 'text-gray-700'}">
+                                        ${getFirstName(member.email)}
+                                    </span>
+                                </div>
+                                <span class="font-bold text-lg ${isCurrentUser ? 'text-orange-600' : 'text-gray-700'}">
+                                    ${member.completed_tasks_this_week}
+                                </span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-orange-500 h-2 rounded-full transition-all" style="width: ${progressWidth}%"></div>
+                            </div>
+                        `;
+
+                        leaderboard.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching team stats:', error);
+            }
+        }
+
+        // Render Profile Header
+        function renderProfileHeader() {
+            const name = getFirstName(currentUser.email);
+            const initial = name.charAt(0);
+
+            document.getElementById('profileName').textContent = name.toUpperCase();
+            document.getElementById('profileEmail').textContent = currentUser.email;
+            document.getElementById('profileAvatar').textContent = initial;
+            document.getElementById('userName').textContent = name;
+        }
+
+        // Event Listeners
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) logout();
+        });
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', async () => {
+            currentUser = await checkAuth();
+            if (!currentUser) return;
+
+            renderProfileHeader();
+
+            // Fetch all data
+            await Promise.all([
+                fetchStats(),
+                fetchTasks(),
+                fetchActivities(),
+                renderLeaderboard()
+            ]);
+
+            lucide.createIcons();
         });
     </script>
 </body>

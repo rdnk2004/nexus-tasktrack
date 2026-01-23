@@ -1,0 +1,21 @@
+# Nutmeg Backend - Python Dependencies
+
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+
+# Database & ORM
+sqlmodel==0.0.14
+sqlalchemy==2.0.23
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Date/Time Handling
+python-dateutil==2.8.2
+
+# Development & Testing (optional but recommended)
+pytest==7.4.3
+httpx==0.25.2

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Nutmeg Task Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-10px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(10px);
+            }
+        }
+
+        .shake {
+            animation: shake 0.5s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+    </style>
+</head>
+
+<body
+    class="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center p-4">
+
+    <!-- Login Card -->
+    <div id="loginCard" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 slide-in">
+        <!-- Logo and Title -->
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">🥜</div>
+            <h1 class="text-3xl font-bold text-gray-800 mb-2">NUTMEG</h1>
+            <p class="text-gray-600 text-sm">Task Tracker for Teams</p>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" class="space-y-6">
+            <!-- Email Dropdown -->
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                    Email Address
+                </label>
+                <div class="relative">
+                    <select id="email" name="email" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 appearance-none bg-white cursor-pointer">
+                        <option value="">Select your email</option>
+                        <option value="nikhil@nutmeg.com">nikhil@nutmeg.com</option>
+                        <option value="jayasree@nutmeg.com">jayasree@nutmeg.com</option>
+                        <option value="nandana@nutmeg.com">nandana@nutmeg.com</option>
+                        <option value="hafeez@nutmeg.com">hafeez@nutmeg.com</option>
+                    </select>
+                    <i data-lucide="chevron-down"
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none"></i>
+                </div>
+            </div>
+
+            <!-- Password Input -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                </label>
+                <div class="relative">
+                    <input type="password" id="password" name="password" required placeholder="Enter your password"
+                        class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200" />
+                    <button type="button" id="togglePassword"
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded p-1"
+                        aria-label="Toggle password visibility">
+                        <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Login Button -->
+            <button type="submit" id="loginButton"
+                class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-orange-300 flex items-center justify-center gap-2">
+                <span id="buttonText">Login</span>
+                <i data-lucide="log-in" id="loginIcon" class="w-5 h-5"></i>
+                <!-- Loading Spinner (hidden by default) -->
+                <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white"
+                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+            </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="mt-6 text-center">
+            <p class="text-gray-500 text-xs">
+                Nutmeg Task Tracker © 2026
+            </p>
+        </div>
+    </div>
+
+    <script src="utils.js"></script>
+    <script>
+        // Password Toggle Functionality
+        const togglePassword = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+
+        togglePassword.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            // Update icon
+            eyeIcon.setAttribute('data-lucide', type === 'password' ? 'eye' : 'eye-off');
+            lucide.createIcons();
+        });
+
+        // Form Submission
+        const loginForm = document.getElementById('loginForm');
+        const loginButton = document.getElementById('loginButton');
+        const buttonText = document.getElementById('buttonText');
+        const loginIcon = document.getElementById('loginIcon');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const loginCard = document.getElementById('loginCard');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Get form values
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Validate fields
+            if (!email || !password) {
+                showToast('Please fill in all fields', 'error');
+                loginCard.classList.add('shake');
+                setTimeout(() => loginCard.classList.remove('shake'), 500);
+                return;
+            }
+
+            // Show loading state
+            loginButton.disabled = true;
+            buttonText.textContent = 'Logging in...';
+            loginIcon.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+
+            try {
+                // Make API request
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Success - store token and user info
+                    setToken(data.access_token);
+                    setCurrentUser({ email: data.email });
+
+
+                    showToast('Login successful! Redirecting...', 'success');
+
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                } else {
+                    // Error response from server
+                    throw new Error(data.detail || 'Invalid credentials');
+                }
+            } catch (error) {
+                // Handle errors
+                console.error('Login error:', error);
+
+                if (error.message.includes('Failed to fetch')) {
+                    showToast('Cannot connect to server. Please check if the backend is running.', 'error');
+                } else {
+                    showToast(error.message || 'Login failed. Please try again.', 'error');
+                }
+
+                // Shake animation
+                loginCard.classList.add('shake');
+                setTimeout(() => loginCard.classList.remove('shake'), 500);
+
+                // Reset button state
+                loginButton.disabled = false;
+                buttonText.textContent = 'Login';
+                loginIcon.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+            }
+        });
+
+        // Check if already logged in
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = getToken();
+            if (token) {
+                window.location.href = 'dashboard.html';
+            }
+        });
+
+        // Enter key submits form (already handled by form submit event)
+        // Tab navigation works automatically with proper HTML structure
+    </script>
+</body>
+
+</html>

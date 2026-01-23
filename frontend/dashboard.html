@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Nutmeg Task Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @keyframes shimmer {
+            0% {
+                background-position: -1000px 0;
+            }
+
+            100% {
+                background-position: 1000px 0;
+            }
+        }
+
+        .skeleton {
+            animation: shimmer 2s infinite;
+            background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
+            background-size: 1000px 100%;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo/Brand -->
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">🥜</span>
+                    <span class="text-xl font-bold text-orange-500">NUTMEG</span>
+                </div>
+
+                <!-- Navigation Links (Desktop) -->
+                <div class="hidden md:flex items-center gap-6">
+                    <a href="dashboard.html"
+                        class="text-orange-500 font-semibold border-b-2 border-orange-500 pb-1 transition-colors">
+                        Dashboard
+                    </a>
+                    <a href="projects.html" class="text-gray-600 hover:text-orange-500 transition-colors">
+                        Projects
+                    </a>
+                    <a href="profile.html" class="text-gray-600 hover:text-orange-500 transition-colors">
+                        Profile
+                    </a>
+                </div>
+
+                <!-- User Info & Logout -->
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:block text-right">
+                        <p class="text-sm text-gray-600">Welcome,</p>
+                        <p id="userName" class="text-sm font-semibold text-gray-800">Loading...</p>
+                    </div>
+                    <button id="logoutBtn"
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span class="hidden sm:inline">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class="md:hidden border-t border-gray-200 px-4 py-3 flex gap-4">
+            <a href="dashboard.html"
+                class="flex-1 text-center text-orange-500 font-semibold py-2 bg-orange-50 rounded-lg">
+                Dashboard
+            </a>
+            <a href="projects.html"
+                class="flex-1 text-center text-gray-600 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                Projects
+            </a>
+            <a href="profile.html"
+                class="flex-1 text-center text-gray-600 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                Profile
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Column 1: MY PROJECTS -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        MY PROJECTS
+                        <span id="projectCount" class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">0</span>
+                    </h2>
+                    <button id="newProjectBtn" class="text-orange-500 hover:text-orange-600 transition-colors"
+                        title="New Project">
+                        <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <!-- Projects List -->
+                <div id="projectsList" class="space-y-4 mb-6">
+                    <!-- Skeleton loaders shown while loading -->
+                </div>
+
+                <!-- Project Stats -->
+                <div id="projectStats" class="text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
+                    <!-- Stats will be inserted here -->
+                </div>
+
+                <!-- View All Button -->
+                <a href="projects.html"
+                    class="block text-center bg-orange-50 hover:bg-orange-100 text-orange-600 font-semibold py-2 rounded-lg transition-colors">
+                    View All Projects
+                </a>
+            </div>
+
+            <!-- Column 2: MY TASKS -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        MY TASKS
+                        <span id="taskCount" class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">0</span>
+                    </h2>
+                </div>
+
+                <!-- Tasks List -->
+                <div id="tasksList" class="space-y-3 mb-6">
+                    <!-- Skeleton loaders shown while loading -->
+                </div>
+
+                <!-- Task Summary -->
+                <div id="taskSummary"
+                    class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 text-sm text-green-700">
+                    <!-- Summary will be inserted here -->
+                </div>
+
+                <!-- View All Button -->
+                <a href="tasks.html"
+                    class="block text-center bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-2 rounded-lg transition-colors">
+                    View All Tasks
+                </a>
+            </div>
+
+            <!-- Column 3: TEAM PULSE -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-800">TEAM PULSE</h2>
+                    <i data-lucide="activity" class="w-5 h-5 text-gray-400"></i>
+                </div>
+
+                <p class="text-sm text-gray-600 mb-4">Recent Activity</p>
+
+                <!-- Activity Feed -->
+                <div id="activityFeed" class="space-y-4 mb-6">
+                    <!-- Skeleton loaders shown while loading -->
+                </div>
+
+                <!-- View All Button -->
+                <button
+                    class="w-full text-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold py-2 rounded-lg transition-colors">
+                    View All Activity
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="utils.js"></script>
+    <script>
+        // Authentication Check
+        async function checkAuth() {
+            const token = getToken();
+            if (!token) {
+                window.location.href = 'login.html';
+                return null;
+            }
+
+            try {
+                // Validate token with backend
+                const response = await fetch(`${API_BASE_URL}/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Invalid token');
+                }
+
+                const user = await response.json();
+                return user;
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                // Clear localStorage and redirect to login
+                removeToken();
+                removeCurrentUser();
+                window.location.href = 'login.html';
+                return null;
+            }
+        }
+
+        // Extract first name from email
+        function getFirstName(email) {
+            return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+        }
+
+        // Get relative time
+        function getRelativeTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSecs = Math.floor(diffMs / 1000);
+            const diffMins = Math.floor(diffSecs / 60);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffSecs < 60) return 'just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays === 1) return 'yesterday';
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        // Get days until deadline
+        function getDaysUntil(dateString) {
+            const deadline = new Date(dateString);
+            const now = new Date();
+            const diffMs = deadline - now;
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+            if (diffDays < 0) return { text: `${Math.abs(diffDays)} days overdue`, color: 'text-red-600' };
+            if (diffDays === 0) return { text: 'Due today', color: 'text-yellow-600' };
+            if (diffDays === 1) return { text: '1 day left', color: 'text-yellow-600' };
+            if (diffDays <= 3) return { text: `${diffDays} days left`, color: 'text-orange-600' };
+            return { text: `${diffDays} days left`, color: 'text-gray-600' };
+        }
+
+        // Show skeleton loaders
+        function showSkeletons(containerId, count) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton h-20 rounded-lg';
+                container.appendChild(skeleton);
+            }
+        }
+
+        // Fetch Projects
+        async function fetchProjects() {
+            showSkeletons('projectsList', 3);
+
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/projects`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch projects');
+
+                const projects = await response.json();
+                const activeProjects = projects.filter(p => p.status === 'active').slice(0, 3);
+                const doneProjects = projects.filter(p => p.status === 'done').length;
+                const archivedProjects = projects.filter(p => p.status === 'archived').length;
+
+                document.getElementById('projectCount').textContent = activeProjects.length;
+
+                // Display projects
+                const projectsList = document.getElementById('projectsList');
+                projectsList.innerHTML = '';
+
+                if (activeProjects.length === 0) {
+                    projectsList.innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <i data-lucide="folder-open" class="w-12 h-12 mx-auto mb-2"></i>
+                            <p>No active projects yet</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                } else {
+                    activeProjects.forEach(project => {
+                        const tasksDone = project.completed_tasks || 0;
+                        const tasksTotal = project.total_tasks || 0;
+                        const progress = tasksTotal > 0 ? (tasksDone / tasksTotal) * 100 : 0;
+                        const deadline = project.end_date ? getDaysUntil(project.end_date) : null;
+
+                        const projectCard = document.createElement('div');
+                        projectCard.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-md hover:scale-105 transition-all cursor-pointer';
+                        projectCard.onclick = () => window.location.href = `tasks.html?project_id=${project.id}`;
+
+                        projectCard.innerHTML = `
+                            <div class="flex items-start justify-between mb-3">
+                                <h3 class="font-semibold text-gray-800">${project.name}</h3>
+                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                            </div>
+                            <div class="mb-2">
+                                <div class="flex justify-between text-xs text-gray-600 mb-1">
+                                    <span>${tasksDone}/${tasksTotal} tasks</span>
+                                    <span>${Math.round(progress)}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-orange-500 h-2 rounded-full transition-all" style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+                            ${deadline ? `<p class="text-xs ${deadline.color} font-medium">${deadline.text}</p>` : ''}
+                        `;
+
+                        projectsList.appendChild(projectCard);
+                    });
+                }
+
+                // Display stats
+                document.getElementById('projectStats').innerHTML = `
+                    <span class="mr-4">✅ ${doneProjects} Done</span>
+                    <span>📦 ${archivedProjects} Archived</span>
+                `;
+
+            } catch (error) {
+                console.error('Error fetching projects:', error);
+                document.getElementById('projectsList').innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p>Error loading projects</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Fetch Tasks
+        async function fetchTasks() {
+            showSkeletons('tasksList', 5);
+
+            try {
+                const token = getToken();
+                const currentUser = getCurrentUser();
+                const response = await fetch(`${API_BASE_URL}/user/tasks`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch tasks');
+
+                const allTasks = await response.json();
+
+                // Filter tasks where current user's status is not done
+                const myTasks = allTasks.filter(task => {
+                    const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+                    return myAssignment && myAssignment.status !== 'done';
+                }).slice(0, 5);
+
+                // Count tasks where current user completed
+                const completedCount = allTasks.filter(task => {
+                    const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+                    return myAssignment && myAssignment.status === 'done';
+                }).length;
+
+                document.getElementById('taskCount').textContent = myTasks.length;
+
+                // Display tasks
+                const tasksList = document.getElementById('tasksList');
+                tasksList.innerHTML = '';
+
+                if (myTasks.length === 0) {
+                    tasksList.innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <i data-lucide="check-circle" class="w-12 h-12 mx-auto mb-2"></i>
+                            <p>No pending tasks</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                } else {
+                    myTasks.forEach(task => {
+                        const priorityColors = {
+                            'high': 'bg-red-100 text-red-600',
+                            'urgent': 'bg-red-100 text-red-600',
+                            'medium': 'bg-yellow-100 text-yellow-600',
+                            'low': 'bg-green-100 text-green-600'
+                        };
+                        const deadline = task.deadline ? getDaysUntil(task.deadline) : null;
+
+                        const taskCard = document.createElement('div');
+                        taskCard.className = 'border border-gray-200 rounded-lg p-3 hover:shadow-md hover:scale-105 transition-all cursor-pointer';
+                        taskCard.onclick = () => window.location.href = `tasks.html?project_id=${task.project_id}`;
+
+                        taskCard.innerHTML = `
+                            <h4 class="font-medium text-gray-800 mb-2">${task.title}</h4>
+                            <div class="flex items-center justify-between">
+                                <p class="text-xs text-gray-500">Project #${task.project_id}</p>
+                                <span class="text-xs px-2 py-1 rounded ${priorityColors[task.priority] || priorityColors['low']}">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
+                            </div>
+                            ${deadline ? `<p class="text-xs ${deadline.color} font-medium mt-2">${deadline.text}</p>` : ''}
+                        `;
+
+                        tasksList.appendChild(taskCard);
+                    });
+                }
+
+                // Display summary
+                document.getElementById('taskSummary').innerHTML = `
+                    <span class="font-semibold">✅ ${completedCount} Completed</span>
+                `;
+
+            } catch (error) {
+                console.error('Error fetching tasks:', error);
+                document.getElementById('tasksList').innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p>Error loading tasks</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Fetch Activities
+        async function fetchActivities() {
+            showSkeletons('activityFeed', 5);
+
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/activities?limit=5`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch activities');
+
+                const activities = await response.json();
+
+                // Display activities
+                const activityFeed = document.getElementById('activityFeed');
+                activityFeed.innerHTML = '';
+
+                if (activities.length === 0) {
+                    activityFeed.innerHTML = `
+                        <div class="text-center py-8 text-gray-400">
+                            <i data-lucide="bell-off" class="w-12 h-12 mx-auto mb-2"></i>
+                            <p>No recent activity</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                } else {
+                    const avatarColors = ['bg-orange-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500'];
+
+                    activities.forEach((activity, index) => {
+                        const userName = activity.user_email ? getFirstName(activity.user_email) : 'User';
+                        const initial = userName.charAt(0).toUpperCase();
+                        const avatarColor = avatarColors[index % avatarColors.length];
+                        const timestamp = getRelativeTime(activity.created_at);
+
+                        const activityItem = document.createElement('div');
+                        activityItem.className = 'flex gap-3';
+
+                        activityItem.innerHTML = `
+                            <div class="${avatarColor} w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                ${initial}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-800">${activity.description}</p>
+                                <p class="text-xs text-gray-500 mt-1">${timestamp}</p>
+                            </div>
+                        `;
+
+                        activityFeed.appendChild(activityItem);
+                    });
+                }
+
+            } catch (error) {
+                console.error('Error fetching activities:', error);
+                document.getElementById('activityFeed').innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p>Error loading activity</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to logout?')) {
+                logout();
+            }
+        });
+
+        // New Project Button
+        document.getElementById('newProjectBtn').addEventListener('click', () => {
+            window.location.href = 'projects.html?action=new';
+        });
+
+        // Initialize Dashboard
+        async function initDashboard() {
+            const user = await checkAuth();
+            if (!user) return;
+
+            // Display user name
+            document.getElementById('userName').textContent = getFirstName(user.email);
+
+            // Fetch all data
+            await Promise.all([
+                fetchProjects(),
+                fetchTasks(),
+                fetchActivities()
+            ]);
+
+            // Initialize icons
+            lucide.createIcons();
+        }
+
+        // Run on page load
+        window.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+</body>
+
+</html>
