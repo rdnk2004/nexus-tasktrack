@@ -1,11 +1,12 @@
-from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import create_engine, Session
+from app.config import settings
 
-DATABASE_URL = "sqlite:///./nutmeg_v2.db"
-
+# Create engine based on configuration
 engine = create_engine(
-    DATABASE_URL,
-    echo=True,  # logs SQL (great for learning)
-    connect_args={"check_same_thread": False}
+    settings.DATABASE_URL,
+    echo=True,
+    # Remove SQLite-specific settings for PostgreSQL
+    connect_args={"check_same_thread": False} if settings.DATABASE_TYPE == "sqlite" else {}
 )
 
 def get_session():

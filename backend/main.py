@@ -843,6 +843,14 @@ def delete_task(
         task_id=task_id
     )
 
+    # Delete associated TaskAssignees first to satisfy foreign key constraints
+    assignees = session.exec(
+        select(TaskAssignee).where(TaskAssignee.task_id == task_id)
+    ).all()
+    
+    for assignee in assignees:
+        session.delete(assignee)
+
     session.delete(task)
     session.commit()
     return {"message": "Task removed 🌱"}
