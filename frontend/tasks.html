@@ -105,21 +105,15 @@
 
 <body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
 
-    <!-- Background Ambient Effects -->
-    <div class="fixed inset-0 z-0 pointer-events-none">
-        <div
-            class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgbZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBmaWxsPSIjMjIyIiBmaWxsLW9wYWNpdHk9IjAuMDUiPjxwYXRoIGQ9Ik0zNiAzNHYtNGgtMnY0aC0ydjRoMnY0aDJ2LTRoMnYtNGgtMnpNMzYgMzRWMzBoNDB2NGgtNDB6Ii8+PC9nPjwvZz48L3N2Zz4=')]">
-        </div>
-        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-yellow-600/5 blur-[120px] rounded-full"></div>
-        <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[100px] rounded-full"></div>
-    </div>
+
 
     <!-- Top Navigation Bar -->
     <nav class="bg-black/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-4">
-                    <span class="text-3xl drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🥜</span>
+                    <i data-lucide="network"
+                        class="w-8 h-8 text-yellow-500 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]"></i>
                     <span
                         class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 tracking-tight">NEXUS</span>
                 </div>
@@ -926,6 +920,7 @@
             lucide.createIcons();
         });
     </script>
+    <script src="nexus-theme.js"></script>
 </body>
 
 </html>
