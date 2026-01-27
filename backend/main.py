@@ -850,6 +850,8 @@ def delete_task(
     
     for assignee in assignees:
         session.delete(assignee)
+    
+    session.flush()  # Ensure assignees are deleted before task
 
     session.delete(task)
     session.commit()
