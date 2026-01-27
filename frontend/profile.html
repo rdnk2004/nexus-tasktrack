@@ -4,10 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - Nutmeg Task Tracker</title>
+    <title>Profile - NEXUS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+        }
+
         @keyframes countUp {
             from {
                 opacity: 0;
@@ -45,8 +52,9 @@
         }
 
         .heatmap-square:hover {
-            transform: scale(1.2);
-            border: 2px solid #f59e0b;
+            transform: scale(1.4);
+            border: 1px solid #ffd700;
+            z-index: 10;
         }
 
         .achievement-card:hover {
@@ -54,196 +62,255 @@
         }
 
         .achievement-locked {
-            filter: grayscale(100%);
-            opacity: 0.5;
+            filter: grayscale(100%) opacity(0.3);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
         }
     </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen">
+<body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
+
+    <!-- Background Ambient Effects -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute inset-0 bg-gradient-to-br from-neutral-900/50 via-black to-black"></div>
+        <div class="absolute top-40 right-0 w-[500px] h-[500px] bg-yellow-600/5 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-40 left-0 w-[600px] h-[600px] bg-purple-900/5 blur-[100px] rounded-full"></div>
+    </div>
 
     <!-- Top Navigation Bar -->
-    <nav class="bg-white shadow-md sticky top-0 z-50">
+    <nav class="bg-black/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-3">
-                    <span class="text-3xl">🥜</span>
-                    <span class="text-xl font-bold text-orange-500">NUTMEG</span>
-                </div>
-                <div class="hidden md:flex items-center gap-6">
-                    <a href="dashboard.html" class="text-gray-600 hover:text-orange-500 transition-colors">Dashboard</a>
-                    <a href="projects.html" class="text-gray-600 hover:text-orange-500 transition-colors">Projects</a>
-                    <a href="profile.html"
-                        class="text-orange-500 font-semibold border-b-2 border-orange-500 pb-1 transition-colors">Profile</a>
-                </div>
+            <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-4">
+                    <span class="text-3xl drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🥜</span>
+                    <span
+                        class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 tracking-tight">NEXUS</span>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="dashboard.html"
+                        class="text-gray-400 hover:text-white transition-colors font-medium">Dashboard</a>
+                    <a href="projects.html"
+                        class="text-gray-400 hover:text-white transition-colors font-medium">Projects</a>
+                    <a href="profile.html"
+                        class="text-yellow-500 font-medium border-b-2 border-yellow-500 pb-1 transition-all drop-shadow-[0_0_8px_rgba(255,215,0,0.3)]">Profile</a>
+                </div>
+                <div class="flex items-center gap-6">
                     <div class="hidden sm:block text-right">
-                        <p class="text-sm text-gray-600">Welcome,</p>
-                        <p id="userName" class="text-sm font-semibold text-gray-800">Loading...</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">Operator</p>
+                        <p id="userName" class="text-sm font-bold text-white">Loading...</p>
                     </div>
                     <button id="logoutBtn"
-                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Logout</span>
+                        class="group bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded-xl transition-all border border-white/10 hover:border-red-500/50 flex items-center gap-2">
+                        <i data-lucide="log-out"
+                            class="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors"></i>
+                        <span class="hidden sm:inline text-sm font-medium">Logout</span>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Mobile Navigation -->
-        <div class="md:hidden border-t border-gray-200 px-4 py-3 flex gap-4">
+        <div class="md:hidden border-t border-white/10 px-4 py-3 flex gap-2 bg-black/90 backdrop-blur-md">
             <a href="dashboard.html"
-                class="flex-1 text-center text-gray-600 py-2 hover:bg-gray-100 rounded-lg transition-colors">Dashboard</a>
+                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors">Dashboard</a>
             <a href="projects.html"
-                class="flex-1 text-center text-gray-600 py-2 hover:bg-gray-100 rounded-lg transition-colors">Projects</a>
+                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors">Projects</a>
             <a href="profile.html"
-                class="flex-1 text-center text-orange-500 font-semibold py-2 bg-orange-50 rounded-lg">Profile</a>
+                class="flex-1 text-center text-yellow-500 font-medium py-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">Profile</a>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
 
         <!-- Profile Header -->
-        <div class="bg-white rounded-xl shadow-md p-8 mb-8">
-            <div class="flex flex-col sm:flex-row items-center gap-6">
-                <div id="profileAvatar"
-                    class="w-24 h-24 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-                    N
+        <div
+            class="bg-neutral-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-8 mb-10 shadow-2xl relative overflow-hidden group">
+            <div
+                class="absolute top-0 right-0 w-[300px] h-[300px] bg-gradient-to-br from-yellow-500/10 to-transparent blur-3xl opacity-50">
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center gap-8 relative z-10">
+                <!-- Avatar with glowing ring -->
+                <div class="relative">
+                    <div
+                        class="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400 to-orange-600 blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500">
+                    </div>
+                    <div id="profileAvatar"
+                        class="relative w-28 h-28 rounded-full bg-black border-2 border-white/10 flex items-center justify-center text-white text-4xl font-black shadow-inner ring-4 ring-black">
+                        N
+                    </div>
+                    <div class="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-black rounded-full">
+                    </div>
                 </div>
+
                 <div class="text-center sm:text-left">
-                    <h1 id="profileName" class="text-3xl font-bold text-gray-800 mb-2">NIKHIL</h1>
-                    <p id="profileEmail" class="text-gray-600 mb-1">nikhil@nutmeg.com</p>
-                    <p class="text-sm text-gray-500">Member since: January 2026</p>
+                    <h1 id="profileName" class="text-4xl font-black text-white mb-2 tracking-tight">NIKHIL</h1>
+                    <div
+                        class="flex items-center justify-center sm:justify-start gap-2 text-gray-400 mb-4 bg-black/30 inline-flex px-3 py-1 rounded-lg border border-white/5">
+                        <i data-lucide="mail" class="w-4 h-4"></i>
+                        <span id="profileEmail" class="text-sm font-mono">nikhil@nutmeg.com</span>
+                    </div>
+                    <p class="text-xs text-gray-600 uppercase tracking-widest">Active Operative since January 2026</p>
                 </div>
             </div>
         </div>
 
         <!-- Stats Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
             <!-- Projects Card -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-gray-800">PROJECTS</h3>
-                    <span class="text-3xl">🎯</span>
+            <div
+                class="bg-neutral-900/40 border border-white/5 rounded-2xl p-6 hover:bg-neutral-900/60 transition-colors">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Projects</h3>
+                    <i data-lucide="target" class="w-5 h-5 text-yellow-500"></i>
                 </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600">Active:</span>
-                        <span id="activeProjects" class="counter text-xl font-bold text-green-600">0</span>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">Active Protocol</span>
+                        <span id="activeProjects" class="counter font-mono text-green-400">0</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600">Done:</span>
-                        <span id="doneProjects" class="counter text-xl font-bold text-blue-600">0</span>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">Completed</span>
+                        <span id="doneProjects" class="counter font-mono text-blue-400">0</span>
                     </div>
-                    <div class="flex justify-between items-center pt-2 border-t border-gray-200">
-                        <span class="text-gray-700 font-semibold">Total:</span>
-                        <span id="totalProjects" class="counter text-2xl font-bold text-orange-500">0</span>
+                    <div class="flex justify-between items-baseline pt-4 border-t border-white/5">
+                        <span class="text-gray-300 font-semibold text-xs uppercase">Total Assigned</span>
+                        <span id="totalProjects" class="counter text-3xl font-black text-white">0</span>
                     </div>
                 </div>
             </div>
 
             <!-- Tasks Card -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-gray-800">TASKS</h3>
-                    <span class="text-3xl">✅</span>
+            <div
+                class="bg-neutral-900/40 border border-white/5 rounded-2xl p-6 hover:bg-neutral-900/60 transition-colors">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Tasks</h3>
+                    <i data-lucide="check-square" class="w-5 h-5 text-blue-500"></i>
                 </div>
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600">Done:</span>
-                        <span id="doneTasks" class="counter text-xl font-bold text-green-600">0</span>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">Executed</span>
+                        <span id="doneTasks" class="counter font-mono text-green-400">0</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600">Doing:</span>
-                        <span id="doingTasks" class="counter text-xl font-bold text-yellow-600">0</span>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-gray-500">In Progress</span>
+                        <span id="doingTasks" class="counter font-mono text-yellow-500">0</span>
                     </div>
-                    <div class="flex justify-between items-center pt-2 border-t border-gray-200">
-                        <span class="text-gray-700 font-semibold">Total:</span>
-                        <span id="totalTasks" class="counter text-2xl font-bold text-orange-500">0</span>
+                    <div class="flex justify-between items-baseline pt-4 border-t border-white/5">
+                        <span class="text-gray-300 font-semibold text-xs uppercase">Total Directives</span>
+                        <span id="totalTasks" class="counter text-3xl font-black text-white">0</span>
                     </div>
                 </div>
             </div>
 
             <!-- Streak Card -->
-            <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-xl shadow-md p-6 text-white">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold">STREAK</h3>
-                    <span class="text-3xl streak-fire">🔥</span>
+            <div
+                class="bg-gradient-to-br from-yellow-900/40 to-orange-900/40 border border-yellow-700/30 rounded-2xl p-6 relative overflow-hidden group">
+                <div
+                    class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDIxNSwwLDAuMSkiLz48L3N2Zz4=')] opacity-20">
                 </div>
-                <div class="text-center">
-                    <div class="text-5xl font-bold mb-2">
+                <div class="flex items-center justify-between mb-4 relative z-10">
+                    <h3 class="text-sm font-bold text-yellow-500/80 uppercase tracking-wider">Active Streak</h3>
+                    <span class="text-2xl streak-fire drop-shadow-[0_0_10px_rgba(255,100,0,0.5)]">🔥</span>
+                </div>
+                <div class="text-center mt-6 relative z-10">
+                    <div
+                        class="text-6xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600">
                         <span id="streakDays" class="counter">0</span>
                     </div>
-                    <p class="text-orange-100">Days Active</p>
+                    <p class="text-yellow-200/60 text-xs uppercase tracking-widest">Consecutive Days</p>
                 </div>
             </div>
 
         </div>
 
         <!-- Activity Heatmap -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">📈 ACTIVITY HEATMAP</h2>
-            <div class="overflow-x-auto">
-                <div class="inline-flex flex-col gap-1 min-w-max">
-                    <!-- Day labels -->
+        <div class="bg-neutral-900/40 border border-white/5 rounded-2xl p-8 mb-10 overflow-hidden">
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-xl font-bold text-white tracking-tight">ACTIVITY GRID</h2>
+                <div class="flex items-center gap-2 text-[10px] text-gray-500 uppercase tracking-wider">
+                    <span>Dormant</span>
                     <div class="flex gap-1">
-                        <div class="w-12"></div>
-                        <div id="heatmapGrid" class="flex gap-1"></div>
+                        <div class="w-3 h-3 bg-neutral-800 rounded-sm"></div>
+                        <div class="w-3 h-3 bg-yellow-900/40 rounded-sm"></div>
+                        <div class="w-3 h-3 bg-yellow-700/60 rounded-sm"></div>
+                        <div class="w-3 h-3 bg-yellow-500 rounded-sm"></div>
                     </div>
+                    <span>Active</span>
                 </div>
-                <div class="flex items-center gap-4 mt-4 text-sm text-gray-600">
-                    <span>Less</span>
-                    <div class="flex gap-1">
-                        <div class="w-4 h-4 bg-gray-200 rounded"></div>
-                        <div class="w-4 h-4 bg-green-200 rounded"></div>
-                        <div class="w-4 h-4 bg-green-400 rounded"></div>
-                        <div class="w-4 h-4 bg-green-600 rounded"></div>
+            </div>
+
+            <div class="overflow-x-auto pb-2 custom-scrollbar">
+                <div class="inline-flex flex-col gap-2 min-w-max">
+                    <div class="flex gap-2">
+                        <div class="w-8"></div> <!-- Spacer for day labels if needed -->
+                        <div id="heatmapGrid" class="flex gap-2"></div>
                     </div>
-                    <span>More</span>
                 </div>
             </div>
         </div>
 
         <!-- Achievements Section -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6">🏆 ACHIEVEMENTS</h2>
-            <div id="achievementsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="bg-neutral-900/40 border border-white/5 rounded-2xl p-8 mb-10">
+            <h2 class="text-xl font-bold text-white tracking-tight mb-8 flex items-center gap-3">
+                <i data-lucide="award" class="w-5 h-5 text-yellow-500"></i>
+                ACCOLADES
+            </h2>
+            <div id="achievementsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Achievement cards will be inserted here -->
             </div>
         </div>
 
         <!-- Two Column Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
             <!-- This Month Stats -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">📊 THIS MONTH</h2>
+            <div class="bg-neutral-900/40 border border-white/5 rounded-2xl p-8">
+                <h2 class="text-xl font-bold text-white tracking-tight mb-8">MONTHLY REPORT</h2>
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="text-gray-700">Projects Created:</span>
-                        <span id="monthProjects" class="font-bold text-orange-500">0</span>
+                    <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-gray-400 text-sm">Projects Initiated</span>
+                        <span id="monthProjects" class="font-bold text-yellow-500 font-mono text-lg">0</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="text-gray-700">Tasks Completed:</span>
-                        <span id="monthTasks" class="font-bold text-green-600">0</span>
+                    <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-gray-400 text-sm">Directives Executed</span>
+                        <span id="monthTasks" class="font-bold text-green-500 font-mono text-lg">0</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="text-gray-700">Avg Completion Time:</span>
-                        <span id="avgCompletionTime" class="font-bold text-blue-600">0 days</span>
+                    <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-gray-400 text-sm">Mean Execution Time</span>
+                        <span id="avgCompletionTime" class="font-bold text-blue-500 font-mono text-lg">0 days</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="text-gray-700">Most Productive Day:</span>
-                        <span id="mostProductiveDay" class="font-bold text-purple-600">-</span>
+                    <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-gray-400 text-sm">Peak Performance Day</span>
+                        <span id="mostProductiveDay"
+                            class="font-bold text-purple-400 font-mono text-sm text-right">-</span>
                     </div>
                 </div>
             </div>
 
             <!-- Team Comparison -->
-            <div class="bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">🎯 COMPARED TO TEAM</h2>
-                <div id="leaderboard" class="space-y-3">
+            <div class="bg-neutral-900/40 border border-white/5 rounded-2xl p-8">
+                <h2 class="text-xl font-bold text-white tracking-tight mb-8">SQUADRON LEADERBOARD</h2>
+                <div id="leaderboard" class="space-y-4">
                     <!-- Leaderboard will be inserted here -->
                 </div>
             </div>
@@ -286,7 +353,14 @@
         }
 
         function getAvatarColor(email) {
-            const colors = ['bg-orange-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500'];
+            // Updated colors for dark theme
+            const colors = [
+                'bg-orange-600 border-orange-400',
+                'bg-blue-600 border-blue-400',
+                'bg-green-600 border-green-400',
+                'bg-purple-600 border-purple-400',
+                'bg-pink-600 border-pink-400'
+            ];
             let hash = 0;
             for (let i = 0; i < email.length; i++) {
                 hash = email.charCodeAt(i) + ((hash << 5) - hash);
@@ -297,7 +371,13 @@
         // Animate Counter
         function animateCounter(element, target) {
             let current = 0;
-            const increment = target / 20;
+            const increment = Math.max(target / 20, 1);
+
+            if (target === 0) {
+                element.textContent = '0';
+                return;
+            }
+
             const timer = setInterval(() => {
                 current += increment;
                 if (current >= target) {
@@ -451,7 +531,7 @@
             // Create grid (7 rows x 4 columns)
             for (let week = 0; week < 4; week++) {
                 const weekDiv = document.createElement('div');
-                weekDiv.className = 'flex flex-col gap-1';
+                weekDiv.className = 'flex flex-col gap-2';
 
                 for (let day = 0; day < 7; day++) {
                     const index = week * 7 + day;
@@ -461,14 +541,14 @@
                     const dateStr = date.toDateString();
                     const count = taskCountByDay[dateStr] || 0;
 
-                    let bgColor = 'bg-gray-200';
-                    if (count >= 5) bgColor = 'bg-green-600';
-                    else if (count >= 3) bgColor = 'bg-green-400';
-                    else if (count >= 1) bgColor = 'bg-green-200';
+                    let bgColor = 'bg-neutral-800'; // Default dark
+                    if (count >= 5) bgColor = 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]';
+                    else if (count >= 3) bgColor = 'bg-yellow-600/80';
+                    else if (count >= 1) bgColor = 'bg-yellow-800/60';
 
                     const square = document.createElement('div');
-                    square.className = `heatmap-square w-4 h-4 rounded ${bgColor}`;
-                    square.title = `${date.toLocaleDateString()} • ${count} tasks completed`;
+                    square.className = `heatmap-square w-4 h-4 rounded-sm ${bgColor} cursor-help`;
+                    square.title = `${date.toLocaleDateString()} • ${count} directives executed`;
 
                     weekDiv.appendChild(square);
                 }
@@ -507,21 +587,21 @@
                     id: 'onfire',
                     icon: '🔥',
                     name: 'ON FIRE',
-                    description: '7-day streak',
+                    description: '7-day streak achieved',
                     check: () => parseInt(document.getElementById('streakDays').textContent) >= 7
                 },
                 {
                     id: 'perfectionist',
                     icon: '🎯',
                     name: 'PERFECTIONIST',
-                    description: 'Completed all tasks in a project',
+                    description: 'All tasks in a project executed',
                     check: () => userStats && userStats.done_count >= 1
                 },
                 {
                     id: 'nightowl',
                     icon: '🌙',
                     name: 'NIGHT OWL',
-                    description: 'Created task after 10 PM',
+                    description: 'Directive executed after 2200h',
                     check: () => {
                         return userActivities.some(a => {
                             const hour = new Date(a.created_at).getHours();
@@ -533,7 +613,7 @@
                     id: 'earlybird',
                     icon: '🌅',
                     name: 'EARLY BIRD',
-                    description: 'Created task before 6 AM',
+                    description: 'Directive executed before 0600h',
                     check: () => {
                         return userActivities.some(a => {
                             const hour = new Date(a.created_at).getHours();
@@ -549,15 +629,15 @@
             achievements.forEach(achievement => {
                 const unlocked = achievement.check();
                 const card = document.createElement('div');
-                card.className = `achievement-card bg-white border-2 ${unlocked ? 'border-orange-500' : 'border-gray-200'} rounded-lg p-4 transition-all ${unlocked ? '' : 'achievement-locked'}`;
+                card.className = `achievement-card bg-neutral-900 border ${unlocked ? 'border-yellow-500/50 bg-yellow-900/10' : 'border-white/5 bg-black/40'} rounded-xl p-5 transition-all ${unlocked ? '' : 'achievement-locked'}`;
 
                 card.innerHTML = `
-                    <div class="flex items-start gap-3">
-                        <span class="text-3xl">${achievement.icon}</span>
+                    <div class="flex items-start gap-4">
+                        <span class="text-3xl filter drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">${achievement.icon}</span>
                         <div class="flex-1">
-                            <h4 class="font-bold text-gray-800 mb-1">${achievement.name}</h4>
-                            <p class="text-sm text-gray-600 mb-2">${achievement.description}</p>
-                            <span class="text-xs ${unlocked ? 'text-green-600 font-semibold' : 'text-gray-400'}">
+                            <h4 class="font-bold text-gray-200 mb-1 tracking-wide text-sm">${achievement.name}</h4>
+                            <p class="text-xs text-gray-400 mb-3">${achievement.description}</p>
+                            <span class="text-[10px] uppercase tracking-wider font-bold ${unlocked ? 'text-green-500' : 'text-gray-600'}">
                                 ${unlocked ? '✓ Unlocked' : '🔒 Locked'}
                             </span>
                         </div>
@@ -588,9 +668,9 @@
                 if (a.activity_type !== 'project_created') return false;
                 const date = new Date(a.created_at);
                 return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
-            }).length;
+            });
 
-            document.getElementById('monthProjects').textContent = monthlyProjects;
+            document.getElementById('monthProjects').textContent = monthlyProjects.length;
 
             // Calculate average completion time
             const completedTasks = userTasks.filter(t => {
@@ -628,7 +708,7 @@
                 }
             });
 
-            document.getElementById('mostProductiveDay').textContent = maxCount > 0 ? `${maxDay} (${maxCount} tasks)` : '-';
+            document.getElementById('mostProductiveDay').textContent = maxCount > 0 ? `${maxDay} (${maxCount})` : '-';
         }
 
         // Fetch Team Stats and Render Leaderboard
@@ -656,23 +736,23 @@
                         const progressWidth = (member.completed_tasks_this_week / maxTasks) * 100;
 
                         const row = document.createElement('div');
-                        row.className = `p-3 rounded-lg transition-all ${isCurrentUser ? 'bg-orange-50 border-2 border-orange-500' : 'bg-gray-50'}`;
+                        row.className = `p-4 rounded-xl transition-all border ${isCurrentUser ? 'bg-yellow-900/20 border-yellow-500/50' : 'bg-black/40 border-white/5'}`;
 
                         row.innerHTML = `
-                            <div class="flex items-center justify-between mb-2">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-lg font-bold text-gray-400">#${index + 1}</span>
-                                    ${index < 3 ? `<span class="text-2xl">${medals[index]}</span>` : ''}
-                                    <span class="font-semibold ${isCurrentUser ? 'text-orange-600' : 'text-gray-700'}">
-                                        ${getFirstName(member.email)}
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-4">
+                                    <span class="text-lg font-black text-gray-600 font-mono w-6">#${index + 1}</span>
+                                    ${index < 3 ? `<span class="text-2xl drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]">${medals[index]}</span>` : ''}
+                                    <span class="font-bold tracking-wide ${isCurrentUser ? 'text-yellow-500' : 'text-gray-300'}">
+                                        ${getFirstName(member.email).toUpperCase()}
                                     </span>
                                 </div>
-                                <span class="font-bold text-lg ${isCurrentUser ? 'text-orange-600' : 'text-gray-700'}">
+                                <span class="font-bold font-mono text-lg ${isCurrentUser ? 'text-yellow-500' : 'text-gray-400'}">
                                     ${member.completed_tasks_this_week}
                                 </span>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-orange-500 h-2 rounded-full transition-all" style="width: ${progressWidth}%"></div>
+                            <div class="w-full bg-white/5 rounded-full h-1.5">
+                                <div class="bg-gradient-to-r ${isCurrentUser ? 'from-yellow-600 to-yellow-400' : 'from-gray-600 to-gray-400'} h-1.5 rounded-full transition-all shadow-[0_0_8px_rgba(255,255,255,0.2)]" style="width: ${progressWidth}%"></div>
                             </div>
                         `;
 

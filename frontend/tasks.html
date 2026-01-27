@@ -4,17 +4,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tasks - Nutmeg Task Tracker</title>
+    <title>Tasks - NEXUS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
         .kanban-column {
             min-height: 500px;
         }
 
         .task-card {
             cursor: grab;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .task-card:active {
@@ -27,13 +60,15 @@
         }
 
         .sortable-ghost {
-            opacity: 0.4;
-            background: #f3f4f6;
+            opacity: 0.3;
+            background: #1a1a1a;
+            border: 2px dashed #444;
         }
 
         .sortable-drag {
-            opacity: 0.8;
+            opacity: 0.9;
             transform: rotate(2deg);
+            z-index: 50;
         }
 
         @keyframes fadeIn {
@@ -68,106 +103,144 @@
     </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen">
+<body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
+
+    <!-- Background Ambient Effects -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div
+            class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGcgbZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIj48ZyBmaWxsPSIjMjIyIiBmaWxsLW9wYWNpdHk9IjAuMDUiPjxwYXRoIGQ9Ik0zNiAzNHYtNGgtMnY0aC0ydjRoMnY0aDJ2LTRoMnYtNGgtMnpNMzYgMzRWMzBoNDB2NGgtNDB6Ii8+PC9nPjwvZz48L3N2Zz4=')]">
+        </div>
+        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-yellow-600/5 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[100px] rounded-full"></div>
+    </div>
 
     <!-- Top Navigation Bar -->
-    <nav class="bg-white shadow-md sticky top-0 z-50">
+    <nav class="bg-black/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center gap-3">
-                    <span class="text-3xl">🥜</span>
-                    <span class="text-xl font-bold text-orange-500">NUTMEG</span>
-                </div>
-                <div class="hidden md:flex items-center gap-6">
-                    <a href="dashboard.html" class="text-gray-600 hover:text-orange-500 transition-colors">Dashboard</a>
-                    <a href="projects.html" class="text-gray-600 hover:text-orange-500 transition-colors">Projects</a>
-                    <a href="profile.html" class="text-gray-600 hover:text-orange-500 transition-colors">Profile</a>
-                </div>
+            <div class="flex justify-between items-center h-20">
                 <div class="flex items-center gap-4">
+                    <span class="text-3xl drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🥜</span>
+                    <span
+                        class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 tracking-tight">NEXUS</span>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="dashboard.html"
+                        class="text-gray-400 hover:text-white transition-colors font-medium">Dashboard</a>
+                    <a href="projects.html"
+                        class="text-yellow-500 font-medium border-b-2 border-yellow-500 pb-1 transition-all drop-shadow-[0_0_8px_rgba(255,215,0,0.3)]">Projects</a>
+                    <a href="profile.html"
+                        class="text-gray-400 hover:text-white transition-colors font-medium">Profile</a>
+                </div>
+                <div class="flex items-center gap-6">
                     <div class="hidden sm:block text-right">
-                        <p class="text-sm text-gray-600">Welcome,</p>
-                        <p id="userName" class="text-sm font-semibold text-gray-800">Loading...</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">Operator</p>
+                        <p id="userName" class="text-sm font-bold text-white">Loading...</p>
                     </div>
                     <button id="logoutBtn"
-                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Logout</span>
+                        class="group bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded-xl transition-all border border-white/10 hover:border-red-500/50 flex items-center gap-2">
+                        <i data-lucide="log-out"
+                            class="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors"></i>
+                        <span class="hidden sm:inline text-sm font-medium">Logout</span>
                     </button>
                 </div>
             </div>
         </div>
+
+        <!-- Mobile Navigation -->
+        <div class="md:hidden border-t border-white/10 px-4 py-3 flex gap-2 bg-black/90 backdrop-blur-md">
+            <a href="dashboard.html"
+                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors">Dashboard</a>
+            <a href="projects.html"
+                class="flex-1 text-center text-yellow-500 font-medium py-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">Projects</a>
+            <a href="profile.html"
+                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors">Profile</a>
+        </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
 
         <!-- Page Header -->
-        <div class="mb-8">
+        <div class="mb-10">
             <a href="projects.html"
-                class="inline-flex items-center gap-2 text-orange-500 hover:text-orange-600 font-semibold mb-4">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                Back to Projects
+                class="inline-flex items-center gap-2 text-yellow-500 hover:text-yellow-400 font-bold mb-6 transition-all transform hover:-translate-x-1 uppercase text-xs tracking-wider">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                Return to Directory
             </a>
 
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 id="projectName" class="text-3xl font-bold text-gray-800 mb-2">Loading...</h1>
-                    <div id="projectMeta" class="flex flex-wrap items-center gap-3 text-sm">
+                    <h1 id="projectName" class="text-4xl font-black text-white mb-2 tracking-tight">Loading...</h1>
+                    <div id="projectMeta" class="flex flex-wrap items-center gap-4 text-sm font-mono text-gray-400">
                         <!-- Project metadata will be inserted here -->
                     </div>
                 </div>
                 <button id="newTaskBtn"
-                    class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold flex items-center gap-2 transition-all transform hover:scale-105">
+                    class="bg-gradient-to-r from-yellow-700 via-yellow-600 to-yellow-700 hover:from-yellow-600 hover:to-yellow-600 text-black px-6 py-3 rounded-xl font-bold flex items-center gap-2 transition-all transform hover:scale-105 shadow-[0_0_15px_rgba(255,215,0,0.2)] hover:shadow-[0_0_25px_rgba(255,215,0,0.4)]">
                     <i data-lucide="plus" class="w-5 h-5"></i>
-                    New Task
+                    Initialize Directive
                 </button>
             </div>
         </div>
 
         <!-- Kanban Board -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 overflow-x-auto">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 overflow-x-auto pb-6">
 
             <!-- TO DO Column -->
-            <div class="bg-white rounded-xl shadow-md p-4">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        📝 TO DO
-                        <span id="todoCount" class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full">0</span>
+            <div
+                class="bg-neutral-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-4 flex flex-col h-full min-w-[300px]">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                    <h2 class="text-sm font-bold text-gray-200 flex items-center gap-2 uppercase tracking-wide">
+                        <span class="w-2 h-2 rounded-full bg-gray-500 shadow-[0_0_10px_rgba(107,114,128,0.5)]"></span>
+                        Pending
+                        <span id="todoCount"
+                            class="bg-white/5 border border-white/10 text-gray-400 text-xs px-2 py-0.5 rounded-full font-mono">0</span>
                     </h2>
                 </div>
-                <div id="todoColumn" class="kanban-column space-y-3 min-h-[400px]">
-                    <div class="text-center py-8 text-gray-400 empty-placeholder">
-                        <p class="text-sm">Drop tasks here</p>
+                <div id="todoColumn" class="kanban-column space-y-3 flex-1 scrollbar-hide overflow-y-auto max-h-[70vh]">
+                    <div
+                        class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl">
+                        <p class="text-xs uppercase tracking-widest">Awaiting Directives</p>
                     </div>
                 </div>
             </div>
 
             <!-- DOING Column -->
-            <div class="bg-white rounded-xl shadow-md p-4">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        🔄 DOING
-                        <span id="doingCount" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded-full">0</span>
+            <div
+                class="bg-neutral-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-4 flex flex-col h-full min-w-[300px]">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                    <h2 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wide">
+                        <span
+                            class="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse"></span>
+                        In Progress
+                        <span id="doingCount"
+                            class="bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full font-mono">0</span>
                     </h2>
                 </div>
-                <div id="doingColumn" class="kanban-column space-y-3 min-h-[400px]">
-                    <div class="text-center py-8 text-gray-400 empty-placeholder">
-                        <p class="text-sm">Drop tasks here</p>
+                <div id="doingColumn"
+                    class="kanban-column space-y-3 flex-1 scrollbar-hide overflow-y-auto max-h-[70vh]">
+                    <div
+                        class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl">
+                        <p class="text-xs uppercase tracking-widest">No Active Operations</p>
                     </div>
                 </div>
             </div>
 
             <!-- DONE Column -->
-            <div class="bg-white rounded-xl shadow-md p-4">
-                <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                    <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        ✅ DONE
-                        <span id="doneCount" class="bg-green-100 text-green-600 text-xs px-2 py-1 rounded-full">0</span>
+            <div
+                class="bg-neutral-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-4 flex flex-col h-full min-w-[300px]">
+                <div class="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+                    <h2 class="text-sm font-bold text-gray-200 flex items-center gap-2 uppercase tracking-wide">
+                        <span class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]"></span>
+                        Executed
+                        <span id="doneCount"
+                            class="bg-green-500/10 border border-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full font-mono">0</span>
                     </h2>
                 </div>
-                <div id="doneColumn" class="kanban-column space-y-3 min-h-[400px]">
-                    <div class="text-center py-8 text-gray-400 empty-placeholder">
-                        <p class="text-sm">Drop tasks here</p>
+                <div id="doneColumn" class="kanban-column space-y-3 flex-1 scrollbar-hide overflow-y-auto max-h-[70vh]">
+                    <div
+                        class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl">
+                        <p class="text-xs uppercase tracking-widest">No Completed Tasks</p>
                     </div>
                 </div>
             </div>
@@ -177,96 +250,118 @@
 
     <!-- New Task Modal -->
     <div id="newTaskModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
-        <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50" onclick="closeNewTaskModal()"></div>
+        <div class="modal-backdrop fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeNewTaskModal()"></div>
         <div class="flex min-h-screen items-center justify-center p-4">
-            <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10">
-                <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                    <h3 class="text-2xl font-bold text-gray-800">Create New Task</h3>
-                    <button onclick="closeNewTaskModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+            <div
+                class="modal-content bg-neutral-900 border border-white/10 rounded-3xl shadow-[0_0_50px_-20px_rgba(0,0,0,1)] w-full max-w-2xl relative z-10 overflow-hidden">
+                <!-- Shine Header -->
+                <div
+                    class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-yellow-500/50 to-transparent">
+                </div>
+
+                <div class="border-b border-white/10 px-8 py-6 flex justify-between items-center bg-black/20">
+                    <h3 class="text-2xl font-bold text-white tracking-tight">Initialize New Directive</h3>
+                    <button onclick="closeNewTaskModal()"
+                        class="text-gray-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full">
                         <i data-lucide="x" class="w-6 h-6"></i>
                     </button>
                 </div>
 
-                <form id="newTaskForm" class="px-6 py-6 space-y-6">
+                <form id="newTaskForm" class="px-8 py-6 space-y-6">
                     <div>
-                        <label for="taskTitle" class="block text-sm font-medium text-gray-700 mb-2">
-                            Task Title <span class="text-red-500">*</span>
+                        <label for="taskTitle"
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            Directive Title
                         </label>
                         <input type="text" id="taskTitle" required placeholder="Enter task title"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all text-lg placeholder-gray-700 outline-none" />
                     </div>
 
                     <div>
                         <label for="taskDescription"
-                            class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Details</label>
                         <textarea id="taskDescription" rows="3" placeholder="Enter task description (optional)"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"></textarea>
+                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-gray-300 rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all placeholder-gray-700 outline-none resize-none"></textarea>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-3">Assignment <span
-                                class="text-red-500">*</span></label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Assignment
+                            Protocol</label>
                         <div class="space-y-2">
-                            <label class="flex items-center gap-2 cursor-pointer">
+                            <label
+                                class="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
                                 <input type="radio" name="assignmentType" value="me" checked
-                                    class="w-4 h-4 text-orange-500 focus:ring-orange-500" />
-                                <span>Just me</span>
+                                    class="w-4 h-4 text-yellow-500 bg-black border-gray-600 focus:ring-yellow-500 focus:ring-offset-black" />
+                                <span class="text-gray-300 group-hover:text-white">Self Assignment</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
+                            <label
+                                class="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
                                 <input type="radio" name="assignmentType" value="specific"
-                                    class="w-4 h-4 text-orange-500 focus:ring-orange-500" />
-                                <span>Specific people</span>
+                                    class="w-4 h-4 text-yellow-500 bg-black border-gray-600 focus:ring-yellow-500 focus:ring-offset-black" />
+                                <span class="text-gray-300 group-hover:text-white">Specific Operatives</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
+                            <label
+                                class="flex items-center gap-3 cursor-pointer group hover:bg-white/5 p-2 rounded-lg transition-colors">
                                 <input type="radio" name="assignmentType" value="all"
-                                    class="w-4 h-4 text-orange-500 focus:ring-orange-500" />
-                                <span>Everyone (ALL)</span>
+                                    class="w-4 h-4 text-yellow-500 bg-black border-gray-600 focus:ring-yellow-500 focus:ring-offset-black" />
+                                <span class="text-gray-300 group-hover:text-white">Broadcast (All)</span>
                             </label>
                         </div>
                     </div>
 
                     <div id="specificAssigneesSection" class="hidden">
-                        <label class="block text-sm font-medium text-gray-700 mb-3">Select Assignees <span
-                                class="text-red-500">*</span></label>
-                        <div id="assigneesList" class="space-y-2 bg-gray-50 p-4 rounded-lg max-h-40 overflow-y-auto">
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Select
+                            Operatives</label>
+                        <div id="assigneesList"
+                            class="space-y-2 bg-black/30 p-4 rounded-xl border border-white/5 max-h-40 overflow-y-auto custom-scrollbar">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-3">Priority</label>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Priority
+                            Level</label>
                         <div class="flex gap-4">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="priority" value="low" class="w-4 h-4 text-orange-500" />
-                                <span class="text-green-600">Low</span>
+                            <label
+                                class="flex items-center gap-2 cursor-pointer group bg-neutral-800/50 p-2 pr-4 rounded-lg border border-transparent hover:border-blue-500/30 transition-all">
+                                <input type="radio" name="priority" value="low"
+                                    class="w-4 h-4 text-blue-500 bg-black border-gray-600 focus:ring-blue-500 focus:ring-offset-black" />
+                                <span
+                                    class="text-blue-400 group-hover:text-blue-300 font-bold text-xs uppercase">Low</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
+                            <label
+                                class="flex items-center gap-2 cursor-pointer group bg-neutral-800/50 p-2 pr-4 rounded-lg border border-transparent hover:border-yellow-500/30 transition-all">
                                 <input type="radio" name="priority" value="medium" checked
-                                    class="w-4 h-4 text-orange-500" />
-                                <span class="text-yellow-600">Medium</span>
+                                    class="w-4 h-4 text-yellow-500 bg-black border-gray-600 focus:ring-yellow-500 focus:ring-offset-black" />
+                                <span
+                                    class="text-yellow-400 group-hover:text-yellow-300 font-bold text-xs uppercase">Medium</span>
                             </label>
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="radio" name="priority" value="high" class="w-4 h-4 text-orange-500" />
-                                <span class="text-red-600">High</span>
+                            <label
+                                class="flex items-center gap-2 cursor-pointer group bg-neutral-800/50 p-2 pr-4 rounded-lg border border-transparent hover:border-red-500/30 transition-all">
+                                <input type="radio" name="priority" value="high"
+                                    class="w-4 h-4 text-red-500 bg-black border-gray-600 focus:ring-red-500 focus:ring-offset-black" />
+                                <span
+                                    class="text-red-400 group-hover:text-red-300 font-bold text-xs uppercase">High</span>
                             </label>
                         </div>
                     </div>
 
                     <div>
-                        <label for="taskDeadline" class="block text-sm font-medium text-gray-700 mb-2">
-                            Deadline <span class="text-xs text-gray-500">(optional, max +2 days)</span>
+                        <label for="taskDeadline"
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            Deadline Target <span class="text-[10px] text-gray-600 font-normal ml-2">(+48h max)</span>
                         </label>
                         <input type="date" id="taskDeadline"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500" />
+                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all outline-none text-gray-300" />
                     </div>
                 </form>
 
-                <div class="border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
+                <div class="border-t border-white/10 px-8 py-6 flex justify-end gap-3 bg-black/20">
                     <button onclick="closeNewTaskModal()"
-                        class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-semibold">Cancel</button>
+                        class="px-6 py-3 border border-white/10 text-gray-400 rounded-xl hover:bg-white/5 hover:text-white transition-colors font-medium">Cancel</button>
                     <button id="createTaskBtn"
-                        class="px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors font-semibold flex items-center gap-2">
-                        <span>Create Task</span>
-                        <svg id="createTaskSpinner" class="hidden animate-spin h-5 w-5 text-white"
+                        class="px-8 py-3 bg-yellow-600 hover:bg-yellow-500 text-black rounded-xl transition-all font-bold flex items-center gap-2 shadow-[0_0_15px_rgba(234,179,8,0.2)] hover:shadow-[0_0_20px_rgba(234,179,8,0.4)]">
+                        <span>Execute</span>
+                        <svg id="createTaskSpinner" class="hidden animate-spin h-5 w-5 text-black"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
                             </circle>
@@ -282,27 +377,30 @@
 
     <!-- Task Detail Modal -->
     <div id="taskDetailModal" class="hidden fixed inset-0 z-50 overflow-y-auto">
-        <div class="modal-backdrop fixed inset-0 bg-black bg-opacity-50" onclick="closeTaskDetailModal()"></div>
+        <div class="modal-backdrop fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closeTaskDetailModal()"></div>
         <div class="flex min-h-screen items-center justify-center p-4">
-            <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-2xl relative z-10">
-                <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-                    <h3 class="text-2xl font-bold text-gray-800">Task Details</h3>
+            <div
+                class="modal-content bg-neutral-900 border border-white/10 rounded-3xl shadow-[0_0_60px_-10px_rgba(0,0,0,1)] w-full max-w-2xl relative z-10 overflow-hidden">
+                <div class="border-b border-white/10 px-8 py-6 flex justify-between items-center bg-black/20">
+                    <h3 class="text-2xl font-bold text-white tracking-tight">Directive Details</h3>
                     <button onclick="closeTaskDetailModal()"
-                        class="text-gray-400 hover:text-gray-600 transition-colors">
+                        class="text-gray-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full">
                         <i data-lucide="x" class="w-6 h-6"></i>
                     </button>
                 </div>
 
-                <div id="taskDetailContent" class="px-6 py-6">
+                <div id="taskDetailContent" class="px-8 py-8 text-gray-300">
                     <!-- Task details will be inserted here -->
                 </div>
 
-                <div class="border-t border-gray-200 px-6 py-4 flex justify-between">
+                <div class="border-t border-white/10 px-8 py-6 flex justify-between bg-black/20">
                     <button id="deleteTaskBtn"
-                        class="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-semibold">Delete
-                        Task</button>
+                        class="px-6 py-3 bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-500/20 rounded-xl transition-all font-semibold flex items-center gap-2">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        Delete Directive
+                    </button>
                     <button onclick="closeTaskDetailModal()"
-                        class="px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors font-semibold">Close</button>
+                        class="px-6 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl transition-colors font-semibold border border-white/5">Close</button>
                 </div>
             </div>
         </div>
@@ -343,7 +441,14 @@
         }
 
         function getAvatarColor(email) {
-            const colors = ['bg-orange-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500'];
+            const colors = [
+                'bg-orange-600/20 text-orange-400 border-orange-500/30',
+                'bg-blue-600/20 text-blue-400 border-blue-500/30',
+                'bg-green-600/20 text-green-400 border-green-500/30',
+                'bg-purple-600/20 text-purple-400 border-purple-500/30',
+                'bg-pink-600/20 text-pink-400 border-pink-500/30',
+                'bg-indigo-600/20 text-indigo-400 border-indigo-500/30'
+            ];
             let hash = 0;
             for (let i = 0; i < email.length; i++) {
                 hash = email.charCodeAt(i) + ((hash << 5) - hash);
@@ -357,10 +462,10 @@
             const diffMs = deadline - now;
             const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-            if (diffDays < 0) return { text: `${Math.abs(diffDays)} days overdue`, color: 'text-red-600' };
-            if (diffDays === 0) return { text: 'Due today', color: 'text-red-600' };
-            if (diffDays === 1) return { text: 'Tomorrow', color: 'text-yellow-600' };
-            return { text: `${diffDays} days left`, color: 'text-gray-600' };
+            if (diffDays < 0) return { text: `${Math.abs(diffDays)}d overdue`, color: 'text-red-400 font-bold' };
+            if (diffDays === 0) return { text: 'Due today', color: 'text-red-400 font-bold' };
+            if (diffDays === 1) return { text: 'Tomorrow', color: 'text-yellow-400' };
+            return { text: `${diffDays}d left`, color: 'text-gray-500' };
         }
 
         // Fetch Project Details
@@ -384,26 +489,28 @@
             document.getElementById('projectName').textContent = currentProject.name;
 
             const typeBadge = currentProject.is_collaborative ?
-                '<span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full font-semibold">Collaborative</span>' :
-                '<span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-semibold">Individual</span>';
+                '<span class="bg-purple-900/30 text-purple-300 border border-purple-500/20 px-3 py-1 rounded-lg font-bold uppercase text-[10px] tracking-wider"> Collaborative </span>' :
+                '<span class="bg-blue-900/30 text-blue-300 border border-blue-500/20 px-3 py-1 rounded-lg font-bold uppercase text-[10px] tracking-wider"> Individual </span>';
 
             const collaborators = currentProject.members.slice(0, 3).map(m => `
-                <div class="${getAvatarColor(m.email)} w-7 h-7 rounded-full flex items-center justify-center text-white font-semibold text-xs -ml-2 border-2 border-white">
+                <div class="${getAvatarColor(m.email)} w-7 h-7 rounded-lg border flex items-center justify-center font-bold text-xs -ml-2 shadow-lg">
                     ${getFirstName(m.email).charAt(0)}
                 </div>
             `).join('');
 
             const moreCount = currentProject.members.length > 3 ?
-                `<div class="w-7 h-7 rounded-full bg-gray-300 flex items-center justify-center text-gray-700 text-xs font-semibold -ml-2 border-2 border-white">+${currentProject.members.length - 3}</div>` : '';
+                `<div class="w-7 h-7 rounded-lg bg-neutral-800 border border-white/10 flex items-center justify-center text-gray-500 text-xs font-bold -ml-2 shadow-lg">+${currentProject.members.length - 3}</div>` : '';
 
             const deadline = currentProject.end_date ?
-                `<span class="text-gray-600">Deadline: ${new Date(currentProject.end_date).toLocaleDateString()}</span>` : '';
+                `<span class="text-gray-500 text-xs flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${new Date(currentProject.end_date).toLocaleDateString()}</span>` : '';
 
             document.getElementById('projectMeta').innerHTML = `
                 ${typeBadge}
-                <div class="flex items-center ml-2">${collaborators}${moreCount}</div>
+                ${currentProject.is_collaborative ? `<div class="flex items-center ml-2 pl-2 border-l border-white/10 h-4">${collaborators}${moreCount}</div>` : ''}
+                <div class="w-px h-4 bg-white/10 mx-2"></div>
                 ${deadline}
             `;
+            lucide.createIcons();
         }
 
         // Fetch Tasks
@@ -460,9 +567,9 @@
             myTasks.done.forEach(task => doneColumn.appendChild(createTaskCard(task)));
 
             // Show placeholders if empty
-            if (myTasks.todo.length === 0) todoColumn.innerHTML = '<div class="text-center py-8 text-gray-400 empty-placeholder"><p class="text-sm">Drop tasks here</p></div>';
-            if (myTasks.doing.length === 0) doingColumn.innerHTML = '<div class="text-center py-8 text-gray-400 empty-placeholder"><p class="text-sm">Drop tasks here</p></div>';
-            if (myTasks.done.length === 0) doneColumn.innerHTML = '<div class="text-center py-8 text-gray-400 empty-placeholder"><p class="text-sm">Drop tasks here</p></div>';
+            if (myTasks.todo.length === 0) todoColumn.innerHTML = '<div class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl"><p class="text-xs uppercase tracking-widest opacity-50">Empty Queue</p></div>';
+            if (myTasks.doing.length === 0) doingColumn.innerHTML = '<div class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl"><p class="text-xs uppercase tracking-widest opacity-50">No Active Operations</p></div>';
+            if (myTasks.done.length === 0) doneColumn.innerHTML = '<div class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl"><p class="text-xs uppercase tracking-widest opacity-50">Nothing Archived</p></div>';
 
             lucide.createIcons();
         }
@@ -473,40 +580,45 @@
             const myAssignment = task.assignees.find(a => a.email === currentUser.email);
             const isMyTask = !!myAssignment;
 
-            const priorityColors = {
-                high: 'bg-red-100 text-red-600',
-                medium: 'bg-yellow-100 text-yellow-600',
-                low: 'bg-blue-100 text-blue-600'
+            const priorityStyles = {
+                high: 'text-red-400 bg-red-400/10 border-red-400/20',
+                medium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+                low: 'text-blue-400 bg-blue-400/10 border-blue-400/20'
             };
 
             const deadline = task.deadline ? getDaysUntil(task.deadline) : null;
 
             const assigneeAvatars = task.assignees.slice(0, 3).map(a => `
-                <div class="${getAvatarColor(a.email)} w-6 h-6 rounded-full flex items-center justify-center text-white font-semibold text-xs -ml-1 border border-white">
+                <div class="${getAvatarColor(a.email)} w-6 h-6 rounded-lg border border-black/20 flex items-center justify-center text-white font-semibold text-[10px] -ml-1">
                     ${getFirstName(a.email).charAt(0)}
                 </div>
             `).join('');
 
             const isTeamTask = task.assignees.length > 1;
-            const teamBadge = isTeamTask ? '<span class="text-xs bg-purple-100 text-purple-600 px-2 py-1 rounded">👥 Team task</span>' : '';
-            const myTaskBadge = isMyTask ? '<span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded">⚠️ Your task</span>' : '';
+            const myTaskBadge = isMyTask && isTeamTask ? '<span class="text-[10px] bg-white/10 text-gray-300 px-1.5 py-0.5 rounded border border-white/5">You</span>' : '';
 
-            card.className = `task-card bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all ${isMyTask ? '' : 'not-draggable'}`;
+            card.className = `task-card bg-black/60 backdrop-blur-sm border border-white/5 rounded-xl p-4 transition-all group ${isMyTask ? '' : 'not-draggable opacity-60'}`;
             card.dataset.taskId = task.id;
             card.onclick = () => openTaskDetailModal(task.id);
 
             card.innerHTML = `
-                <h4 class="font-semibold text-gray-800 mb-2">${task.title}</h4>
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="font-semibold text-gray-200 group-hover:text-white transition-colors text-sm leading-snug pr-2">${task.title}</h4>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider ${priorityStyles[task.priority]}">${task.priority.charAt(0)}</span>
+                </div>
+                
                 <div class="flex items-center gap-2 mb-3">
-                    <span class="text-xs px-2 py-1 rounded font-semibold ${priorityColors[task.priority]}">${task.priority.toUpperCase()}</span>
                     ${myTaskBadge}
-                    ${teamBadge}
                 </div>
-                ${deadline ? `<p class="text-xs ${deadline.color} font-medium mb-2">${deadline.text}</p>` : ''}
-                <div class="flex items-center mt-3 ml-1">
-                    ${assigneeAvatars}
+                
+                ${deadline ? `<div class="flex items-center gap-1.5 mb-3"><i data-lucide="calendar" class="w-3 h-3 ${deadline.color}"></i> <p class="text-xs ${deadline.color} font-medium font-mono">${deadline.text}</p></div>` : ''}
+                
+                <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
+                    <div class="flex items-center pl-1">
+                        ${assigneeAvatars}
+                    </div>
+                    ${isTeamTask ? `<span class="text-[10px] text-gray-600 font-mono">${task.assignees.filter(a => a.status === 'done').length}/${task.assignees.length}</span>` : ''}
                 </div>
-                ${isTeamTask ? `<p class="text-xs text-gray-500 mt-2">${task.assignees.filter(a => a.status === 'done').length}/${task.assignees.length} completed</p>` : ''}
             `;
 
             return card;
@@ -524,7 +636,7 @@
             columns.forEach(columnId => {
                 new Sortable(document.getElementById(columnId), {
                     group: 'kanban',
-                    animation: 150,
+                    animation: 200,
                     ghostClass: 'sortable-ghost',
                     dragClass: 'sortable-drag',
                     filter: '.not-draggable, .empty-placeholder',
@@ -551,8 +663,8 @@
                 });
 
                 if (response.ok) {
-                    const statusTexts = { todo: 'To Do', doing: 'Doing', done: 'Done' };
-                    showToast(`Task moved to ${statusTexts[newStatus]}`, 'success');
+                    const statusTexts = { todo: 'Pending', doing: 'In Progress', done: 'Executed' };
+                    showToast(`Status updated: ${statusTexts[newStatus]}`, 'success');
                     await fetchTasks();
                 } else {
                     throw new Error('Failed to update task status');
@@ -606,13 +718,13 @@
 
             currentProject.members.forEach(member => {
                 const checkbox = document.createElement('label');
-                checkbox.className = 'flex items-center gap-3 cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors';
+                checkbox.className = 'flex items-center gap-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors border border-transparent hover:border-white/5';
                 checkbox.innerHTML = `
-                    <input type="checkbox" name="assignee" value="${member.email}" class="w-4 h-4 text-orange-500 rounded focus:ring-orange-500" />
-                    <div class="${getAvatarColor(member.email)} w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                    <input type="checkbox" name="assignee" value="${member.email}" class="w-4 h-4 text-yellow-500 bg-black border-gray-600 rounded focus:ring-yellow-500 focus:ring-offset-black" />
+                    <div class="${getAvatarColor(member.email)} w-8 h-8 rounded-lg border border-black/20 flex items-center justify-center font-bold text-xs">
                         ${getFirstName(member.email).charAt(0)}
                     </div>
-                    <span class="text-gray-700">${member.email}</span>
+                    <span class="text-gray-300 font-medium">${member.email}</span>
                 `;
                 container.appendChild(checkbox);
             });
@@ -628,7 +740,7 @@
 
             // Validation
             if (!title) {
-                showToast('Please enter a task title', 'error');
+                showToast('Please enter a directive title', 'error');
                 return;
             }
 
@@ -639,7 +751,7 @@
                 const checkboxes = document.querySelectorAll('input[name="assignee"]:checked');
                 assignees = Array.from(checkboxes).map(cb => cb.value);
                 if (assignees.length === 0) {
-                    showToast('Please select at least one assignee', 'error');
+                    showToast('Select at least one operative', 'error');
                     return;
                 }
             } else if (assignmentType === 'all') {
@@ -669,7 +781,7 @@
                 });
 
                 if (response.ok) {
-                    showToast('Task created successfully!', 'success');
+                    showToast('Directive executed.', 'success');
                     closeNewTaskModal();
                     await fetchTasks();
                 } else {
@@ -691,10 +803,10 @@
             const task = allTasks.find(t => t.id === taskId);
             if (!task) return;
 
-            const priorityColors = {
-                high: 'bg-red-100 text-red-600',
-                medium: 'bg-yellow-100 text-yellow-600',
-                low: 'bg-blue-100 text-blue-600'
+            const priorityStyles = {
+                high: 'text-red-400 bg-red-400/10 border-red-400/20',
+                medium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+                low: 'text-blue-400 bg-blue-400/10 border-blue-400/20'
             };
 
             const assigneesList = task.assignees.map(a => {
@@ -703,29 +815,48 @@
                     doing: '🔄',
                     done: '✅'
                 };
+                const statusStyles = {
+                    todo: 'text-gray-400',
+                    doing: 'text-blue-400',
+                    done: 'text-green-400'
+                };
                 return `
-                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <div class="flex items-center gap-2">
-                            <div class="${getAvatarColor(a.email)} w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                    <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                        <div class="flex items-center gap-3">
+                            <div class="${getAvatarColor(a.email)} w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shadow-lg">
                                 ${getFirstName(a.email).charAt(0)}
                             </div>
-                            <span>${a.email}</span>
+                            <span class="text-sm text-gray-300 font-medium">${a.email}</span>
                         </div>
-                        <span class="text-sm">${statusIcons[a.status]} ${a.status.toUpperCase()}</span>
+                        <span class="text-xs font-mono font-bold uppercase tracking-wider ${statusStyles[a.status]}">${statusIcons[a.status]} ${a.status.toUpperCase()}</span>
                     </div>
                 `;
             }).join('');
 
             document.getElementById('taskDetailContent').innerHTML = `
-                <div class="space-y-4">
+                <div class="space-y-6">
                     <div>
-                        <h4 class="text-2xl font-bold text-gray-800">${task.title}</h4>
-                        <span class="inline-block mt-2 text-sm px-3 py-1 rounded font-semibold ${priorityColors[task.priority]}">${task.priority.toUpperCase()} PRIORITY</span>
+                        <h4 class="text-3xl font-bold text-white mb-2 leading-tight">${task.title}</h4>
+                        <span class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest border ${priorityStyles[task.priority]}">${task.priority.toUpperCase()} PRIORITY</span>
                     </div>
-                    ${task.description ? `<div><p class="text-sm font-medium text-gray-700 mb-1">Description:</p><p class="text-gray-600">${task.description}</p></div>` : ''}
-                    ${task.deadline ? `<div><p class="text-sm font-medium text-gray-700 mb-1">Deadline:</p><p class="text-gray-600">${new Date(task.deadline).toLocaleDateString()}</p></div>` : ''}
+                    
+                    ${task.description ? `
+                        <div class="bg-black/20 p-4 rounded-xl border border-white/5">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Details</p>
+                            <p class="text-gray-300 leading-relaxed text-sm">${task.description}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${task.deadline ? `
+                        <div class="flex items-center gap-3 text-sm">
+                            <i data-lucide="calendar" class="w-4 h-4 text-yellow-500"></i>
+                            <span class="text-gray-400">Target Deadline:</span>
+                            <span class="text-white font-mono">${new Date(task.deadline).toLocaleDateString()}</span>
+                        </div>
+                    ` : ''}
+                    
                     <div>
-                        <p class="text-sm font-medium text-gray-700 mb-2">Assignees:</p>
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Assigned Operatives</p>
                         <div class="space-y-2">${assigneesList}</div>
                     </div>
                 </div>
@@ -743,7 +874,7 @@
         // Delete Task
         async function deleteTask() {
             if (!selectedTaskId) return;
-            if (!confirm('Are you sure you want to delete this task?')) return;
+            if (!confirm('Are you sure you want to delete this directive? This action is irreversible.')) return;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/tasks/${selectedTaskId}`, {
@@ -752,7 +883,7 @@
                 });
 
                 if (response.ok) {
-                    showToast('Task deleted successfully', 'success');
+                    showToast('Directive terminated.', 'success');
                     closeTaskDetailModal();
                     await fetchTasks();
                 } else {

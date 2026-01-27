@@ -53,49 +53,65 @@
     </style>
 </head>
 
-<body
-    class="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center p-4">
+<body class="min-h-screen bg-black flex items-center justify-center p-4 selection:bg-yellow-500/30">
+
+    <!-- Background Effects -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div
+            class="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-neutral-900 via-black to-transparent opacity-50">
+        </div>
+        <div class="absolute bottom-0 right-0 w-[500px] h-[500px] bg-yellow-600/5 blur-[120px] rounded-full"></div>
+    </div>
 
     <!-- Login Card -->
-    <div id="loginCard" class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 slide-in">
+    <div id="loginCard"
+        class="relative z-10 bg-neutral-900/80 backdrop-blur-[20px] border border-white/10 rounded-3xl shadow-[0_0_40px_-10px_rgba(0,0,0,0.7)] w-full max-w-md p-10 slide-in overflow-hidden">
+
+        <!-- Shine Effect -->
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent">
+        </div>
+
         <!-- Logo and Title -->
-        <div class="text-center mb-8">
-            <div class="text-6xl mb-4">🥜</div>
-            <h1 class="text-3xl font-bold text-gray-800 mb-2">NUTMEG</h1>
-            <p class="text-gray-600 text-sm">Task Tracker for Teams</p>
+        <div class="text-center mb-10">
+            <div class="text-6xl mb-6 drop-shadow-[0_0_15px_rgba(255,215,0,0.3)]">🥜</div>
+            <h1
+                class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 mb-2 tracking-tight">
+                NEXUS</h1>
+            <p class="text-gray-400 text-sm tracking-widest uppercase">Project Nutmeg • Internal</p>
         </div>
 
         <!-- Login Form -->
         <form id="loginForm" class="space-y-6">
             <!-- Email Dropdown -->
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
+                <label for="email" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Identity
                 </label>
-                <div class="relative">
+                <div class="relative group">
                     <select id="email" name="email" required
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 appearance-none bg-white cursor-pointer">
-                        <option value="">Select your email</option>
-                        <option value="nikhil@nutmeg.com">nikhil@nutmeg.com</option>
-                        <option value="jayasree@nutmeg.com">jayasree@nutmeg.com</option>
-                        <option value="nandana@nutmeg.com">nandana@nutmeg.com</option>
-                        <option value="hafeez@nutmeg.com">hafeez@nutmeg.com</option>
+                        class="w-full px-4 py-4 bg-black/50 border border-neutral-800 text-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 transition-all duration-300 appearance-none cursor-pointer outline-none hover:border-gray-700">
+                        <option value="" class="bg-neutral-900 text-gray-500">Select Access ID</option>
+                        <option value="nikhil@nutmeg.com" class="bg-neutral-900 text-white">nikhil@nutmeg.com</option>
+                        <option value="jayasree@nutmeg.com" class="bg-neutral-900 text-white">jayasree@nutmeg.com
+                        </option>
+                        <option value="nandana@nutmeg.com" class="bg-neutral-900 text-white">nandana@nutmeg.com</option>
+                        <option value="hafeez@nutmeg.com" class="bg-neutral-900 text-white">hafeez@nutmeg.com</option>
                     </select>
                     <i data-lucide="chevron-down"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 pointer-events-none"></i>
+                        class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-hover:text-yellow-500 transition-colors duration-300 w-5 h-5 pointer-events-none"></i>
                 </div>
             </div>
 
             <!-- Password Input -->
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-                    Password
+                <label for="password" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Key Code
                 </label>
-                <div class="relative">
-                    <input type="password" id="password" name="password" required placeholder="Enter your password"
-                        class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200" />
+                <div class="relative group">
+                    <input type="password" id="password" name="password" required placeholder="Enter key code"
+                        class="w-full px-4 py-4 pr-12 bg-black/50 border border-neutral-800 text-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 transition-all duration-300 placeholder-gray-700 outline-none hover:border-gray-700" />
                     <button type="button" id="togglePassword"
-                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 rounded p-1"
+                        class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-white transition-colors duration-200 focus:outline-none p-1"
                         aria-label="Toggle password visibility">
                         <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
                     </button>
@@ -104,11 +120,11 @@
 
             <!-- Login Button -->
             <button type="submit" id="loginButton"
-                class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-orange-300 flex items-center justify-center gap-2">
-                <span id="buttonText">Login</span>
-                <i data-lucide="log-in" id="loginIcon" class="w-5 h-5"></i>
-                <!-- Loading Spinner (hidden by default) -->
-                <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white"
+                class="w-full bg-gradient-to-r from-yellow-700 via-yellow-500 to-yellow-700 hover:from-yellow-600 hover:via-yellow-400 hover:to-yellow-600 text-black font-extrabold py-4 px-4 rounded-xl transition-all duration-500 transform hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(255,190,0,0.2)] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] flex items-center justify-center gap-3 mt-8">
+                <span id="buttonText" class="tracking-wide">INITIALIZE</span>
+                <i data-lucide="arrow-right" id="loginIcon" class="w-5 h-5"></i>
+                <!-- Loading Spinner -->
+                <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-black"
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor"
@@ -119,9 +135,9 @@
         </form>
 
         <!-- Footer -->
-        <div class="mt-6 text-center">
-            <p class="text-gray-500 text-xs">
-                Nutmeg Task Tracker © 2026
+        <div class="mt-8 text-center border-t border-white/5 pt-6">
+            <p class="text-gray-600 text-[10px] tracking-widest uppercase">
+                Nexus System v2.0 • 2026
             </p>
         </div>
     </div>

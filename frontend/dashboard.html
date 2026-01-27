@@ -4,10 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Nutmeg Task Tracker</title>
+    <title>Dashboard - NEXUS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #000;
+        }
+
         @keyframes shimmer {
             0% {
                 background-position: -1000px 0;
@@ -20,151 +27,202 @@
 
         .skeleton {
             animation: shimmer 2s infinite;
-            background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
+            background: linear-gradient(to right, #1a1a1a 4%, #333 25%, #1a1a1a 36%);
             background-size: 1000px 100%;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
         }
     </style>
 </head>
 
-<body class="bg-gray-50 min-h-screen">
+<body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
+
+    <!-- Background Ambient Effects -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-yellow-600/5 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-900/10 blur-[100px] rounded-full"></div>
+    </div>
 
     <!-- Top Navigation Bar -->
-    <nav class="bg-white shadow-md sticky top-0 z-50">
+    <nav class="bg-black/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+            <div class="flex justify-between items-center h-20">
                 <!-- Logo/Brand -->
-                <div class="flex items-center gap-3">
-                    <span class="text-3xl">🥜</span>
-                    <span class="text-xl font-bold text-orange-500">NUTMEG</span>
+                <div class="flex items-center gap-4">
+                    <span class="text-3xl drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">🥜</span>
+                    <span
+                        class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 tracking-tight">NEXUS</span>
                 </div>
 
                 <!-- Navigation Links (Desktop) -->
-                <div class="hidden md:flex items-center gap-6">
+                <div class="hidden md:flex items-center gap-8">
                     <a href="dashboard.html"
-                        class="text-orange-500 font-semibold border-b-2 border-orange-500 pb-1 transition-colors">
+                        class="text-yellow-500 font-medium border-b-2 border-yellow-500 pb-1 transition-all drop-shadow-[0_0_8px_rgba(255,215,0,0.3)]">
                         Dashboard
                     </a>
-                    <a href="projects.html" class="text-gray-600 hover:text-orange-500 transition-colors">
+                    <a href="projects.html" class="text-gray-400 hover:text-white transition-colors font-medium">
                         Projects
                     </a>
-                    <a href="profile.html" class="text-gray-600 hover:text-orange-500 transition-colors">
+                    <a href="profile.html" class="text-gray-400 hover:text-white transition-colors font-medium">
                         Profile
                     </a>
                 </div>
 
                 <!-- User Info & Logout -->
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-6">
                     <div class="hidden sm:block text-right">
-                        <p class="text-sm text-gray-600">Welcome,</p>
-                        <p id="userName" class="text-sm font-semibold text-gray-800">Loading...</p>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider">Operator</p>
+                        <p id="userName" class="text-sm font-bold text-white">Loading...</p>
                     </div>
                     <button id="logoutBtn"
-                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                        <i data-lucide="log-out" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Logout</span>
+                        class="group bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded-xl transition-all border border-white/10 hover:border-red-500/50 flex items-center gap-2">
+                        <i data-lucide="log-out"
+                            class="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors"></i>
+                        <span class="hidden sm:inline text-sm font-medium">Logout</span>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Mobile Navigation -->
-        <div class="md:hidden border-t border-gray-200 px-4 py-3 flex gap-4">
+        <div class="md:hidden border-t border-white/10 px-4 py-3 flex gap-2 bg-black/90 backdrop-blur-md">
             <a href="dashboard.html"
-                class="flex-1 text-center text-orange-500 font-semibold py-2 bg-orange-50 rounded-lg">
+                class="flex-1 text-center text-yellow-500 font-medium py-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
                 Dashboard
             </a>
             <a href="projects.html"
-                class="flex-1 text-center text-gray-600 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors">
                 Projects
             </a>
             <a href="profile.html"
-                class="flex-1 text-center text-gray-600 py-2 hover:bg-gray-100 rounded-lg transition-colors">
+                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors">
                 Profile
             </a>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
         <!-- Grid Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
             <!-- Column 1: MY PROJECTS -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        MY PROJECTS
-                        <span id="projectCount" class="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">0</span>
+            <div
+                class="bg-neutral-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden group">
+                <!-- Gradient Borders -->
+                <div class="absolute inset-0 border border-white/5 rounded-2xl z-20 pointer-events-none"></div>
+                <div
+                    class="absolute -top-20 -right-20 w-40 h-40 bg-orange-500/10 blur-[50px] rounded-full pointer-events-none">
+                </div>
+
+                <div class="flex items-center justify-between mb-8 relative z-30">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-3 tracking-wide">
+                        <i data-lucide="folder-kanban" class="w-5 h-5 text-orange-400"></i>
+                        PROJECTS
+                        <span id="projectCount"
+                            class="bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs px-2 py-0.5 rounded-full">0</span>
                     </h2>
-                    <button id="newProjectBtn" class="text-orange-500 hover:text-orange-600 transition-colors"
+                    <button id="newProjectBtn"
+                        class="text-gray-400 hover:text-orange-400 transition-colors transform hover:rotate-90 duration-300"
                         title="New Project">
-                        <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                        <i data-lucide="plus" class="w-6 h-6"></i>
                     </button>
                 </div>
 
                 <!-- Projects List -->
-                <div id="projectsList" class="space-y-4 mb-6">
+                <div id="projectsList" class="space-y-4 mb-6 relative z-30 min-h-[200px]">
                     <!-- Skeleton loaders shown while loading -->
                 </div>
 
                 <!-- Project Stats -->
-                <div id="projectStats" class="text-sm text-gray-600 mb-4 pb-4 border-b border-gray-200">
+                <div id="projectStats"
+                    class="text-xs text-gray-500 mb-6 pb-4 border-b border-white/10 relative z-30 font-mono">
                     <!-- Stats will be inserted here -->
                 </div>
 
                 <!-- View All Button -->
                 <a href="projects.html"
-                    class="block text-center bg-orange-50 hover:bg-orange-100 text-orange-600 font-semibold py-2 rounded-lg transition-colors">
+                    class="block text-center bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-medium py-3 rounded-xl transition-all border border-white/5 hover:border-white/20 relative z-30">
                     View All Projects
                 </a>
             </div>
 
             <!-- Column 2: MY TASKS -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                        MY TASKS
-                        <span id="taskCount" class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">0</span>
+            <div
+                class="bg-neutral-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+                <div
+                    class="absolute -top-20 -left-20 w-40 h-40 bg-blue-500/10 blur-[50px] rounded-full pointer-events-none">
+                </div>
+
+                <div class="flex items-center justify-between mb-8 relative z-30">
+                    <h2 class="text-lg font-bold text-white flex items-center gap-3 tracking-wide">
+                        <i data-lucide="check-square" class="w-5 h-5 text-blue-400"></i>
+                        PENDING TASKS
+                        <span id="taskCount"
+                            class="bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs px-2 py-0.5 rounded-full">0</span>
                     </h2>
                 </div>
 
                 <!-- Tasks List -->
-                <div id="tasksList" class="space-y-3 mb-6">
+                <div id="tasksList" class="space-y-3 mb-6 relative z-30 min-h-[200px]">
                     <!-- Skeleton loaders shown while loading -->
                 </div>
 
                 <!-- Task Summary -->
                 <div id="taskSummary"
-                    class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4 text-sm text-green-700">
+                    class="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-6 text-sm text-green-400 relative z-30">
                     <!-- Summary will be inserted here -->
                 </div>
 
                 <!-- View All Button -->
                 <a href="tasks.html"
-                    class="block text-center bg-blue-50 hover:bg-blue-100 text-blue-600 font-semibold py-2 rounded-lg transition-colors">
+                    class="block text-center bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white font-medium py-3 rounded-xl transition-all border border-white/5 hover:border-white/20 relative z-30">
                     View All Tasks
                 </a>
             </div>
 
             <!-- Column 3: TEAM PULSE -->
-            <div class="bg-white rounded-lg shadow-md p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold text-gray-800">TEAM PULSE</h2>
-                    <i data-lucide="activity" class="w-5 h-5 text-gray-400"></i>
+            <div
+                class="bg-neutral-900/60 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden">
+                <div
+                    class="absolute -bottom-20 -right-20 w-40 h-40 bg-purple-500/10 blur-[50px] rounded-full pointer-events-none">
                 </div>
 
-                <p class="text-sm text-gray-600 mb-4">Recent Activity</p>
+                <div class="flex items-center justify-between mb-8 relative z-30">
+                    <h2 class="text-lg font-bold text-white tracking-wide">TEAM PULSE</h2>
+                    <div class="relative">
+                        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span
+                                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                        </span>
+                        <i data-lucide="activity" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                </div>
+
+                <p class="text-xs text-gray-500 uppercase tracking-widest mb-6 relative z-30">Live Feed</p>
 
                 <!-- Activity Feed -->
-                <div id="activityFeed" class="space-y-4 mb-6">
+                <div id="activityFeed" class="space-y-6 mb-6 relative z-30 min-h-[200px]">
                     <!-- Skeleton loaders shown while loading -->
                 </div>
 
-                <!-- View All Button -->
-                <button
-                    class="w-full text-center bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold py-2 rounded-lg transition-colors">
-                    View All Activity
-                </button>
             </div>
         </div>
     </main>
@@ -233,11 +291,11 @@
             const diffMs = deadline - now;
             const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-            if (diffDays < 0) return { text: `${Math.abs(diffDays)} days overdue`, color: 'text-red-600' };
-            if (diffDays === 0) return { text: 'Due today', color: 'text-yellow-600' };
-            if (diffDays === 1) return { text: '1 day left', color: 'text-yellow-600' };
-            if (diffDays <= 3) return { text: `${diffDays} days left`, color: 'text-orange-600' };
-            return { text: `${diffDays} days left`, color: 'text-gray-600' };
+            if (diffDays < 0) return { text: `${Math.abs(diffDays)}d overdue`, color: 'text-red-400' };
+            if (diffDays === 0) return { text: 'Due today', color: 'text-yellow-400' };
+            if (diffDays === 1) return { text: '1d left', color: 'text-yellow-400' };
+            if (diffDays <= 3) return { text: `${diffDays}d left`, color: 'text-orange-400' };
+            return { text: `${diffDays}d left`, color: 'text-gray-500' };
         }
 
         // Show skeleton loaders
@@ -247,7 +305,7 @@
 
             for (let i = 0; i < count; i++) {
                 const skeleton = document.createElement('div');
-                skeleton.className = 'skeleton h-20 rounded-lg';
+                skeleton.className = 'skeleton h-20 rounded-xl opacity-10';
                 container.appendChild(skeleton);
             }
         }
@@ -279,9 +337,9 @@
 
                 if (activeProjects.length === 0) {
                     projectsList.innerHTML = `
-                        <div class="text-center py-8 text-gray-400">
-                            <i data-lucide="folder-open" class="w-12 h-12 mx-auto mb-2"></i>
-                            <p>No active projects yet</p>
+                        <div class="text-center py-12 text-gray-600">
+                            <i data-lucide="folder-open" class="w-10 h-10 mx-auto mb-3 opacity-50"></i>
+                            <p class="text-sm">No active projects</p>
                         </div>
                     `;
                     lucide.createIcons();
@@ -293,24 +351,24 @@
                         const deadline = project.end_date ? getDaysUntil(project.end_date) : null;
 
                         const projectCard = document.createElement('div');
-                        projectCard.className = 'border border-gray-200 rounded-lg p-4 hover:shadow-md hover:scale-105 transition-all cursor-pointer';
+                        projectCard.className = 'bg-black/40 border border-white/5 rounded-xl p-4 hover:bg-white/5 hover:border-orange-500/30 transition-all cursor-pointer group';
                         projectCard.onclick = () => window.location.href = `tasks.html?project_id=${project.id}`;
 
                         projectCard.innerHTML = `
                             <div class="flex items-start justify-between mb-3">
-                                <h3 class="font-semibold text-gray-800">${project.name}</h3>
-                                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                                <h3 class="font-semibold text-gray-200 group-hover:text-white transition-colors text-sm">${project.name}</h3>
+                                <div class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
                             </div>
-                            <div class="mb-2">
-                                <div class="flex justify-between text-xs text-gray-600 mb-1">
+                            <div class="mb-3">
+                                <div class="flex justify-between text-[10px] text-gray-500 mb-2 uppercase tracking-wider font-mono">
                                     <span>${tasksDone}/${tasksTotal} tasks</span>
                                     <span>${Math.round(progress)}%</span>
                                 </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-orange-500 h-2 rounded-full transition-all" style="width: ${progress}%"></div>
+                                <div class="w-full bg-white/5 rounded-full h-1">
+                                    <div class="bg-gradient-to-r from-orange-600 to-orange-400 h-1 rounded-full transition-all shadow-[0_0_10px_rgba(249,115,22,0.3)]" style="width: ${progress}%"></div>
                                 </div>
                             </div>
-                            ${deadline ? `<p class="text-xs ${deadline.color} font-medium">${deadline.text}</p>` : ''}
+                            ${deadline ? `<p class="text-[10px] ${deadline.color} font-medium text-right">${deadline.text}</p>` : ''}
                         `;
 
                         projectsList.appendChild(projectCard);
@@ -319,15 +377,18 @@
 
                 // Display stats
                 document.getElementById('projectStats').innerHTML = `
-                    <span class="mr-4">✅ ${doneProjects} Done</span>
-                    <span>📦 ${archivedProjects} Archived</span>
+                    <div class="flex justify-between items-center px-2">
+                        <span class="text-green-400">✅ ${doneProjects} Done</span>
+                        <span class="text-gray-500">|</span>
+                        <span class="text-purple-400">📦 ${archivedProjects} Archived</span>
+                    </div>
                 `;
 
             } catch (error) {
                 console.error('Error fetching projects:', error);
                 document.getElementById('projectsList').innerHTML = `
-                    <div class="text-center py-8 text-red-400">
-                        <p>Error loading projects</p>
+                    <div class="text-center py-8 text-red-500/50">
+                        <p class="text-xs">Error loading projects</p>
                     </div>
                 `;
             }
@@ -370,33 +431,35 @@
 
                 if (myTasks.length === 0) {
                     tasksList.innerHTML = `
-                        <div class="text-center py-8 text-gray-400">
-                            <i data-lucide="check-circle" class="w-12 h-12 mx-auto mb-2"></i>
-                            <p>No pending tasks</p>
+                        <div class="text-center py-12 text-gray-600">
+                            <i data-lucide="check-circle" class="w-10 h-10 mx-auto mb-3 opacity-50"></i>
+                            <p class="text-sm">No pending tasks</p>
                         </div>
                     `;
                     lucide.createIcons();
                 } else {
                     myTasks.forEach(task => {
-                        const priorityColors = {
-                            'high': 'bg-red-100 text-red-600',
-                            'urgent': 'bg-red-100 text-red-600',
-                            'medium': 'bg-yellow-100 text-yellow-600',
-                            'low': 'bg-green-100 text-green-600'
+                        const priorityStyles = {
+                            'high': 'text-red-400 bg-red-400/10 border-red-400/20',
+                            'urgent': 'text-red-500 bg-red-500/10 border-red-500/20',
+                            'medium': 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+                            'low': 'text-green-400 bg-green-400/10 border-green-400/20'
                         };
                         const deadline = task.deadline ? getDaysUntil(task.deadline) : null;
 
                         const taskCard = document.createElement('div');
-                        taskCard.className = 'border border-gray-200 rounded-lg p-3 hover:shadow-md hover:scale-105 transition-all cursor-pointer';
+                        taskCard.className = 'bg-black/40 border border-white/5 rounded-xl p-3 px-4 hover:bg-white/5 hover:border-blue-500/30 transition-all cursor-pointer group flex items-center justify-between gap-3';
                         taskCard.onclick = () => window.location.href = `tasks.html?project_id=${task.project_id}`;
 
                         taskCard.innerHTML = `
-                            <h4 class="font-medium text-gray-800 mb-2">${task.title}</h4>
-                            <div class="flex items-center justify-between">
-                                <p class="text-xs text-gray-500">Project #${task.project_id}</p>
-                                <span class="text-xs px-2 py-1 rounded ${priorityColors[task.priority] || priorityColors['low']}">${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</span>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-medium text-gray-300 group-hover:text-white truncate text-sm mb-1">${task.title}</h4>
+                                <p class="text-[10px] text-gray-600 font-mono">Project #${task.project_id}</p>
                             </div>
-                            ${deadline ? `<p class="text-xs ${deadline.color} font-medium mt-2">${deadline.text}</p>` : ''}
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="text-[10px] px-2 py-0.5 rounded border ${priorityStyles[task.priority] || priorityStyles['low']} uppercase tracking-wider font-bold">${task.priority}</span>
+                                ${deadline ? `<p class="text-[10px] ${deadline.color} font-medium">${deadline.text}</p>` : ''}
+                            </div>
                         `;
 
                         tasksList.appendChild(taskCard);
@@ -405,14 +468,18 @@
 
                 // Display summary
                 document.getElementById('taskSummary').innerHTML = `
-                    <span class="font-semibold">✅ ${completedCount} Completed</span>
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="award" class="w-5 h-5"></i>
+                        <span class="font-bold text-white">${completedCount}</span>
+                        <span class="text-green-400/80">Tasks Completed Lifetime</span>
+                    </div>
                 `;
 
             } catch (error) {
                 console.error('Error fetching tasks:', error);
                 document.getElementById('tasksList').innerHTML = `
-                    <div class="text-center py-8 text-red-400">
-                        <p>Error loading tasks</p>
+                    <div class="text-center py-8 text-red-500/50">
+                        <p class="text-xs">Error loading tasks</p>
                     </div>
                 `;
             }
@@ -440,31 +507,37 @@
 
                 if (activities.length === 0) {
                     activityFeed.innerHTML = `
-                        <div class="text-center py-8 text-gray-400">
-                            <i data-lucide="bell-off" class="w-12 h-12 mx-auto mb-2"></i>
-                            <p>No recent activity</p>
+                        <div class="text-center py-12 text-gray-600">
+                            <i data-lucide="bell-off" class="w-10 h-10 mx-auto mb-3 opacity-50"></i>
+                            <p class="text-sm">No recent activity</p>
                         </div>
                     `;
                     lucide.createIcons();
                 } else {
-                    const avatarColors = ['bg-orange-500', 'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500'];
+                    const avatarStyles = [
+                        'bg-orange-500/20 text-orange-400 border-orange-500/30',
+                        'bg-blue-500/20 text-blue-400 border-blue-500/30',
+                        'bg-green-500/20 text-green-400 border-green-500/30',
+                        'bg-purple-500/20 text-purple-400 border-purple-500/30',
+                        'bg-pink-500/20 text-pink-400 border-pink-500/30'
+                    ];
 
                     activities.forEach((activity, index) => {
                         const userName = activity.user_email ? getFirstName(activity.user_email) : 'User';
                         const initial = userName.charAt(0).toUpperCase();
-                        const avatarColor = avatarColors[index % avatarColors.length];
+                        const avatarStyle = avatarStyles[index % avatarStyles.length];
                         const timestamp = getRelativeTime(activity.created_at);
 
                         const activityItem = document.createElement('div');
-                        activityItem.className = 'flex gap-3';
+                        activityItem.className = 'flex gap-4 group';
 
                         activityItem.innerHTML = `
-                            <div class="${avatarColor} w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold flex-shrink-0">
+                            <div class="${avatarStyle} w-8 h-8 rounded-lg border flex items-center justify-center font-bold text-xs flex-shrink-0 shadow-[0_0_10px_rgba(0,0,0,0.5)]">
                                 ${initial}
                             </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm text-gray-800">${activity.description}</p>
-                                <p class="text-xs text-gray-500 mt-1">${timestamp}</p>
+                            <div class="flex-1 min-w-0 pt-0.5">
+                                <p class="text-sm text-gray-400 group-hover:text-gray-300 transition-colors leading-relaxed">${activity.description}</p>
+                                <p class="text-[10px] text-gray-600 mt-1 font-mono">${timestamp}</p>
                             </div>
                         `;
 
@@ -475,8 +548,8 @@
             } catch (error) {
                 console.error('Error fetching activities:', error);
                 document.getElementById('activityFeed').innerHTML = `
-                    <div class="text-center py-8 text-red-400">
-                        <p>Error loading activity</p>
+                    <div class="text-center py-8 text-red-500/50">
+                        <p class="text-xs">Error loading activity</p>
                     </div>
                 `;
             }

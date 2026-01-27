@@ -11,47 +11,61 @@ function showToast(message, type = 'info') {
     // Remove existing toast if any
     const existingToast = document.getElementById('toast-notification');
     if (existingToast) {
-        existingToast.remove();
+        existingToast.style.opacity = '0';
+        setTimeout(() => existingToast.remove(), 200);
     }
 
     // Create toast container
     const toast = document.createElement('div');
     toast.id = 'toast-notification';
-    toast.className = 'fixed top-4 right-4 z-50 transform transition-all duration-300 ease-in-out translate-x-0';
+    toast.className = 'fixed top-6 right-6 z-[100] transform transition-all duration-300 ease-out translate-x-12 opacity-0';
 
-    // Define colors and icons based on type
+    // Define colors and icons based on type for NEXUS theme
     const styles = {
         success: {
-            bg: 'bg-green-500',
-            icon: '✓',
-            iconBg: 'bg-green-600'
+            border: 'border-green-500/50',
+            bg: 'bg-neutral-900/90',
+            text: 'text-green-400',
+            icon: `<i data-lucide="check-circle" class="w-5 h-5 text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]"></i>`,
+            shadow: 'shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)]'
         },
         error: {
-            bg: 'bg-red-500',
-            icon: '✕',
-            iconBg: 'bg-red-600'
+            border: 'border-red-500/50',
+            bg: 'bg-neutral-900/90',
+            text: 'text-red-400',
+            icon: `<i data-lucide="alert-circle" class="w-5 h-5 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"></i>`,
+            shadow: 'shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]'
         },
         warning: {
-            bg: 'bg-yellow-500',
-            icon: '⚠',
-            iconBg: 'bg-yellow-600'
+            border: 'border-yellow-500/50',
+            bg: 'bg-neutral-900/90',
+            text: 'text-yellow-400',
+            icon: `<i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]"></i>`,
+            shadow: 'shadow-[0_0_20px_-5px_rgba(234,179,8,0.3)]'
         },
         info: {
-            bg: 'bg-blue-500',
-            icon: 'ℹ',
-            iconBg: 'bg-blue-600'
+            border: 'border-blue-500/50',
+            bg: 'bg-neutral-900/90',
+            text: 'text-blue-400',
+            icon: `<i data-lucide="info" class="w-5 h-5 text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]"></i>`,
+            shadow: 'shadow-[0_0_20px_-5px_rgba(59,130,246,0.3)]'
         }
     };
 
     const style = styles[type] || styles.info;
 
     toast.innerHTML = `
-        <div class="${style.bg} text-white px-6 py-4 rounded-lg shadow-lg flex items-center gap-3 min-w-[300px] max-w-md">
-            <div class="${style.iconBg} w-8 h-8 rounded-full flex items-center justify-center font-bold flex-shrink-0">
+        <div class="${style.bg} backdrop-blur-xl border ${style.border} pl-4 pr-6 py-4 rounded-xl ${style.shadow} flex items-center gap-4 min-w-[320px] max-w-md relative overflow-hidden group">
+            <!-- Glow effect -->
+            <div class="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+            
+            <div class="flex-shrink-0">
                 ${style.icon}
             </div>
-            <p class="flex-1 font-medium">${message}</p>
-            <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200 transition-colors ml-2 flex-shrink-0">
+            <div class="flex-1">
+                <p class="font-medium text-gray-200 text-sm leading-snug">${message}</p>
+            </div>
+            <button onclick="this.closest('#toast-notification').remove()" class="text-gray-500 hover:text-white transition-colors flex-shrink-0 p-1 hover:bg-white/10 rounded-full">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
@@ -61,11 +75,24 @@ function showToast(message, type = 'info') {
 
     document.body.appendChild(toast);
 
+    // Initialize icons for the toast
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    // Animate in
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-12', 'opacity-0');
+    });
+
     // Auto dismiss after 5 seconds
     setTimeout(() => {
-        toast.style.transform = 'translateX(400px)';
-        toast.style.opacity = '0';
-        setTimeout(() => toast.remove(), 300);
+        if (document.body.contains(toast)) {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (document.body.contains(toast)) toast.remove();
+            }, 300);
+        }
     }, 5000);
 }
 
