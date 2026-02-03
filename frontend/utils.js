@@ -6,6 +6,27 @@ const API_BASE_URL = 'http://localhost:8000';
 const TOKEN_KEY = 'nutmeg_token';
 const USER_KEY = 'nutmeg_user';
 
+// Toast Notification System - Helper Functions
+function getIconName(type) {
+    const iconMap = {
+        success: 'check-circle',
+        error: 'alert-circle',
+        warning: 'alert-triangle',
+        info: 'info'
+    };
+    return iconMap[type] || iconMap.info;
+}
+
+function getShadowColor(type) {
+    const shadowMap = {
+        success: 'rgba(34,197,94,0.6)',
+        error: 'rgba(239,68,68,0.6)',
+        warning: 'rgba(234,179,8,0.6)',
+        info: 'rgba(59,130,246,0.6)'
+    };
+    return shadowMap[type] || shadowMap.info;
+}
+
 // Toast Notification System
 function showToast(message, type = 'info') {
     // Remove existing toast if any
@@ -26,28 +47,24 @@ function showToast(message, type = 'info') {
             border: 'border-green-500/50',
             bg: 'bg-neutral-900/90',
             text: 'text-green-400',
-            icon: `<i data-lucide="check-circle" class="w-5 h-5 text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]"></i>`,
             shadow: 'shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)]'
         },
         error: {
             border: 'border-red-500/50',
             bg: 'bg-neutral-900/90',
             text: 'text-red-400',
-            icon: `<i data-lucide="alert-circle" class="w-5 h-5 text-red-500 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]"></i>`,
             shadow: 'shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]'
         },
         warning: {
             border: 'border-yellow-500/50',
             bg: 'bg-neutral-900/90',
             text: 'text-yellow-400',
-            icon: `<i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.6)]"></i>`,
             shadow: 'shadow-[0_0_20px_-5px_rgba(234,179,8,0.3)]'
         },
         info: {
             border: 'border-blue-500/50',
             bg: 'bg-neutral-900/90',
             text: 'text-blue-400',
-            icon: `<i data-lucide="info" class="w-5 h-5 text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]"></i>`,
             shadow: 'shadow-[0_0_20px_-5px_rgba(59,130,246,0.3)]'
         }
     };
@@ -63,10 +80,13 @@ function showToast(message, type = 'info') {
     glowEffect.className = 'absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none';
     container.appendChild(glowEffect);
 
-    // Icon container (style.icon is safe as it comes from internal styles object)
+    // Icon container - create using DOM APIs for security compliance
     const iconWrapper = document.createElement('div');
     iconWrapper.className = 'flex-shrink-0';
-    iconWrapper.innerHTML = style.icon;
+    const iconElement = document.createElement('i');
+    iconElement.setAttribute('data-lucide', getIconName(type));
+    iconElement.className = `w-5 h-5 ${style.text} drop-shadow-[0_0_8px_${getShadowColor(type)}]`;
+    iconWrapper.appendChild(iconElement);
     container.appendChild(iconWrapper);
 
     // Message container - use textContent to prevent XSS
