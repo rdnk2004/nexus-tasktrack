@@ -54,25 +54,52 @@ function showToast(message, type = 'info') {
 
     const style = styles[type] || styles.info;
 
-    toast.innerHTML = `
-        <div class="${style.bg} backdrop-blur-xl border ${style.border} pl-4 pr-6 py-4 rounded-xl ${style.shadow} flex items-center gap-4 min-w-[320px] max-w-md relative overflow-hidden group">
-            <!-- Glow effect -->
-            <div class="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-            
-            <div class="flex-shrink-0">
-                ${style.icon}
-            </div>
-            <div class="flex-1">
-                <p class="font-medium text-gray-200 text-sm leading-snug">${message}</p>
-            </div>
-            <button onclick="this.closest('#toast-notification').remove()" class="text-gray-500 hover:text-white transition-colors flex-shrink-0 p-1 hover:bg-white/10 rounded-full">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-            </button>
-        </div>
-    `;
+    // Create toast structure using DOM APIs to prevent XSS
+    const container = document.createElement('div');
+    container.className = `${style.bg} backdrop-blur-xl border ${style.border} pl-4 pr-6 py-4 rounded-xl ${style.shadow} flex items-center gap-4 min-w-[320px] max-w-md relative overflow-hidden group`;
 
+    // Glow effect
+    const glowEffect = document.createElement('div');
+    glowEffect.className = 'absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none';
+    container.appendChild(glowEffect);
+
+    // Icon container (style.icon is safe as it comes from internal styles object)
+    const iconWrapper = document.createElement('div');
+    iconWrapper.className = 'flex-shrink-0';
+    iconWrapper.innerHTML = style.icon;
+    container.appendChild(iconWrapper);
+
+    // Message container - use textContent to prevent XSS
+    const messageWrapper = document.createElement('div');
+    messageWrapper.className = 'flex-1';
+    const messageText = document.createElement('p');
+    messageText.className = 'font-medium text-gray-200 text-sm leading-snug';
+    messageText.textContent = message; // Safe: textContent escapes HTML
+    messageWrapper.appendChild(messageText);
+    container.appendChild(messageWrapper);
+
+    // Close button
+    const closeButton = document.createElement('button');
+    closeButton.className = 'text-gray-500 hover:text-white transition-colors flex-shrink-0 p-1 hover:bg-white/10 rounded-full';
+    closeButton.onclick = function () {
+        const toastEl = this.closest('#toast-notification');
+        if (toastEl) toastEl.remove();
+    };
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('class', 'w-4 h-4');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+    svg.appendChild(path);
+    closeButton.appendChild(svg);
+    container.appendChild(closeButton);
+
+    toast.appendChild(container);
     document.body.appendChild(toast);
 
     // Initialize icons for the toast
