@@ -8,6 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- Flatpickr Date Picker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
 
@@ -683,14 +687,20 @@
         }
 
         function setupNewTaskModal() {
-            // Set deadline limits
+            // Set deadline limits (today to +2 days max)
             const today = new Date();
             const maxDate = new Date(today);
             maxDate.setDate(today.getDate() + 2);
 
-            const deadlineInput = document.getElementById('taskDeadline');
-            deadlineInput.min = today.toISOString().split('T')[0];
-            deadlineInput.max = maxDate.toISOString().split('T')[0];
+            //Initialize Flatpickr on task deadline input
+            flatpickr("#taskDeadline", {
+                defaultDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), // +2 days
+                minDate: today,
+                maxDate: maxDate,
+                dateFormat: "Y-m-d",
+                theme: "dark",
+                disableMobile: true
+            });
 
             // Assignment type handling
             const assignmentTypes = document.querySelectorAll('input[name="assignmentType"]');

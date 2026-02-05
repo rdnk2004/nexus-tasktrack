@@ -6,8 +6,6 @@ class Settings:
     # Database Configuration
     DATABASE_TYPE: str = os.getenv("DATABASE_TYPE", "postgresql")  # sqlite or postgresql
     
-    # SQLite (for local dev)
-    SQLITE_DATABASE_URL: str = "sqlite:///./nutmeg_v2.db"
     
     # PostgreSQL (for production)
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "nutmeg_user")

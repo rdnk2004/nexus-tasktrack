@@ -39,6 +39,7 @@ class User(SQLModel, table=True):
 class Project(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
+    description: Optional[str] = None  # Project description (optional)
     status: str = Field(default=ProjectStatus.ACTIVE)
     created_by: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -100,9 +101,14 @@ class Activity(SQLModel, table=True):
 
 class ProjectCreate(SQLModel):
     name: str
+    description: Optional[str] = None  # Optional project description
     members: List[str] = []  # List of collaborator emails (creator auto-added)
     start_date: datetime  # Required for timeline validation
     end_date: datetime    # Required for timeline validation
+
+class PasswordChange(SQLModel):
+    current_password: str
+    new_password: str
 
 class ProjectUpdate(SQLModel):
     name: Optional[str] = None
@@ -140,6 +146,7 @@ class ProjectResponse(BaseModel):
     """Enriched project response with members and task stats"""
     id: int
     name: str
+    description: Optional[str] = None  # Project description
     status: str
     created_by: str
     created_at: datetime

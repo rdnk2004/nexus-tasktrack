@@ -157,7 +157,7 @@
                     </div>
                 </div>
 
-                <div class="text-center sm:text-left">
+                <div class="text-center sm:text-left flex-1">
                     <h1 id="profileName" class="text-4xl font-black text-white mb-2 tracking-tight">NIKHIL</h1>
                     <div
                         class="flex items-center justify-center sm:justify-start gap-2 text-gray-400 mb-4 bg-black/30 inline-flex px-3 py-1 rounded-lg border border-white/5">
@@ -166,6 +166,76 @@
                     </div>
                     <p class="text-xs text-gray-600 uppercase tracking-widest">Active Operative since January 2026</p>
                 </div>
+
+                <!-- Change Password Button -->
+                <button id="changePasswordBtn"
+                    class="group bg-neutral-900 hover:bg-neutral-800 text-white px-5 py-3 rounded-xl transition-all border border-white/10 hover:border-yellow-500/50 flex items-center gap-2">
+                    <i data-lucide="key"
+                        class="w-4 h-4 text-gray-400 group-hover:text-yellow-500 transition-colors"></i>
+                    <span class="text-sm font-medium">Change Password</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Change Password Modal -->
+        <div id="passwordModal"
+            class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+            <div
+                class="bg-neutral-900 border border-white/10 rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden">
+                <div class="border-b border-white/10 px-8 py-6 flex justify-between items-center bg-black/20">
+                    <h3 class="text-2xl font-bold text-white tracking-tight">Change Password</h3>
+                    <button onclick="closePasswordModal()"
+                        class="text-gray-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full">
+                        <i data-lucide="x" class="w-6 h-6"></i>
+                    </button>
+                </div>
+
+                <form id="passwordForm" class="px-8 py-6 space-y-6">
+                    <!-- Current Password -->
+                    <div>
+                        <label for="currentPassword"
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            Current Password
+                        </label>
+                        <input type="password" id="currentPassword" required
+                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all outline-none"
+                            placeholder="Enter current password" />
+                    </div>
+
+                    <!-- New Password -->
+                    <div>
+                        <label for="newPassword"
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            New Password
+                        </label>
+                        <input type="password" id="newPassword" required
+                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all outline-none"
+                            placeholder="Enter new password (min. 6 characters)" />
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div>
+                        <label for="confirmPassword"
+                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                            Confirm New Password
+                        </label>
+                        <input type="password" id="confirmPassword" required
+                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all outline-none"
+                            placeholder="Confirm new password" />
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-4 pt-4">
+                        <button type="button" onclick="closePasswordModal()"
+                            class="flex-1 px-6 py-3 bg-neutral-800 hover:bg-neutral-700 text-gray-300 rounded-xl transition-all font-semibold border border-white/10">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="flex-1 px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-black rounded-xl transition-all font-semibold shadow-lg shadow-yellow-900/50">
+                            Update Password
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -771,7 +841,67 @@
             document.getElementById('userName').textContent = name;
         }
 
+        // Password Modal Functions
+        function openPasswordModal() {
+            document.getElementById('passwordModal').classList.remove('hidden');
+            document.getElementById('passwordModal').classList.add('flex');
+            document.getElementById('passwordForm').reset();
+            lucide.createIcons();
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+            document.getElementById('passwordModal').classList.remove('flex');
+        }
+
+        async function changePassword(e) {
+            e.preventDefault();
+
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Validation
+            if (newPassword !== confirmPassword) {
+                showToast('New passwords do not match', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                showToast('New password must be at least 6 characters', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/me/password`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${getToken()}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showToast('Password changed successfully', 'success');
+                    closePasswordModal();
+                } else {
+                    throw new Error(data.detail || 'Failed to change password');
+                }
+            } catch (error) {
+                console.error('Error changing password:', error);
+                showToast(error.message, 'error');
+            }
+        }
+
         // Event Listeners
+        document.getElementById('changePasswordBtn').addEventListener('click', openPasswordModal);
+        document.getElementById('passwordForm').addEventListener('submit', changePassword);
         document.getElementById('logoutBtn').addEventListener('click', () => {
             if (confirm('Are you sure you want to logout?')) logout();
         });

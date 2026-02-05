@@ -5,7 +5,7 @@ from sqlalchemy import desc
 from typing import List, Optional
 from pydantic import BaseModel
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Local Imports
 from app.jwt_utils import create_access_token
@@ -19,7 +19,8 @@ from app.models import (
     Task, TaskStatus, TaskPriority, TaskCreate, TaskUpdate, TaskAssignee, TaskStatusUpdate,
     Activity, ActivityType,
     ProjectResponse, MemberInfo,
-    TaskResponse, AssigneeInfo
+    TaskResponse, AssigneeInfo,
+    PasswordChange
 )
 
 app = FastAPI(
@@ -177,6 +178,39 @@ def read_me(current_user: str = Depends(get_current_user)):
         "status": "authenticated"
     }
 
+@app.put("/me/password", tags=["Auth"])
+def change_password(
+    password_data: PasswordChange,
+    current_user: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """Change user password"""
+    # Get user from database
+    user = session.exec(select(User).where(User.email == current_user)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Verify current password
+    if not verify_password(password_data.current_password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect"
+        )
+    
+    # Validate new password
+    if len(password_data.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 6 characters"
+        )
+    
+    # Hash and update password
+    user.password = hash_password(password_data.new_password)
+    session.add(user)
+    session.commit()
+    
+    return {"message": "Password changed successfully"}
+
 
 # ==========================================
 # USER ENDPOINTS
@@ -278,6 +312,7 @@ def create_project(
         # ===== CREATE PROJECT =====
         project = Project(
             name=project_data.name,
+            description=project_data.description,
             created_by=current_user,
             status=ProjectStatus.ACTIVE,
             start_date=project_data.start_date,
@@ -394,11 +429,10 @@ def list_projects(
             is_collaborative = len(members) > 1
             
             # Apply type filter
-            if type:
-                if type == "individual" and is_collaborative:
-                    continue
-                elif type == "collaborative" and not is_collaborative:
-                    continue
+            if type == "individual" and is_collaborative:
+                continue
+            if type == "collaborative" and not is_collaborative:
+                continue
             
             # Get task statistics
             all_tasks = session.exec(
@@ -487,10 +521,10 @@ def get_project(
         total_tasks = len(all_tasks)
         completed_tasks = len([t for t in all_tasks if t.status == TaskStatus.DONE])
         
-        # Create enriched response
-        enriched_project = ProjectResponse(
+        return ProjectResponse(
             id=project.id,
             name=project.name,
+            description=project.description,
             status=project.status,
             created_by=project.created_by,
             created_at=project.created_at,
@@ -501,8 +535,6 @@ def get_project(
             completed_tasks=completed_tasks,
             is_collaborative=is_collaborative
         )
-        
-        return enriched_project
         
     except HTTPException:
         raise
@@ -551,6 +583,68 @@ def update_project(
     return project
 
 
+@app.delete("/projects/{project_id}", tags=["Projects"])
+def delete_project(
+    project_id: int,
+    current_user: str = Depends(get_current_user),
+    session: Session = Depends(get_session)
+):
+    """Delete a project (only allowed for archived projects by the owner)"""
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Verify user is the project owner
+    if project.created_by != current_user:
+        raise HTTPException(status_code=403, detail="Only the project owner can delete the project")
+    
+    # Verify project is archived
+    if project.status != ProjectStatus.ARCHIVED:
+        raise HTTPException(status_code=400, detail="Only archived projects can be deleted")
+    
+    # Cascade delete all related data
+    # 1. Delete all activities for this project
+    activities = session.exec(
+        select(Activity).where(Activity.project_id == project_id)
+    ).all()
+    for activity in activities:
+        session.delete(activity)
+    session.flush()  # Flush activities deletion
+    
+    # 2. Get all tasks for this project
+    tasks = session.exec(
+        select(Task).where(Task.project_id == project_id)
+    ).all()
+    
+    # 3. Delete all task assignees for these tasks
+    for task in tasks:
+        assignees = session.exec(
+            select(TaskAssignee).where(TaskAssignee.task_id == task.id)
+        ).all()
+        for assignee in assignees:
+            session.delete(assignee)
+    session.flush()  # Flush task assignees deletion
+    
+    # 4. Delete all tasks
+    for task in tasks:
+        session.delete(task)
+    session.flush()  # Flush tasks deletion
+    
+    # 5. Delete all project members
+    members = session.exec(
+        select(ProjectMember).where(ProjectMember.project_id == project_id)
+    ).all()
+    for member in members:
+        session.delete(member)
+    session.flush()  # Flush project members deletion
+    
+    # 6. Delete the project itself
+    session.delete(project)
+    session.commit()
+    
+    return {"message": f"Project '{project.name}' permanently deleted"}
+
+
 # ==========================================
 # TASK ENDPOINTS
 # ==========================================
@@ -566,6 +660,20 @@ def add_task(
     project = session.get(Project, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found")
+
+    # ===== DEADLINE VALIDATION & DEFAULT =====
+    # Use timezone-aware datetime to match frontend ISO datetime format
+    now = datetime.now(timezone.utc)
+    
+    # If no deadline provided, default to 2 days from now
+    if task_data.deadline is None:
+        task_data.deadline = now + timedelta(days=2)
+    # Validate deadline is not in the past
+    elif task_data.deadline < now:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Task deadline cannot be in the past. Please choose a future date."
+            )
 
     # Determine if team task
     is_team_task = not task_data.assignees or task_data.assignees == ["ALL"]
@@ -758,7 +866,7 @@ def update_my_task_status(
         select(TaskAssignee).where(TaskAssignee.task_id == task_id)
     ).all()
     
-    all_done = all([a.status == TaskStatus.DONE for a in all_assignees])
+    all_done = all(a.status == TaskStatus.DONE for a in all_assignees)
     
     # Update task overall status
     task = session.get(Task, task_id)
