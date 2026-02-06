@@ -9,7 +9,7 @@ class Settings:
     
     # PostgreSQL (for production)
     POSTGRES_USER: str = os.getenv("POSTGRES_USER", "nutmeg_user")
-    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "rdnk@2004")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "nutmeg123")
     POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
     POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
     POSTGRES_DB: str = os.getenv("POSTGRES_DB", "nutmeg_db")

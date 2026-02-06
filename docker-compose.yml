@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  database:
+    image: postgres:15-alpine
+    container_name: nutmeg-db
+    environment:
+      POSTGRES_USER: nutmeg_user
+      POSTGRES_PASSWORD: nutmeg123
+      POSTGRES_DB: nutmeg_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U nutmeg_user -d nutmeg_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nutmeg-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nutmeg-backend
+    environment:
+      DATABASE_TYPE: postgresql
+      POSTGRES_USER: nutmeg_user
+      POSTGRES_PASSWORD: nutmeg123
+      POSTGRES_HOST: database
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: nutmeg_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - nutmeg-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nutmeg-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - nutmeg-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+
+networks:
+  nutmeg-network:
+    driver: bridge
