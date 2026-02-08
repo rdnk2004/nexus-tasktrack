@@ -43,6 +43,7 @@ FIXED_USERS = [
     "jayasree@nutmeg.com",
     "nandana@nutmeg.com",
     "hafeez@nutmeg.com",
+    "test@nutmeg.com",
 ]
 DEFAULT_PASSWORD = "nutmeg123"
 MAX_ACTIVE_PROJECTS = 2
