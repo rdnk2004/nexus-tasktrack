@@ -1,0 +1,32 @@
+<!-- Nutmeg Frontend - Production Configuration -->
+<!-- 
+  INSTRUCTIONS FOR RENDER DEPLOYMENT:
+  
+  1. After deploying your backend to Render, you'll get a URL like:
+     https://nutmeg-backend-xxxx.onrender.com
+  
+  2. Add this script to ALL your HTML files (login.html, tasks.html, etc.)
+     RIGHT BEFORE the closing </head> tag:
+     
+     <script>
+       // Set production API URL (replace with your actual Render backend URL)
+       window.NUTMEG_API_URL = 'https://nutmeg-backend-xxxx.onrender.com';
+     </script>
+  
+  3. For local development, you can remove this script or comment it out,
+     and it will default to http://localhost:8000
+     
+  EXAMPLE:
+  In login.html, find the </head> tag and add:
+  
+  <head>
+    ... other head content ...
+    
+    <!-- Production API Configuration -->
+<script>
+    window.NUTMEG_API_URL = 'https://nutmeg-backend-xxxx.onrender.com';
+</script>
+</head>
+
+IMPORTANT: Don't commit the actual URL initially. Wait until you have your backend URL from Render!
+-->

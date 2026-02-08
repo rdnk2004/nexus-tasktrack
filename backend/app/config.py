@@ -17,6 +17,12 @@ class Settings:
     @property
     def DATABASE_URL(self) -> str:
         """Returns appropriate database URL based on DATABASE_TYPE"""
+        # For Render/Railway deployment - use DATABASE_URL directly if provided
+        database_url = os.getenv("DATABASE_URL")
+        if database_url:
+            return database_url
+        
+        # Otherwise construct from individual env vars (for local development)
         if self.DATABASE_TYPE == "postgresql":
             # URL encode user and password to handle special characters like '@'
             user = quote_plus(self.POSTGRES_USER)

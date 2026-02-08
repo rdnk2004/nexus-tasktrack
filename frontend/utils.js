@@ -1,6 +1,7 @@
 // Nutmeg Task Tracker - Shared Utilities
-// API Base URL
-const API_BASE_URL = 'http://localhost:8000';
+// API Base URL - Can be overridden by setting window.NUTMEG_API_URL in production
+// For Render deployment, set this in an inline script in your HTML files
+const API_BASE_URL = window.NUTMEG_API_URL || 'http://localhost:8000';
 
 // Local Storage Keys
 const TOKEN_KEY = 'nutmeg_token';
