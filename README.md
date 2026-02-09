@@ -1,4 +1,4 @@
-# 🥜 Nutmeg Task Tracker
+# Nexus Task Tracker
 
 A modern, lightweight project management tool built for small teams. Track projects, tasks, and team activity with ease.
 
