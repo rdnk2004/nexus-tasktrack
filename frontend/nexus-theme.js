@@ -148,7 +148,7 @@ function startElementalEngine() {
     // Heat: Fast Y movement, subtle X jitter
     // Water: Slow, smooth rolling movement
 
-    function animate() {
+    const animate = () => {
         frames++;
 
         // Heat Animation (Rising)
