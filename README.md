@@ -22,7 +22,7 @@ A modern, lightweight project management tool built for small teams. Track proje
 2. **Clone and Run**
    ```powershell
    # Clone the repository
-   git clone https://github.com/YOUR_USERNAME/nutmeg.git
+   git clone https://github.com/YOUR_USERNAME/nutmeg-tasktracker.git
    cd nutmeg
 
    # Start all services
