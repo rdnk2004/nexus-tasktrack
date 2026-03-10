@@ -1,4 +1,4 @@
-# 🥜 Nutmeg Task Tracker
+# Nexus Task Tracker
 
 A modern, lightweight project management tool built for small teams. Track projects, tasks, and team activity with ease.
 
@@ -22,7 +22,7 @@ A modern, lightweight project management tool built for small teams. Track proje
 2. **Clone and Run**
    ```powershell
    # Clone the repository
-   git clone https://github.com/YOUR_USERNAME/nutmeg.git
+   git clone https://github.com/YOUR_USERNAME/nutmeg-tasktracker.git
    cd nutmeg
 
    # Start all services
@@ -36,30 +36,6 @@ A modern, lightweight project management tool built for small teams. Track proje
    - Frontend: http://localhost
    - Backend API: http://localhost:8000
    - API Docs: http://localhost:8000/docs
-
-4. **Default Users**
-   - nikhil@nutmeg.com / nutmeg123
-   - jayasree@nutmeg.com / nutmeg123
-   - nandana@nutmeg.com / nutmeg123
-   - hafeez@nutmeg.com / nutmeg123
-
-   ⚠️ **Remember to change passwords after first login!**
-
-## ☁️ Deploy to Railway
-
-For production deployment with **NO SLEEP TIME** and **24/7 access**:
-
-📖 **See detailed guide:** [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md)
-
-Quick steps:
-1. Sign up at [railway.app](https://railway.app)
-2. Create new project from GitHub repo
-3. Add PostgreSQL database
-4. Deploy backend and frontend services
-5. Update frontend API URL to Railway backend
-6. Done! 🎉
-
-**Cost:** FREE (within $5/month Railway credit)
 
 ## 🛠️ Tech Stack
 
