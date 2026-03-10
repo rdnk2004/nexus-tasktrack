@@ -84,10 +84,10 @@
         }
     </style>
 
-    <!-- Production API Configuration -->
+    <!-- API Configuration -->
     <script>
-        // Set production backend URL for Render deployment
-        window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
+        window.NUTMEG_API_URL = 'http://localhost:8000';
+        // window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
     </script>
 </head>
 
@@ -538,8 +538,8 @@
                 });
                 const users = await response.json();
 
-                // Exclude current user
-                const otherUsers = users.filter(email => email !== currentUser.email);
+                // Exclude current user and hidden test account
+                const otherUsers = users.filter(email => email !== currentUser.email && email !== 'test@nutmeg.com');
 
                 otherUsers.forEach(email => {
                     const checkbox = document.createElement('label');
@@ -834,7 +834,13 @@
                 return;
             }
 
-            if (!confirm('Mark this protocol as complete?')) return;
+            const confirmed = await showConfirm({
+                title: 'Complete Protocol',
+                message: 'Mark this protocol as complete? This cannot be undone.',
+                confirmText: 'Complete',
+                cancelText: 'Cancel'
+            });
+            if (!confirmed) return;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
@@ -860,7 +866,13 @@
 
         // Archive Project
         async function archiveProject(projectId) {
-            if (!confirm('Archive this protocol? It will be moved to storage.')) return;
+            const confirmed = await showConfirm({
+                title: 'Archive Protocol',
+                message: 'Archive this protocol? It will be moved to storage and you can delete it later.',
+                confirmText: 'Archive',
+                cancelText: 'Cancel'
+            });
+            if (!confirmed) return;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
@@ -956,7 +968,14 @@
 
         // Delete Project Function
         async function deleteProject(projectId) {
-            if (!confirm('Permanently delete this archived project? This action cannot be undone.')) return;
+            const confirmed = await showConfirm({
+                title: 'Delete Project',
+                message: 'Permanently delete this archived project? This action cannot be undone.',
+                confirmText: 'Delete',
+                cancelText: 'Cancel',
+                danger: true
+            });
+            if (!confirmed) return;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
@@ -999,8 +1018,14 @@
         // Event Listeners
         document.getElementById('newProjectBtn').addEventListener('click', openModal);
         document.getElementById('createProjectBtn').addEventListener('click', createProject);
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to logout?')) logout();
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            const confirmed = await showConfirm({
+                title: 'Logout',
+                message: 'Are you sure you want to end your session?',
+                confirmText: 'Logout',
+                cancelText: 'Stay'
+            });
+            if (confirmed) logout();
         });
 
         // Check for action parameter

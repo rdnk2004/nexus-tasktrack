@@ -3,6 +3,7 @@
 # Core Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
+python-dotenv==1.0.1
 
 # Database & ORM
 sqlmodel==0.0.14

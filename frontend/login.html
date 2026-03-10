@@ -50,19 +50,32 @@
         .slide-in {
             animation: slideIn 0.5s ease-out;
         }
+
+        @keyframes fadeSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hint-appear {
+            animation: fadeSlideIn 0.4s ease-out;
+        }
     </style>
 
-    <!-- Production API Configuration -->
+    <!-- API Configuration -->
     <script>
-        // Set production backend URL for Render deployment
+        //window.NUTMEG_API_URL = 'http://localhost:8000';
         window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
     </script>
 </head>
 
 <body class="min-h-screen bg-black flex items-center justify-center p-4 selection:bg-yellow-500/30">
-
-    <!-- Background Effects -->
-
 
     <!-- Login Card -->
     <div id="loginCard"
@@ -77,7 +90,7 @@
             <h1
                 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 mb-2 tracking-tight">
                 NEXUS</h1>
-            <p class="text-gray-400 text-sm tracking-widest uppercase">Project NLP & RAG • Internal</p>
+            <p class="text-gray-400 text-sm tracking-widest uppercase">Project NLP &amp; RAG • Internal</p>
         </div>
 
         <!-- Login Form -->
@@ -96,7 +109,11 @@
                         </option>
                         <option value="nandana@nutmeg.com" class="bg-neutral-900 text-white">nandana@nutmeg.com</option>
                         <option value="hafeez@nutmeg.com" class="bg-neutral-900 text-white">hafeez@nutmeg.com</option>
-                        <option value="test@nutmeg.com" class="bg-neutral-900 text-white">test@nutmeg.com</option>
+                        <option value="aldrin@nutmeg.com" class="bg-neutral-900 text-white">aldrin@nutmeg.com</option>
+                        <option value="sreeraj@nutmeg.com" class="bg-neutral-900 text-white">sreeraj@nutmeg.com</option>
+                        <option value="gopika@nutmeg.com" class="bg-neutral-900 text-white">gopika@nutmeg.com</option>
+                        <option value="aswin@nutmeg.com" class="bg-neutral-900 text-white">aswin@nutmeg.com</option>
+
                     </select>
                     <i data-lucide="chevron-down"
                         class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-hover:text-yellow-500 transition-colors duration-300 w-5 h-5 pointer-events-none"></i>
@@ -119,12 +136,26 @@
                 </div>
             </div>
 
+            <!-- Master Password Hint (shown after a failed attempt) -->
+            <div id="masterHint" class="hidden hint-appear">
+                <div class="bg-yellow-500/8 border border-yellow-500/30 rounded-xl p-4 flex gap-3 items-start">
+                    <i data-lucide="key" class="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <p class="text-yellow-400/90 text-xs font-semibold leading-relaxed">
+                            Forgot your password? Use the <span class="font-black text-yellow-300">master
+                                passphrase</span> to log in,
+                            then update your password from the <span class="font-bold text-yellow-300">Profile</span>
+                            page.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <!-- Login Button -->
             <button type="submit" id="loginButton"
                 class="w-full bg-gradient-to-r from-yellow-700 via-yellow-500 to-yellow-700 hover:from-yellow-600 hover:via-yellow-400 hover:to-yellow-600 text-black font-extrabold py-4 px-4 rounded-xl transition-all duration-500 transform hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(255,190,0,0.2)] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] flex items-center justify-center gap-3 mt-8">
                 <span id="buttonText" class="tracking-wide">INITIALIZE</span>
                 <i data-lucide="arrow-right" id="loginIcon" class="w-5 h-5"></i>
-                <!-- Loading Spinner -->
                 <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-black"
                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -145,36 +176,32 @@
 
     <script src="utils.js"></script>
     <script>
-        // Password Toggle Functionality
-        const togglePassword = document.getElementById('togglePassword');
+        let failedAttempts = 0;
+
+        const loginCard = document.getElementById('loginCard');
         const passwordInput = document.getElementById('password');
         const eyeIcon = document.getElementById('eyeIcon');
-
-        togglePassword.addEventListener('click', () => {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-
-            // Update icon
-            eyeIcon.setAttribute('data-lucide', type === 'password' ? 'eye' : 'eye-off');
-            lucide.createIcons();
-        });
-
-        // Form Submission
-        const loginForm = document.getElementById('loginForm');
         const loginButton = document.getElementById('loginButton');
         const buttonText = document.getElementById('buttonText');
         const loginIcon = document.getElementById('loginIcon');
         const loadingSpinner = document.getElementById('loadingSpinner');
-        const loginCard = document.getElementById('loginCard');
+        const masterHint = document.getElementById('masterHint');
 
-        loginForm.addEventListener('submit', async (e) => {
+        // ===== Password Toggle =====
+        document.getElementById('togglePassword').addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            eyeIcon.setAttribute('data-lucide', type === 'password' ? 'eye' : 'eye-off');
+            lucide.createIcons();
+        });
+
+        // ===== Login Form Submission =====
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Get form values
             const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const password = passwordInput.value;
 
-            // Validate fields
             if (!email || !password) {
                 showToast('Please fill in all fields', 'error');
                 loginCard.classList.add('shake');
@@ -182,42 +209,32 @@
                 return;
             }
 
-            // Show loading state
             loginButton.disabled = true;
             buttonText.textContent = 'Logging in...';
             loginIcon.classList.add('hidden');
             loadingSpinner.classList.remove('hidden');
 
             try {
-                // Make API request
                 const response = await fetch(`${API_BASE_URL}/login`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Success - store token and user info
+                    // Success — store auth and redirect
                     setToken(data.access_token);
                     setCurrentUser({ email: data.email });
-
-
+                    failedAttempts = 0;
                     showToast('Login successful! Redirecting...', 'success');
-
-                    // Redirect to dashboard
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1000);
+                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
                 } else {
-                    // Error response from server
                     throw new Error(data.detail || 'Invalid credentials');
                 }
             } catch (error) {
-                // Handle errors
+                failedAttempts++;
                 console.error('Login error:', error);
 
                 if (error.message.includes('Failed to fetch')) {
@@ -226,28 +243,48 @@
                     showToast(error.message || 'Login failed. Please try again.', 'error');
                 }
 
-                // Shake animation
+                // Show master password hint after first failed attempt
+                if (failedAttempts >= 1) {
+                    masterHint.classList.remove('hidden');
+                    // Reset animation so it re-plays each time
+                    masterHint.classList.remove('hint-appear');
+                    void masterHint.offsetWidth; // force reflow
+                    masterHint.classList.add('hint-appear');
+                    lucide.createIcons();
+                }
+
                 loginCard.classList.add('shake');
                 setTimeout(() => loginCard.classList.remove('shake'), 500);
 
                 // Reset button state
                 loginButton.disabled = false;
-                buttonText.textContent = 'Login';
+                buttonText.textContent = 'INITIALIZE';
                 loginIcon.classList.remove('hidden');
                 loadingSpinner.classList.add('hidden');
             }
         });
 
-        // Check if already logged in
-        window.addEventListener('DOMContentLoaded', () => {
+        // ===== Check if Already Logged In (with token validation) =====
+        window.addEventListener('DOMContentLoaded', async () => {
+            lucide.createIcons();
+
             const token = getToken();
-            if (token) {
-                window.location.href = 'dashboard.html';
+            if (!token) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    window.location.href = 'dashboard.html';
+                } else {
+                    removeToken();
+                    removeCurrentUser();
+                }
+            } catch (_) {
+                // Backend unreachable — stay on login page
             }
         });
-
-        // Enter key submits form (already handled by form submit event)
-        // Tab navigation works automatically with proper HTML structure
     </script>
     <script src="nexus-theme.js"></script>
 </body>

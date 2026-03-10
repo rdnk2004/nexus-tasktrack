@@ -50,10 +50,10 @@
         }
     </style>
 
-    <!-- Production API Configuration -->
+    <!-- API Configuration -->
     <script>
-        // Set production backend URL for Render deployment
-        window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
+        window.NUTMEG_API_URL = 'http://localhost:8000';
+        // window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
     </script>
 </head>
 
@@ -559,10 +559,15 @@
         }
 
         // Logout
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to logout?')) {
-                logout();
-            }
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            const confirmed = await showConfirm({
+                title: 'Logout',
+                message: 'Are you sure you want to end your session?',
+                confirmText: 'Logout',
+                cancelText: 'Stay',
+                danger: false
+            });
+            if (confirmed) logout();
         });
 
         // New Project Button

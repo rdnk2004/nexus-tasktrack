@@ -1,6 +1,9 @@
 import os
 from typing import Optional
 from urllib.parse import quote_plus
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Settings:
     # Database Configuration

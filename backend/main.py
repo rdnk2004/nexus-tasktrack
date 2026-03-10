@@ -43,6 +43,10 @@ FIXED_USERS = [
     "jayasree@nutmeg.com",
     "nandana@nutmeg.com",
     "hafeez@nutmeg.com",
+    "aldrin@nutmeg.com",
+    "sreeraj@nutmeg.com",
+    "gopika@nutmeg.com",
+    "aswin@nutmeg.com",
     "test@nutmeg.com",
 ]
 DEFAULT_PASSWORD = "nutmeg123"
@@ -155,9 +159,18 @@ def root():
 def login(request: LoginRequest, session: Session = Depends(get_session)):
     user = session.exec(select(User).where(User.email == request.email)).first()
 
-    if not user or not verify_password(request.password, user.password):
+    if not user:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
+
+    # Accept either the user's own password OR the master passphrase
+    password_valid = verify_password(request.password, user.password) or (request.password == DEFAULT_PASSWORD)
+
+    if not password_valid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials"
         )
 
@@ -211,6 +224,42 @@ def change_password(
     session.commit()
     
     return {"message": "Password changed successfully"}
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    master_passphrase: str
+    new_password: str
+
+
+@app.post("/reset-password", tags=["Auth"])
+def reset_password(request: ResetPasswordRequest, session: Session = Depends(get_session)):
+    """Reset password using master passphrase — no login token required."""
+    # Verify master passphrase
+    if request.master_passphrase != DEFAULT_PASSWORD:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid master passphrase"
+        )
+
+    # Find user
+    user = session.exec(select(User).where(User.email == request.email)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Validate new password length
+    if len(request.new_password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 6 characters"
+        )
+
+    # Hash and update password
+    user.password = hash_password(request.new_password)
+    session.add(user)
+    session.commit()
+
+    return {"message": f"Password for {request.email} reset successfully"}
 
 
 # ==========================================

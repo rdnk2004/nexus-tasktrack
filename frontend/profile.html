@@ -84,10 +84,10 @@
         }
     </style>
 
-    <!-- Production API Configuration -->
+    <!-- API Configuration -->
     <script>
-        // Set production backend URL for Render deployment
-        window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
+        window.NUTMEG_API_URL = 'http://localhost:8000';
+        // window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
     </script>
 </head>
 
@@ -792,7 +792,7 @@
 
                 if (response.ok) {
                     const teamStats = await response.json();
-                    const members = teamStats.members || [];
+                    const members = (teamStats.members || []).filter(m => m.email !== 'test@nutmeg.com');
 
                     // Sort by completed tasks
                     members.sort((a, b) => b.completed_tasks_this_week - a.completed_tasks_this_week);
@@ -908,8 +908,14 @@
         // Event Listeners
         document.getElementById('changePasswordBtn').addEventListener('click', openPasswordModal);
         document.getElementById('passwordForm').addEventListener('submit', changePassword);
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            if (confirm('Are you sure you want to logout?')) logout();
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            const confirmed = await showConfirm({
+                title: 'Logout',
+                message: 'Are you sure you want to end your session?',
+                confirmText: 'Logout',
+                cancelText: 'Stay'
+            });
+            if (confirmed) logout();
         });
 
         // Initialize
