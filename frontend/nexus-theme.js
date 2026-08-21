@@ -1,11 +1,11 @@
 /**
- * NEXUS THEME ENGINE v4.0 (Heat Haze & Ripples)
- * Concept 2 Implementation
+ * NEXUS THEME ENGINE v4.1 (Heat Haze & Ripples)
  * Features:
  * - Deep Obsidian Background
  * - Fire Side (Left): Upward "Heat Haze" displacement animation
  * - Water Side (Right): Fluid "Ripple" displacement animation
- * - Subtle Glassmorphism (No heavy magnetic pulls)
+ * - Subtle Glassmorphism
+ * - Performance optimized: Animation pauses when browser tab is inactive
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initNexusTheme() {
-    console.log('NEXUS: Initializing Heat Haze & Ripples...');
     injectStyles();
     injectStructure();
     startElementalEngine();
@@ -22,13 +21,17 @@ function initNexusTheme() {
 function injectStyles() {
     const style = document.createElement('style');
     style.textContent = `
-        /* GLOBAL CURSOR RESET */
-        body, a, button, input, select, textarea {
+        /* GLOBAL CURSOR STYLES */
+        body, a, button, select {
             cursor: default;
         }
         
-        a, button, input[type="submit"], .clickable {
+        a, button, input[type="submit"], input[type="button"], .clickable {
             cursor: pointer;
+        }
+
+        input[type="text"], input[type="password"], input[type="email"], input[type="date"], textarea {
+            cursor: text;
         }
 
         /* CONTAINER */
@@ -50,7 +53,7 @@ function injectStyles() {
             width: 60vw;
             height: 100vh;
             top: 0;
-            opacity: 0.4; /* Subtle visibility */
+            opacity: 0.4;
             mix-blend-mode: screen;
         }
 
@@ -60,7 +63,7 @@ function injectStyles() {
             background: radial-gradient(ellipse at 30% 50%, #ff4500 0%, #8b0000 40%, transparent 70%);
             mask-image: linear-gradient(to right, black 0%, transparent 100%);
             -webkit-mask-image: linear-gradient(to right, black 0%, transparent 100%);
-            filter: url(#heatFilter); /* Apply Heat Distortion */
+            filter: url(#heatFilter);
         }
 
         /* WATER SIDE (Right) */
@@ -69,7 +72,7 @@ function injectStyles() {
             background: radial-gradient(ellipse at 70% 50%, #00bfff 0%, #00008b 40%, transparent 70%);
             mask-image: linear-gradient(to left, black 0%, transparent 100%);
             -webkit-mask-image: linear-gradient(to left, black 0%, transparent 100%);
-            filter: url(#waterFilter); /* Apply Ripple Distortion */
+            filter: url(#waterFilter);
         }
 
         /* VIGNETTE OVERLAY */
@@ -102,7 +105,6 @@ function injectStyles() {
 }
 
 function injectStructure() {
-    // Remove existing if present
     const existing = document.getElementById('nexus-background');
     if (existing) existing.remove();
 
@@ -115,15 +117,14 @@ function injectStructure() {
             <!-- FILTERS -->
             <svg style="width:0; height:0; position:absolute;">
                 <defs>
-                    <!-- FIRE HEAT FILTER: Vertical, jagged turbulence -->
+                    <!-- FIRE HEAT FILTER -->
                     <filter id="heatFilter">
                         <feTurbulence id="heat-turb" type="turbulence" baseFrequency="0.01 0.03" numOctaves="2" seed="1" />
                         <feDisplacementMap in="SourceGraphic" scale="40" xChannelSelector="R" yChannelSelector="G" />
-                        <!-- Blur slightly to soften the noise edges -->
                         <feGaussianBlur stdDeviation="0.5" /> 
                     </filter>
 
-                    <!-- WATER RIPPLE FILTER: Smoother, fractal noise -->
+                    <!-- WATER RIPPLE FILTER -->
                     <filter id="waterFilter">
                         <feTurbulence id="water-turb" type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="5" />
                         <feDisplacementMap in="SourceGraphic" scale="60" xChannelSelector="R" yChannelSelector="B" />
@@ -143,35 +144,36 @@ function startElementalEngine() {
     if (!heatTurb || !waterTurb) return;
 
     let frames = 0;
+    let isRunning = true;
 
-    // Config
-    // Heat: Fast Y movement, subtle X jitter
-    // Water: Slow, smooth rolling movement
+    // Pause animation when tab is in background to preserve CPU/GPU battery
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            isRunning = false;
+        } else if (!isRunning) {
+            isRunning = true;
+            requestAnimationFrame(animate);
+        }
+    });
 
     const animate = () => {
+        if (!isRunning) return;
+
         frames++;
 
-        // Heat Animation (Rising)
-        // Adjusting baseFrequency Y creates a "stretching/compressing" look
-        // We add a tiny seed shift occasionally or phase shift if using simpler noise
-        // For displacement map, animating baseFrequency is the smoothest "distortion" loop
-
-        // Heat: High frequency Y, oscilating slightly
+        // Heat Animation (Rising Frequency Oscillations)
         const heatLowY = 0.03;
-        const heatVarY = 0.005 * Math.sin(frames * 0.05); // Rapid flicker
+        const heatVarY = 0.005 * Math.sin(frames * 0.05);
         const heatX = 0.01;
-
-        // To make it look like it's "rising", we shift opacity or phase usually, 
-        // but here we will oscillate the FREQUENCY to simulate heat waves expanding/contracting
         heatTurb.setAttribute('baseFrequency', `${heatX} ${heatLowY + heatVarY}`);
 
-        // Water Animation (Undulating)
-        // Slow rolling waves
+        // Water Animation (Smooth Undulation)
         const waterGlobal = 0.008 + 0.002 * Math.sin(frames * 0.01);
         waterTurb.setAttribute('baseFrequency', `${waterGlobal} ${waterGlobal}`);
 
         requestAnimationFrame(animate);
-    }
+    };
 
     animate();
 }
+
