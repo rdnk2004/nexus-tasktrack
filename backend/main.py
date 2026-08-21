@@ -1,20 +1,21 @@
-from fastapi import FastAPI, Depends, HTTPException, status, Query
-from fastapi.middleware.cors import CORSMiddleware
-from sqlmodel import SQLModel, Session, select
-from sqlalchemy import desc
-from typing import List, Optional
-from pydantic import BaseModel
 import json
 from datetime import datetime, timedelta, timezone
+from typing import List, Optional, Dict, Any
+
+from fastapi import FastAPI, Depends, HTTPException, status, Query
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import func, desc
+from sqlmodel import SQLModel, Session, select
+from pydantic import BaseModel
 
 # Local Imports
+from app.config import settings
 from app.jwt_utils import create_access_token
 from app.db import engine, get_session
-
 from app.security import hash_password, verify_password
 from app.dependencies import get_current_user
 from app.models import (
-    User, 
+    User,
     Project, ProjectStatus, ProjectCreate, ProjectUpdate, ProjectMember,
     Task, TaskStatus, TaskPriority, TaskCreate, TaskUpdate, TaskAssignee, TaskStatusUpdate,
     Activity, ActivityType,
@@ -26,18 +27,19 @@ from app.models import (
 app = FastAPI(
     title="Nutmeg Backend",
     description="API for Nutmeg Project Management",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 # -------- Middleware --------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS != ["*"] else ["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# -------- Constants & Config --------
+# -------- Constants --------
 FIXED_USERS = [
     "nikhil@nutmeg.com",
     "jayasree@nutmeg.com",
@@ -49,58 +51,52 @@ FIXED_USERS = [
     "aswin@nutmeg.com",
     "test@nutmeg.com",
 ]
-DEFAULT_PASSWORD = "nutmeg123"
 MAX_ACTIVE_PROJECTS = 2
 MIN_PROJECT_DAYS = 1
 MAX_PROJECT_DAYS = 14
 
 
-# -------- Request Models (Local) --------
+# -------- Request Models --------
 class LoginRequest(BaseModel):
     email: str
     password: str
 
+class ResetPasswordRequest(BaseModel):
+    email: str
+    master_passphrase: str
+    new_password: str
+
 
 # -------- Helper Functions --------
-def log_activity(
-    session: Session,
-    project_id: int,
-    user_email: str,
-    activity_type: ActivityType,
-    description: str,
-    task_id: int = None,
-    extra_data: str = None
-):
-    """
-    Helper to create activity log entries.
-    Fire-and-forget: logs errors but doesn't raise exceptions.
-    """
-    try:
-        activity = Activity(
-            project_id=project_id,
-            user_email=user_email,
-            activity_type=activity_type,
-            description=description,
-            extra_data=extra_data,
-            created_at=datetime.utcnow()
-        )
-        session.add(activity)
-        # Note: Not committing here - let the calling endpoint commit
-    except Exception as e:
-        print(f"⚠️  Activity logging failed: {e}")
+def get_utc_now() -> datetime:
+    """Return timezone-aware current UTC datetime"""
+    return datetime.now(timezone.utc)
+
+
+def ensure_utc(dt: Optional[datetime]) -> Optional[datetime]:
+    """Ensure a datetime is timezone-aware and set to UTC"""
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 
 def get_user_name(email: str) -> str:
     """Extract friendly name from email"""
+    if not email:
+        return "User"
     return email.split("@")[0].capitalize()
 
 
 def humanize_timestamp(dt: datetime) -> str:
     """Convert datetime to human-readable relative time"""
-    now = datetime.utcnow()
-    diff = now - dt
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
     
-    seconds = diff.total_seconds()
+    now = get_utc_now()
+    diff = now - dt
+    seconds = max(0, diff.total_seconds())
     
     if seconds < 60:
         return "just now"
@@ -121,27 +117,62 @@ def humanize_timestamp(dt: datetime) -> str:
 def get_activity_color(activity_type: str) -> str:
     """Get hex color code for activity type"""
     colors = {
-        "project_created": "#10b981",  # green
-        "project_completed": "#3b82f6",  # blue
-        "task_created": "#8b5cf6",  # purple
-        "task_completed": "#14b8a6",  # teal
-        "task_updated": "#f59e0b",  # amber
+        ActivityType.PROJECT_CREATED.value: "#10b981",   # green
+        ActivityType.PROJECT_COMPLETED.value: "#3b82f6", # blue
+        ActivityType.PROJECT_ARCHIVED.value: "#8b5cf6",  # purple
+        ActivityType.TASK_CREATED.value: "#8b5cf6",      # purple
+        ActivityType.TASK_COMPLETED.value: "#14b8a6",    # teal
+        ActivityType.TASK_UPDATED.value: "#f59e0b",      # amber
+        ActivityType.TASK_DELETED.value: "#ef4444",      # red
+        ActivityType.MEMBER_ADDED.value: "#6366f1",      # indigo
     }
-    return colors.get(activity_type, "#6b7280")  # default gray
+    return colors.get(activity_type, "#6b7280")
+
+
+def log_activity(
+    session: Session,
+    project_id: int,
+    user_email: str,
+    activity_type: ActivityType,
+    description: str,
+    extra_data: Optional[str] = None
+) -> None:
+    """Helper to create activity log entries within current transaction"""
+    try:
+        activity = Activity(
+            project_id=project_id,
+            user_email=user_email,
+            activity_type=activity_type.value if hasattr(activity_type, "value") else str(activity_type),
+            description=description,
+            extra_data=extra_data,
+            created_at=get_utc_now()
+        )
+        session.add(activity)
+    except Exception as e:
+        print(f"⚠️ Activity logging failed: {e}")
+
+
+def check_project_membership(session: Session, project_id: int, user_email: str) -> bool:
+    """Check if a user is a member or creator of a project"""
+    member = session.exec(
+        select(ProjectMember)
+        .where(ProjectMember.project_id == project_id)
+        .where(ProjectMember.user_email == user_email)
+    ).first()
+    return member is not None
 
 
 # -------- Startup --------
 @app.on_event("startup")
 def on_startup():
-    # Database is created here if it doesn't exist
     SQLModel.metadata.create_all(engine)
 
-    # Seed fixed users
+    # Seed fixed default users
     with Session(engine) as session:
         for email in FIXED_USERS:
             existing = session.exec(select(User).where(User.email == email)).first()
             if not existing:
-                user = User(email=email, password=hash_password(DEFAULT_PASSWORD))
+                user = User(email=email, password=hash_password(settings.DEFAULT_PASSWORD))
                 session.add(user)
         session.commit()
 
@@ -165,8 +196,12 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
             detail="Invalid credentials"
         )
 
-    # Accept either the user's own password OR the master passphrase
-    password_valid = verify_password(request.password, user.password) or (request.password == DEFAULT_PASSWORD)
+    # Validate against hashed password or master passphrase if enabled
+    is_master_passphrase = (
+        settings.ALLOW_MASTER_PASSWORD_LOGIN and 
+        request.password == settings.DEFAULT_PASSWORD
+    )
+    password_valid = verify_password(request.password, user.password) or is_master_passphrase
 
     if not password_valid:
         raise HTTPException(
@@ -174,8 +209,7 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
             detail="Invalid credentials"
         )
 
-    # Friendly name logic
-    name = request.email.split("@")[0].capitalize()
+    name = get_user_name(request.email)
     token = create_access_token({"email": request.email})
 
     return {
@@ -185,6 +219,7 @@ def login(request: LoginRequest, session: Session = Depends(get_session)):
         "token_type": "bearer"
     }
 
+
 @app.get("/me", tags=["Auth"])
 def read_me(current_user: str = Depends(get_current_user)):
     return {
@@ -192,33 +227,30 @@ def read_me(current_user: str = Depends(get_current_user)):
         "status": "authenticated"
     }
 
+
 @app.put("/me/password", tags=["Auth"])
 def change_password(
     password_data: PasswordChange,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Change user password"""
-    # Get user from database
+    """Change current user's password"""
     user = session.exec(select(User).where(User.email == current_user)).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
-    # Verify current password
     if not verify_password(password_data.current_password, user.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Current password is incorrect"
         )
     
-    # Validate new password
     if len(password_data.new_password) < 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="New password must be at least 6 characters"
         )
     
-    # Hash and update password
     user.password = hash_password(password_data.new_password)
     session.add(user)
     session.commit()
@@ -226,35 +258,25 @@ def change_password(
     return {"message": "Password changed successfully"}
 
 
-class ResetPasswordRequest(BaseModel):
-    email: str
-    master_passphrase: str
-    new_password: str
-
-
 @app.post("/reset-password", tags=["Auth"])
 def reset_password(request: ResetPasswordRequest, session: Session = Depends(get_session)):
-    """Reset password using master passphrase — no login token required."""
-    # Verify master passphrase
-    if request.master_passphrase != DEFAULT_PASSWORD:
+    """Reset password using master passphrase — gated by configuration"""
+    if not settings.ALLOW_MASTER_PASSWORD_LOGIN or request.master_passphrase != settings.DEFAULT_PASSWORD:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid master passphrase"
+            detail="Invalid master passphrase or feature disabled"
         )
 
-    # Find user
     user = session.exec(select(User).where(User.email == request.email)).first()
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    # Validate new password length
     if len(request.new_password) < 6:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="New password must be at least 6 characters"
         )
 
-    # Hash and update password
     user.password = hash_password(request.new_password)
     session.add(user)
     session.commit()
@@ -269,35 +291,30 @@ def reset_password(request: ResetPasswordRequest, session: Session = Depends(get
 @app.get("/users", tags=["Users"])
 def list_users(session: Session = Depends(get_session)):
     users = session.exec(select(User)).all()
-    # Return list of emails for simplicity
     return [u.email for u in users]
+
 
 @app.get("/user/stats", tags=["Users"])
 def get_user_stats(
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    # Active Projects created by user
     active_count = session.exec(
-        select(Project)
+        select(func.count(Project.id))
         .where(Project.created_by == current_user)
-        .where(Project.status == ProjectStatus.ACTIVE)
-    ).all()
+        .where(Project.status == ProjectStatus.ACTIVE.value)
+    ).one() or 0
     
-    # Done Projects created by user
     done_count = session.exec(
-        select(Project)
+        select(func.count(Project.id))
         .where(Project.created_by == current_user)
-        .where(Project.status == ProjectStatus.DONE)
-    ).all()
-    
-    # Note: total implies total projects involved or created? 
-    # Current logic matches original: total projects created
+        .where(Project.status == ProjectStatus.DONE.value)
+    ).one() or 0
     
     return {
-        "active_count": len(active_count),
-        "done_count": len(done_count),
-        "total": len(active_count) + len(done_count)
+        "active_count": active_count,
+        "done_count": done_count,
+        "total": active_count + done_count
     }
 
 
@@ -312,47 +329,45 @@ def create_project(
     session: Session = Depends(get_session)
 ):
     try:
-        # ===== VALIDATION 1: Max Active Projects Rule =====
-        active_projects = session.exec(
-            select(Project)
+        # ===== VALIDATION 1: Max Active Projects =====
+        active_count = session.exec(
+            select(func.count(Project.id))
             .where(Project.created_by == current_user)
-            .where(Project.status == ProjectStatus.ACTIVE)
-        ).all()
+            .where(Project.status == ProjectStatus.ACTIVE.value)
+        ).one() or 0
         
-        if len(active_projects) >= MAX_ACTIVE_PROJECTS:
+        if active_count >= MAX_ACTIVE_PROJECTS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Maximum {MAX_ACTIVE_PROJECTS} active projects allowed. Complete or archive existing projects first."
             )
         
         # ===== VALIDATION 2: Timeline (1-14 days) =====
-        now = datetime.utcnow()
-        duration = (project_data.end_date - project_data.start_date).days
+        start_date = ensure_utc(project_data.start_date)
+        end_date = ensure_utc(project_data.end_date)
         
+        duration = (end_date - start_date).days
         if duration < MIN_PROJECT_DAYS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Project duration must be at least {MIN_PROJECT_DAYS} day(s)"
             )
-        
         if duration > MAX_PROJECT_DAYS:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Project duration cannot exceed {MAX_PROJECT_DAYS} days"
             )
         
-        # ===== VALIDATION 3: All member emails exist =====
-        for member_email in project_data.members:
+        # ===== VALIDATION 3: Member Emails =====
+        unique_members = list(dict.fromkeys(project_data.members))
+        for member_email in unique_members:
             if member_email == current_user:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Don't include yourself in members list (auto-added as creator)"
+                    detail="Creator is automatically included; do not add yourself to the member list"
                 )
             
-            user_exists = session.exec(
-                select(User).where(User.email == member_email)
-            ).first()
-            
+            user_exists = session.exec(select(User).where(User.email == member_email)).first()
             if not user_exists:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -361,33 +376,33 @@ def create_project(
         
         # ===== CREATE PROJECT =====
         project = Project(
-            name=project_data.name,
-            description=project_data.description,
+            name=project_data.name.strip(),
+            description=project_data.description.strip() if project_data.description else None,
             created_by=current_user,
-            status=ProjectStatus.ACTIVE,
-            start_date=project_data.start_date,
-            end_date=project_data.end_date,
-            created_at=datetime.utcnow()
+            status=ProjectStatus.ACTIVE.value,
+            start_date=start_date,
+            end_date=end_date,
+            created_at=get_utc_now()
         )
         session.add(project)
-        session.flush()  # Get project.id without committing
+        session.flush()  # Acquire project.id
         
         # ===== ADD CREATOR AS OWNER =====
         creator_member = ProjectMember(
             project_id=project.id,
             user_email=current_user,
             role="owner",
-            joined_at=datetime.utcnow()
+            joined_at=get_utc_now()
         )
         session.add(creator_member)
         
         # ===== ADD MEMBERS =====
-        for member_email in project_data.members:
+        for member_email in unique_members:
             member = ProjectMember(
                 project_id=project.id,
                 user_email=member_email,
                 role="member",
-                joined_at=datetime.utcnow()
+                joined_at=get_utc_now()
             )
             session.add(member)
         
@@ -397,22 +412,20 @@ def create_project(
             project_id=project.id,
             user_email=current_user,
             activity_type=ActivityType.PROJECT_CREATED,
-            description=f"{current_user.split('@')[0]} created project '{project.name}'",
-            extra_data=json.dumps({"members": project_data.members})
+            description=f"{get_user_name(current_user)} created project '{project.name}'",
+            extra_data=json.dumps({"members": unique_members})
         )
         
-        # ===== COMMIT TRANSACTION =====
         session.commit()
         session.refresh(project)
-        
         return project
         
     except HTTPException:
-        raise  # Re-raise validation errors
+        raise
     except Exception as e:
         session.rollback()
-        print(f"❌ Error creating project: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 
 @app.get("/projects", tags=["Projects"], response_model=List[ProjectResponse])
 def list_projects(
@@ -422,100 +435,87 @@ def list_projects(
     session: Session = Depends(get_session)
 ):
     """
-    Get all projects where current user is either creator or member.
-    
-    Filters:
-    - status: active | done | archived
-    - type: individual (solo projects) | collaborative (team projects)
-    
-    Returns enriched project data with members and task counts.
+    Get all projects where current user is creator or member.
+    Batch loads related members and tasks to eliminate N+1 queries.
     """
-    
     try:
-        # Get all projects where user is a member (includes creator)
-        member_projects = session.exec(
+        # 1. Fetch project IDs user belongs to
+        member_project_ids = session.exec(
             select(ProjectMember.project_id)
             .where(ProjectMember.user_email == current_user)
         ).all()
         
-        # If user has no projects, return empty list
-        if not member_projects:
+        if not member_project_ids:
             return []
         
-        # Build query for projects user is involved in
-        query = select(Project).where(Project.id.in_(member_projects))
-        
-        # Apply status filter
+        # 2. Query matching projects
+        query = select(Project).where(Project.id.in_(member_project_ids))
         if status:
-            query = query.where(Project.status == status)
+            query = query.where(Project.status == status.value if hasattr(status, "value") else str(status))
         
-        # Execute query (sorted in Python for now)
-        projects = session.exec(query).all()
-        projects = sorted(projects, key=lambda p: p.created_at, reverse=True)
+        projects = session.exec(query.order_by(desc(Project.created_at))).all()
+        if not projects:
+            return []
         
-        # Enrich each project with members and task stats
-        enriched_projects = []
+        project_ids = [p.id for p in projects]
         
+        # 3. Batch query all members for these projects
+        all_members = session.exec(
+            select(ProjectMember).where(ProjectMember.project_id.in_(project_ids))
+        ).all()
+        
+        members_by_project: Dict[int, List[MemberInfo]] = {}
+        for m in all_members:
+            members_by_project.setdefault(m.project_id, []).append(
+                MemberInfo(email=m.user_email, role=m.role, joined_at=m.joined_at)
+            )
+            
+        # 4. Batch query task statistics for these projects
+        all_tasks = session.exec(
+            select(Task.project_id, Task.status).where(Task.project_id.in_(project_ids))
+        ).all()
+        
+        task_stats: Dict[int, Dict[str, int]] = {}
+        for p_id, t_status in all_tasks:
+            stats = task_stats.setdefault(p_id, {"total": 0, "completed": 0})
+            stats["total"] += 1
+            if t_status == TaskStatus.DONE.value:
+                stats["completed"] += 1
+        
+        # 5. Assemble enriched responses
+        enriched_projects: List[ProjectResponse] = []
         for project in projects:
-            # Get all members for this project
-            members_data = session.exec(
-                select(ProjectMember)
-                .where(ProjectMember.project_id == project.id)
-            ).all()
+            raw_members = members_by_project.get(project.id, [])
+            # Sort: owners first, then members
+            sorted_members = sorted(raw_members, key=lambda m: 0 if m.role == "owner" else 1)
+            is_collaborative = len(sorted_members) > 1
             
-            # Sort members: owners first, then members
-            members_data = sorted(members_data, key=lambda m: 0 if m.role == "owner" else 1)
-            
-            members = [
-                MemberInfo(
-                    email=member.user_email,
-                    role=member.role,
-                    joined_at=member.joined_at
-                )
-                for member in members_data
-            ]
-            
-            # Determine if collaborative (more than just the creator)
-            is_collaborative = len(members) > 1
-            
-            # Apply type filter
             if type == "individual" and is_collaborative:
                 continue
             if type == "collaborative" and not is_collaborative:
                 continue
+                
+            stats = task_stats.get(project.id, {"total": 0, "completed": 0})
             
-            # Get task statistics
-            all_tasks = session.exec(
-                select(Task).where(Task.project_id == project.id)
-            ).all()
-            
-            total_tasks = len(all_tasks)
-            completed_tasks = len([t for t in all_tasks if t.status == TaskStatus.DONE])
-            
-            # Create enriched response
-            enriched_project = ProjectResponse(
+            enriched_projects.append(ProjectResponse(
                 id=project.id,
                 name=project.name,
+                description=project.description,
                 status=project.status,
                 created_by=project.created_by,
                 created_at=project.created_at,
                 start_date=project.start_date,
                 end_date=project.end_date,
-                members=members,
-                total_tasks=total_tasks,
-                completed_tasks=completed_tasks,
+                members=sorted_members,
+                total_tasks=stats["total"],
+                completed_tasks=stats["completed"],
                 is_collaborative=is_collaborative
-            )
+            ))
             
-            enriched_projects.append(enriched_project)
-        
         return enriched_projects
         
     except Exception as e:
-        print(f"❌ Error in GET /projects: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error fetching projects: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error fetching projects: {str(e)}")
 
 
 @app.get("/projects/{project_id}", tags=["Projects"], response_model=ProjectResponse)
@@ -524,75 +524,42 @@ def get_project(
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Get a single project by ID with enriched data (members and task stats)."""
+    """Get a single project with enriched member and task information."""
+    project = session.get(Project, project_id)
+    if not project:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
     
-    try:
-        # Check if project exists
-        project = session.get(Project, project_id)
-        if not project:
-            raise HTTPException(status_code=404, detail="Project not found")
-        
-        # Check if user is a member
-        is_member = session.exec(
-            select(ProjectMember)
-            .where(ProjectMember.project_id == project_id)
-            .where(ProjectMember.user_email == current_user)
-        ).first()
-        
-        if not is_member:
-            raise HTTPException(status_code=403, detail="You are not a member of this project")
-        
-        # Get all members for this project
-        members_data = session.exec(
-            select(ProjectMember)
-            .where(ProjectMember.project_id == project_id)
-        ).all()
-        
-        # Sort members: owners first, then members
-        members_data = sorted(members_data, key=lambda m: 0 if m.role == "owner" else 1)
-        
-        members = [
-            MemberInfo(
-                email=member.user_email,
-                role=member.role,
-                joined_at=member.joined_at
-            )
-            for member in members_data
-        ]
-        
-        # Determine if collaborative
-        is_collaborative = len(members) > 1
-        
-        # Get task statistics
-        all_tasks = session.exec(
-            select(Task).where(Task.project_id == project_id)
-        ).all()
-        
-        total_tasks = len(all_tasks)
-        completed_tasks = len([t for t in all_tasks if t.status == TaskStatus.DONE])
-        
-        return ProjectResponse(
-            id=project.id,
-            name=project.name,
-            description=project.description,
-            status=project.status,
-            created_by=project.created_by,
-            created_at=project.created_at,
-            start_date=project.start_date,
-            end_date=project.end_date,
-            members=members,
-            total_tasks=total_tasks,
-            completed_tasks=completed_tasks,
-            is_collaborative=is_collaborative
-        )
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"❌ Error in GET /projects/{project_id}: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Error fetching project: {str(e)}")
+    if not check_project_membership(session, project_id, current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this project")
+    
+    members_data = session.exec(
+        select(ProjectMember).where(ProjectMember.project_id == project_id)
+    ).all()
+    sorted_members = sorted(members_data, key=lambda m: 0 if m.role == "owner" else 1)
+    
+    members = [
+        MemberInfo(email=m.user_email, role=m.role, joined_at=m.joined_at)
+        for m in sorted_members
+    ]
+    
+    tasks = session.exec(select(Task).where(Task.project_id == project_id)).all()
+    total_tasks = len(tasks)
+    completed_tasks = len([t for t in tasks if t.status == TaskStatus.DONE.value])
+    
+    return ProjectResponse(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        status=project.status,
+        created_by=project.created_by,
+        created_at=project.created_at,
+        start_date=project.start_date,
+        end_date=project.end_date,
+        members=members,
+        total_tasks=total_tasks,
+        completed_tasks=completed_tasks,
+        is_collaborative=len(members) > 1
+    )
 
 
 @app.put("/projects/{project_id}", tags=["Projects"], response_model=Project)
@@ -604,28 +571,43 @@ def update_project(
 ):
     project = session.get(Project, project_id)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
     
-    # Only creator can update (simple rule)
     if project.created_by != current_user:
-         raise HTTPException(status_code=403, detail="Only the creator can modify this project")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the project creator can modify this project")
 
-    # Track old status for activity logging
     old_status = project.status
+    update_data = project_update.model_dump(exclude_unset=True)
 
-    project_data = project_update.dict(exclude_unset=True)
-    for key, value in project_data.items():
+    if "start_date" in update_data and update_data["start_date"]:
+        update_data["start_date"] = ensure_utc(update_data["start_date"])
+    if "end_date" in update_data and update_data["end_date"]:
+        update_data["end_date"] = ensure_utc(update_data["end_date"])
+
+    for key, value in update_data.items():
+        if hasattr(value, "value"):
+            value = value.value
         setattr(project, key, value)
     
-    # Log activity if project was completed
-    if 'status' in project_data and project_data['status'] == ProjectStatus.DONE and old_status != ProjectStatus.DONE:
-        log_activity(
-            session=session,
-            project_id=project.id,
-            user_email=current_user,
-            activity_type=ActivityType.PROJECT_COMPLETED,
-            description=f"{get_user_name(current_user)} completed project '{project.name}'"
-        )
+    # Activity logs for status updates
+    if "status" in update_data and update_data["status"] != old_status:
+        new_status = update_data["status"]
+        if new_status == ProjectStatus.DONE.value:
+            log_activity(
+                session=session,
+                project_id=project.id,
+                user_email=current_user,
+                activity_type=ActivityType.PROJECT_COMPLETED,
+                description=f"{get_user_name(current_user)} completed project '{project.name}'"
+            )
+        elif new_status == ProjectStatus.ARCHIVED.value:
+            log_activity(
+                session=session,
+                project_id=project.id,
+                user_email=current_user,
+                activity_type=ActivityType.PROJECT_ARCHIVED,
+                description=f"{get_user_name(current_user)} archived project '{project.name}'"
+            )
     
     session.add(project)
     session.commit()
@@ -639,60 +621,46 @@ def delete_project(
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Delete a project (only allowed for archived projects by the owner)"""
+    """Delete an archived project and its cascading relations"""
     project = session.get(Project, project_id)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
     
-    # Verify user is the project owner
     if project.created_by != current_user:
-        raise HTTPException(status_code=403, detail="Only the project owner can delete the project")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the project creator can delete this project")
     
-    # Verify project is archived
-    if project.status != ProjectStatus.ARCHIVED:
-        raise HTTPException(status_code=400, detail="Only archived projects can be deleted")
+    if project.status != ProjectStatus.ARCHIVED.value:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Only archived projects can be deleted")
     
-    # Cascade delete all related data
-    # 1. Delete all activities for this project
-    activities = session.exec(
-        select(Activity).where(Activity.project_id == project_id)
-    ).all()
-    for activity in activities:
-        session.delete(activity)
-    session.flush()  # Flush activities deletion
-    
-    # 2. Get all tasks for this project
-    tasks = session.exec(
-        select(Task).where(Task.project_id == project_id)
-    ).all()
-    
-    # 3. Delete all task assignees for these tasks
-    for task in tasks:
-        assignees = session.exec(
-            select(TaskAssignee).where(TaskAssignee.task_id == task.id)
-        ).all()
-        for assignee in assignees:
-            session.delete(assignee)
-    session.flush()  # Flush task assignees deletion
-    
-    # 4. Delete all tasks
-    for task in tasks:
-        session.delete(task)
-    session.flush()  # Flush tasks deletion
-    
-    # 5. Delete all project members
-    members = session.exec(
-        select(ProjectMember).where(ProjectMember.project_id == project_id)
-    ).all()
-    for member in members:
-        session.delete(member)
-    session.flush()  # Flush project members deletion
-    
-    # 6. Delete the project itself
-    session.delete(project)
-    session.commit()
-    
-    return {"message": f"Project '{project.name}' permanently deleted"}
+    try:
+        # 1. Activities
+        activities = session.exec(select(Activity).where(Activity.project_id == project_id)).all()
+        for a in activities:
+            session.delete(a)
+        
+        # 2. Tasks & Assignees
+        tasks = session.exec(select(Task).where(Task.project_id == project_id)).all()
+        task_ids = [t.id for t in tasks]
+        if task_ids:
+            assignees = session.exec(select(TaskAssignee).where(TaskAssignee.task_id.in_(task_ids))).all()
+            for assignee in assignees:
+                session.delete(assignee)
+            for t in tasks:
+                session.delete(t)
+        
+        # 3. Project Members
+        members = session.exec(select(ProjectMember).where(ProjectMember.project_id == project_id)).all()
+        for m in members:
+            session.delete(m)
+        
+        # 4. Project
+        session.delete(project)
+        session.commit()
+        return {"message": f"Project '{project.name}' permanently deleted"}
+        
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 # ==========================================
@@ -706,172 +674,145 @@ def add_task(
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    # Validate project exists
     project = session.get(Project, project_id)
     if not project:
-        raise HTTPException(status_code=404, detail="Project not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
-    # ===== DEADLINE VALIDATION & DEFAULT =====
-    # Use timezone-aware datetime to match frontend ISO datetime format
-    now = datetime.now(timezone.utc)
-    
-    # If no deadline provided, default to 2 days from now
-    if task_data.deadline is None:
-        task_data.deadline = now + timedelta(days=2)
-    # Validate deadline is not in the past
-    elif task_data.deadline < now:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Task deadline cannot be in the past. Please choose a future date."
-            )
+    if not check_project_membership(session, project_id, current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You must be a project member to create directives")
 
-    # Determine if team task
+    now = get_utc_now()
+    deadline = ensure_utc(task_data.deadline)
+
+    if deadline is None:
+        deadline = now + timedelta(days=2)
+    elif deadline < now:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Task deadline cannot be in the past. Please choose a future date."
+        )
+
     is_team_task = not task_data.assignees or task_data.assignees == ["ALL"]
-    
-    # Create single task
-    task = Task(
-        project_id=project_id,
-        title=task_data.title,
-        description=task_data.description,
-        deadline=task_data.deadline,
-        priority=task_data.priority,
-        status=TaskStatus.TODO,
-        is_team_task=is_team_task,
-        created_by=current_user
-    )
-    session.add(task)
-    session.flush()  # Get task.id
-    
-    # Create TaskAssignee records
-    if is_team_task:
-        # Get all project members
-        members = session.exec(
-            select(ProjectMember).where(ProjectMember.project_id == project_id)
-        ).all()
-        
-        for member in members:
-            assignee = TaskAssignee(
-                task_id=task.id,
-                user_email=member.user_email,
-                status=TaskStatus.TODO
-            )
-            session.add(assignee)
-    else:
-        # Create assignees for specific emails
-        for email in task_data.assignees:
-            # Validate email exists
-            user = session.exec(select(User).where(User.email == email)).first()
-            if not user:
-                raise HTTPException(status_code=404, detail=f"User '{email}' not found")
-            
+    priority_val = task_data.priority.value if hasattr(task_data.priority, "value") else str(task_data.priority)
+
+    try:
+        task = Task(
+            project_id=project_id,
+            title=task_data.title.strip(),
+            description=task_data.description.strip() if task_data.description else None,
+            deadline=deadline,
+            priority=priority_val,
+            status=TaskStatus.TODO.value,
+            is_team_task=is_team_task,
+            created_by=current_user,
+            created_at=now,
+            updated_at=now
+        )
+        session.add(task)
+        session.flush()
+
+        assignees_to_add: List[str] = []
+        if is_team_task:
+            members = session.exec(select(ProjectMember).where(ProjectMember.project_id == project_id)).all()
+            assignees_to_add = [m.user_email for m in members]
+        else:
+            for email in task_data.assignees:
+                user = session.exec(select(User).where(User.email == email)).first()
+                if not user:
+                    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User '{email}' not found")
+                assignees_to_add.append(email)
+
+        for email in set(assignees_to_add):
             assignee = TaskAssignee(
                 task_id=task.id,
                 user_email=email,
-                status=TaskStatus.TODO
+                status=TaskStatus.TODO.value,
+                assigned_at=now
             )
             session.add(assignee)
-    
-    # Log activity
-    log_activity(
-        session=session,
-        project_id=project_id,
-        user_email=current_user,
-        activity_type=ActivityType.TASK_CREATED,
-        description=f"{get_user_name(current_user)} created task '{task.title}' in '{project.name}'",
-        task_id=task.id
-    )
-    
-    session.commit()
-    session.refresh(task)
-    
-    # Return enriched response with assignees
-    assignees_data = session.exec(
-        select(TaskAssignee).where(TaskAssignee.task_id == task.id)
-    ).all()
-    
-    assignees = [
-        AssigneeInfo(
-            email=a.user_email,
-            status=a.status,
-            assigned_at=a.assigned_at,
-            completed_at=a.completed_at
+
+        log_activity(
+            session=session,
+            project_id=project_id,
+            user_email=current_user,
+            activity_type=ActivityType.TASK_CREATED,
+            description=f"{get_user_name(current_user)} created task '{task.title}' in '{project.name}'"
         )
-        for a in assignees_data
-    ]
-    
-    return TaskResponse(**task.dict(), assignees=assignees)
+
+        session.commit()
+        session.refresh(task)
+
+        assignees_data = session.exec(select(TaskAssignee).where(TaskAssignee.task_id == task.id)).all()
+        assignees_info = [
+            AssigneeInfo(email=a.user_email, status=a.status, assigned_at=a.assigned_at, completed_at=a.completed_at)
+            for a in assignees_data
+        ]
+
+        task_dict = task.model_dump()
+        return TaskResponse(**task_dict, assignees=assignees_info)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
 
 @app.get("/projects/{project_id}/tasks", tags=["Tasks"], response_model=List[TaskResponse])
 def list_project_tasks(
     project_id: int,
     session: Session = Depends(get_session)
 ):
-    tasks = session.exec(
-        select(Task).where(Task.project_id == project_id)
-    ).all()
-    
-    enriched_tasks = []
-    for task in tasks:
-        # Get assignees for this task
-        assignees_data = session.exec(
-            select(TaskAssignee).where(TaskAssignee.task_id == task.id)
-        ).all()
-        
-        assignees = [
-            AssigneeInfo(
-                email=a.user_email,
-                status=a.status,
-                assigned_at=a.assigned_at,
-                completed_at=a.completed_at
-            )
-            for a in assignees_data
-        ]
-        
-        enriched_tasks.append(TaskResponse(**task.dict(), assignees=assignees))
-    
-    return enriched_tasks
+    tasks = session.exec(select(Task).where(Task.project_id == project_id)).all()
+    if not tasks:
+        return []
+
+    task_ids = [t.id for t in tasks]
+    assignees = session.exec(select(TaskAssignee).where(TaskAssignee.task_id.in_(task_ids))).all()
+
+    assignees_by_task: Dict[int, List[AssigneeInfo]] = {}
+    for a in assignees:
+        assignees_by_task.setdefault(a.task_id, []).append(
+            AssigneeInfo(email=a.user_email, status=a.status, assigned_at=a.assigned_at, completed_at=a.completed_at)
+        )
+
+    return [
+        TaskResponse(**t.model_dump(), assignees=assignees_by_task.get(t.id, []))
+        for t in tasks
+    ]
+
 
 @app.get("/user/tasks", tags=["Tasks"], response_model=List[TaskResponse])
 def list_my_tasks(
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Get all tasks assigned to current user"""
-    # Get all tasks where user is an assignee
+    """Get all tasks assigned to current user with batch loaded assignees"""
     my_assignments = session.exec(
-        select(TaskAssignee).where(TaskAssignee.user_email == current_user)
+        select(TaskAssignee.task_id).where(TaskAssignee.user_email == current_user)
     ).all()
     
-    task_ids = [a.task_id for a in my_assignments]
-    
-    # Handle empty case early
-    if not task_ids:
+    if not my_assignments:
         return []
     
-    # Now safe to use .in_()
-    tasks = session.exec(
-        select(Task).where(Task.id.in_(task_ids))
-    ).all()
-    
-    enriched_tasks = []
-    for task in tasks:
-        assignees_data = session.exec(
-            select(TaskAssignee).where(TaskAssignee.task_id == task.id)
-        ).all()
-        
-        assignees = [
-            AssigneeInfo(
-                email=a.user_email,
-                status=a.status,
-                assigned_at=a.assigned_at,
-                completed_at=a.completed_at
-            )
-            for a in assignees_data
-        ]
-        
-        enriched_tasks.append(TaskResponse(**task.dict(), assignees=assignees))
-    
-    return enriched_tasks
+    tasks = session.exec(select(Task).where(Task.id.in_(my_assignments))).all()
+    if not tasks:
+        return []
+
+    task_ids = [t.id for t in tasks]
+    all_assignees = session.exec(select(TaskAssignee).where(TaskAssignee.task_id.in_(task_ids))).all()
+
+    assignees_by_task: Dict[int, List[AssigneeInfo]] = {}
+    for a in all_assignees:
+        assignees_by_task.setdefault(a.task_id, []).append(
+            AssigneeInfo(email=a.user_email, status=a.status, assigned_at=a.assigned_at, completed_at=a.completed_at)
+        )
+
+    return [
+        TaskResponse(**t.model_dump(), assignees=assignees_by_task.get(t.id, []))
+        for t in tasks
+    ]
+
 
 @app.put("/tasks/{task_id}/my-status", tags=["Tasks"])
 def update_my_task_status(
@@ -880,10 +821,9 @@ def update_my_task_status(
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Update only current user's status for this task"""
-    new_status = status_update.status
-    
-    # Get task assignee for current user
+    """Update current user's individual task status and synchronize overall task state"""
+    new_status = status_update.status.value if hasattr(status_update.status, "value") else str(status_update.status)
+
     my_assignment = session.exec(
         select(TaskAssignee)
         .where(TaskAssignee.task_id == task_id)
@@ -891,41 +831,39 @@ def update_my_task_status(
     ).first()
     
     if not my_assignment:
-        raise HTTPException(status_code=404, detail="Task not assigned to you")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not assigned to you")
     
-    # Update individual status
     old_status = my_assignment.status
     my_assignment.status = new_status
+    now = get_utc_now()
     
-    if new_status == TaskStatus.DONE and old_status != TaskStatus.DONE:
-        my_assignment.completed_at = datetime.utcnow()
-        
-        # Log activity
-        task = session.get(Task, task_id)
+    task = session.get(Task, task_id)
+    if not task:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
+
+    if new_status == TaskStatus.DONE.value and old_status != TaskStatus.DONE.value:
+        my_assignment.completed_at = now
         log_activity(
             session=session,
             project_id=task.project_id,
             user_email=current_user,
             activity_type=ActivityType.TASK_COMPLETED,
-            description=f"{get_user_name(current_user)} completed their part of task '{task.title}'",
-            task_id=task_id
+            description=f"{get_user_name(current_user)} completed directive '{task.title}'"
         )
+    elif new_status != TaskStatus.DONE.value:
+        my_assignment.completed_at = None
+
+    all_assignees = session.exec(select(TaskAssignee).where(TaskAssignee.task_id == task_id)).all()
+    all_done = all(a.status == TaskStatus.DONE.value for a in all_assignees)
     
-    # Check if ALL assignees are done
-    all_assignees = session.exec(
-        select(TaskAssignee).where(TaskAssignee.task_id == task_id)
-    ).all()
-    
-    all_done = all(a.status == TaskStatus.DONE for a in all_assignees)
-    
-    # Update task overall status
-    task = session.get(Task, task_id)
     if all_done:
-        task.status = TaskStatus.DONE
-    elif new_status == TaskStatus.DOING and task.status == TaskStatus.TODO:
-        task.status = TaskStatus.DOING
+        task.status = TaskStatus.DONE.value
+    elif new_status == TaskStatus.DOING.value and task.status == TaskStatus.TODO.value:
+        task.status = TaskStatus.DOING.value
+    elif new_status == TaskStatus.TODO.value and all(a.status == TaskStatus.TODO.value for a in all_assignees):
+        task.status = TaskStatus.TODO.value
     
-    task.updated_at = datetime.utcnow()
+    task.updated_at = now
     
     session.add(my_assignment)
     session.add(task)
@@ -937,45 +875,44 @@ def update_my_task_status(
         "your_status": my_assignment.status
     }
 
+
 @app.put("/tasks/{task_id}", tags=["Tasks"], response_model=TaskResponse)
 def update_task(
     task_id: int,
-    task_update: TaskUpdate, 
+    task_update: TaskUpdate,
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Update task metadata (title, description, deadline, priority). Use /my-status for status updates."""
+    """Update task metadata (title, description, deadline, priority)."""
     task = session.get(Task, task_id)
     if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
-    # Update only metadata fields (exclude status)
-    task_data = task_update.dict(exclude_unset=True, exclude={'status'})
+    if not check_project_membership(session, task.project_id, current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to modify this task")
+
+    task_data = task_update.model_dump(exclude_unset=True, exclude={"status"})
+    if "deadline" in task_data and task_data["deadline"]:
+        task_data["deadline"] = ensure_utc(task_data["deadline"])
+
     for key, value in task_data.items():
+        if hasattr(value, "value"):
+            value = value.value
         setattr(task, key, value)
 
-    task.updated_at = datetime.utcnow()
-    
+    task.updated_at = get_utc_now()
     session.add(task)
     session.commit()
     session.refresh(task)
     
-    # Return enriched response
-    assignees_data = session.exec(
-        select(TaskAssignee).where(TaskAssignee.task_id == task.id)
-    ).all()
-    
-    assignees = [
-        AssigneeInfo(
-            email=a.user_email,
-            status=a.status,
-            assigned_at=a.assigned_at,
-            completed_at=a.completed_at
-        )
+    assignees_data = session.exec(select(TaskAssignee).where(TaskAssignee.task_id == task.id)).all()
+    assignees_info = [
+        AssigneeInfo(email=a.user_email, status=a.status, assigned_at=a.assigned_at, completed_at=a.completed_at)
         for a in assignees_data
     ]
     
-    return TaskResponse(**task.dict(), assignees=assignees)
+    return TaskResponse(**task.model_dump(), assignees=assignees_info)
+
 
 @app.delete("/tasks/{task_id}", tags=["Tasks"])
 def delete_task(
@@ -985,32 +922,26 @@ def delete_task(
 ):
     task = session.get(Task, task_id)
     if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
-    # Save task info before deletion
+    if not check_project_membership(session, task.project_id, current_user):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not have permission to delete this task")
+
     task_title = task.title
     task_project_id = task.project_id
     
-    # Log activity before deleting
     log_activity(
         session=session,
         project_id=task_project_id,
         user_email=current_user,
-        activity_type=ActivityType.TASK_UPDATED,  # Using TASK_UPDATED as closest match
-        description=f"{get_user_name(current_user)} deleted task '{task_title}'",
-        task_id=task_id
+        activity_type=ActivityType.TASK_DELETED,
+        description=f"{get_user_name(current_user)} deleted task '{task_title}'"
     )
 
-    # Delete associated TaskAssignees first to satisfy foreign key constraints
-    assignees = session.exec(
-        select(TaskAssignee).where(TaskAssignee.task_id == task_id)
-    ).all()
-    
+    assignees = session.exec(select(TaskAssignee).where(TaskAssignee.task_id == task_id)).all()
     for assignee in assignees:
         session.delete(assignee)
     
-    session.flush()  # Ensure assignees are deleted before task
-
     session.delete(task)
     session.commit()
     return {"message": "Task removed 🌱"}
@@ -1026,19 +957,22 @@ def list_activities(
     limit: int = 50,
     session: Session = Depends(get_session)
 ):
-    """Get recent activities from all team members"""
+    """Get recent activities across team with zero N+1 queries"""
     activities = session.exec(
         select(Activity)
-        .order_by(Activity.created_at.desc())
+        .order_by(desc(Activity.created_at))
         .limit(limit)
     ).all()
     
+    if not activities:
+        return []
+
+    project_ids = list({a.project_id for a in activities})
+    projects = session.exec(select(Project).where(Project.id.in_(project_ids))).all()
+    project_map = {p.id: p.name for p in projects}
+    
     enriched_activities = []
     for activity in activities:
-        # Get project and task names
-        project = session.get(Project, activity.project_id)
-        project_name = project.name if project else "Unknown Project"
-        
         enriched_activities.append({
             "id": activity.id,
             "user_email": activity.user_email,
@@ -1046,7 +980,7 @@ def list_activities(
             "activity_type": activity.activity_type,
             "description": activity.description,
             "project_id": activity.project_id,
-            "project_name": project_name,
+            "project_name": project_map.get(activity.project_id, "Unknown Project"),
             "created_at": activity.created_at.isoformat(),
             "humanized_time": humanize_timestamp(activity.created_at),
             "color": get_activity_color(activity.activity_type)
@@ -1061,20 +995,23 @@ def list_my_activities(
     limit: int = 50,
     session: Session = Depends(get_session)
 ):
-    """Get recent activities by current user"""
+    """Get recent activities by current user with zero N+1 queries"""
     activities = session.exec(
         select(Activity)
         .where(Activity.user_email == current_user)
-        .order_by(Activity.created_at.desc())
+        .order_by(desc(Activity.created_at))
         .limit(limit)
     ).all()
     
+    if not activities:
+        return []
+
+    project_ids = list({a.project_id for a in activities})
+    projects = session.exec(select(Project).where(Project.id.in_(project_ids))).all()
+    project_map = {p.id: p.name for p in projects}
+    
     enriched_activities = []
     for activity in activities:
-        # Get project and task names
-        project = session.get(Project, activity.project_id)
-        project_name = project.name if project else "Unknown Project"
-        
         enriched_activities.append({
             "id": activity.id,
             "user_email": activity.user_email,
@@ -1082,7 +1019,7 @@ def list_my_activities(
             "activity_type": activity.activity_type,
             "description": activity.description,
             "project_id": activity.project_id,
-            "project_name": project_name,
+            "project_name": project_map.get(activity.project_id, "Unknown Project"),
             "created_at": activity.created_at.isoformat(),
             "humanized_time": humanize_timestamp(activity.created_at),
             "color": get_activity_color(activity.activity_type)
@@ -1096,49 +1033,55 @@ def get_dashboard_stats(
     current_user: str = Depends(get_current_user),
     session: Session = Depends(get_session)
 ):
-    """Get team-wide statistics for dashboard"""
-    # Get all projects
-    all_projects = session.exec(select(Project)).all()
-    active_projects = [p for p in all_projects if p.status == ProjectStatus.ACTIVE]
-    completed_projects = [p for p in all_projects if p.status == ProjectStatus.DONE]
+    """Get team-wide statistics using fast SQL aggregate queries"""
+    total_projects = session.exec(select(func.count(Project.id))).one() or 0
+    active_projects = session.exec(
+        select(func.count(Project.id)).where(Project.status == ProjectStatus.ACTIVE.value)
+    ).one() or 0
+    completed_projects = session.exec(
+        select(func.count(Project.id)).where(Project.status == ProjectStatus.DONE.value)
+    ).one() or 0
     
-    # Get all tasks
-    all_tasks = session.exec(select(Task)).all()
-    completed_tasks = [t for t in all_tasks if t.status == TaskStatus.DONE]
+    total_tasks = session.exec(select(func.count(Task.id))).one() or 0
+    completed_tasks = session.exec(
+        select(func.count(Task.id)).where(Task.status == TaskStatus.DONE.value)
+    ).one() or 0
     
-    # Get all users who have created projects or are project members
     all_users = session.exec(select(User)).all()
+    one_week_ago = get_utc_now() - timedelta(days=7)
     
-    # Calculate per-member stats
+    # Active projects count per user
+    user_active_projects_query = session.exec(
+        select(Project.created_by, func.count(Project.id))
+        .where(Project.status == ProjectStatus.ACTIVE.value)
+        .group_by(Project.created_by)
+    ).all()
+    active_proj_map = dict(user_active_projects_query)
+    
+    # Completed tasks this week per user
+    user_weekly_tasks_query = session.exec(
+        select(TaskAssignee.user_email, func.count(TaskAssignee.id))
+        .where(TaskAssignee.status == TaskStatus.DONE.value)
+        .where(TaskAssignee.completed_at >= one_week_ago)
+        .group_by(TaskAssignee.user_email)
+    ).all()
+    weekly_tasks_map = dict(user_weekly_tasks_query)
+    
     members = []
-    one_week_ago = datetime.utcnow() - timedelta(days=7)
-    
     for user in all_users:
-        # Count active projects created by this user
-        user_active_projects = len([
-            p for p in active_projects if p.created_by == user.email
-        ])
-        
-        # Count tasks completed by this user in the last week
-        user_completed_tasks_week = session.exec(
-            select(TaskAssignee)
-            .where(TaskAssignee.user_email == user.email)
-            .where(TaskAssignee.status == TaskStatus.DONE)
-            .where(TaskAssignee.completed_at >= one_week_ago)
-        ).all()
-        
         members.append({
             "email": user.email,
             "name": get_user_name(user.email),
-            "active_projects": user_active_projects,
-            "completed_tasks_this_week": len(user_completed_tasks_week)
+            "active_projects": active_proj_map.get(user.email, 0),
+            "completed_tasks_this_week": weekly_tasks_map.get(user.email, 0)
         })
     
     return {
-        "total_projects": len(all_projects),
-        "active_projects": len(active_projects),
-        "completed_projects": len(completed_projects),
-        "total_tasks": len(all_tasks),
-        "completed_tasks": len(completed_tasks),
+        "total_projects": total_projects,
+        "active_projects": active_projects,
+        "completed_projects": completed_projects,
+        "total_tasks": total_tasks,
+        "completed_tasks": completed_tasks,
         "members": members
     }
+
