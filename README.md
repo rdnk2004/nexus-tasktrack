@@ -1,144 +1,118 @@
-# Nexus Task Tracker
+# NEXUS Task Tracker
 
-A modern, lightweight project management tool built for small teams. Track projects, tasks, and team activity with ease.
+A modern, high-performance project & directive management platform built for agile teams. Track projects, directives, Kanban workflows, operator stats, and team activity feeds.
+
+---
 
 ## ✨ Features
 
-- 👤 **User Authentication** - Secure login with JWT tokens
-- 📊 **Project Management** - Create and track up to 2 active projects per user
-- ✅ **Task Tracking** - Organize tasks with priorities and status updates
-- 📈 **Activity Logs** - Real-time activity feed for team collaboration
-- 🎨 **Clean UI** - Modern, responsive design
-- 🐳 **Docker Ready** - Easy deployment with Docker Compose
+- 👤 **Operator Authentication** - Secure authentication using bcrypt + PyJWT with auto-expiring tokens.
+- 📊 **Project Governance** - Individual and collaborative directives with concurrency-safe member assignments.
+- 📋 **Interactive Kanban Board** - Drag-and-drop workflow status updates (`Todo`, `In Progress`, `Done`).
+- 🛡️ **Defensive Security** - Complete stored XSS mitigation, parameterized SQL queries, and project RBAC validation.
+- ⚡ **Optimized Data Layer** - Batch IN-clause lookups eliminating N+1 query overhead.
+- 📈 **Operator Intelligence** - Real-time activity logs, personal streaks, 28-day heatmaps, and leaderboard stats.
+- 🐳 **Production Docker Setup** - Hardened multi-container stack with Nginx reverse proxy, health checks, and unbuffered logging.
+
+---
 
 ## 🚀 Quick Start
 
-### Local Development
+### 1. Prerequisites
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- Python 3.11+ (for local bare-metal development)
 
-1. **Prerequisites**
-   - Docker Desktop installed and running
-   - Git
+### 2. Configure Environment
+```bash
+# Copy the example environment template
+cp .env.example .env
+```
 
-2. **Clone and Run**
-   ```powershell
-   # Clone the repository
-   git clone https://github.com/YOUR_USERNAME/nutmeg-tasktracker.git
-   cd nutmeg
+### 3. Start with Docker Compose
+```bash
+# Build and run all services in the background
+docker-compose up --build -d
 
-   # Start all services
-   docker-compose up -d
+# Verify container health status
+docker-compose ps
+```
 
-   # Check services are running
-   docker-compose ps
-   ```
+### 4. Access the Application
+- **Frontend App:** [http://localhost](http://localhost)
+- **Backend API Docs (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **API Health Endpoint:** [http://localhost:8000/health](http://localhost:8000/health)
 
-3. **Access the App**
-   - Frontend: http://localhost
-   - Backend API: http://localhost:8000
-   - API Docs: http://localhost:8000/docs
+---
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
 
-- **Backend:** FastAPI (Python) + SQLModel + PostgreSQL
-- **Frontend:** HTML/CSS/JavaScript + Nginx
-- **Authentication:** JWT with bcrypt password hashing
-- **Database:** PostgreSQL
-- **Deployment:** Docker + Railway
+- **Backend:** FastAPI, SQLModel, SQLAlchemy 2.0, PostgreSQL / SQLite
+- **Frontend:** Vanilla JS (ES6+), Tailwind CSS, Lucide Icons, SortableJS, Flatpickr, Nexus Theme
+- **Web Server & Reverse Proxy:** Nginx Alpine with Gzip compression and security headers
+- **Containerization:** Docker & Docker Compose
+
+---
 
 ## 📁 Project Structure
 
 ```
 nutmeg/
-├── backend/               # FastAPI backend
-│   ├── app/               # Application modules
-│   │   ├── models.py      # Database models
-│   │   ├── security.py    # Password hashing
-│   │   ├── db.py          # Database connection
-│   │   └── config.py      # Configuration
-│   ├── main.py            # Main application file
-│   ├── requirements.txt   # Python dependencies
-│   └── Dockerfile         # Backend container
-├── frontend/              # Static frontend
-│   ├── *.html             # HTML pages
-│   ├── *.js               # JavaScript files
-│   ├── *.css              # Stylesheets
-│   ├── nginx.conf         # Nginx configuration
-│   └── Dockerfile         # Frontend container
-├── docker-compose.yml     # Local development setup
-└── RAILWAY_DEPLOYMENT.md  # Deployment guide
+├── backend/
+│   ├── app/
+│   │   ├── config.py         # App configuration & settings
+│   │   ├── db.py             # Session engine & connection pool
+│   │   ├── dependencies.py   # Auth dependencies & DB injection
+│   │   ├── jwt_utils.py      # JWT token issuance & verification
+│   │   └── models.py         # SQLModel database schemas & indexes
+│   ├── main.py               # REST API endpoints & route handlers
+│   ├── requirements.txt      # Python dependencies
+│   └── Dockerfile            # Container definition with healthchecks
+├── frontend/
+│   ├── dashboard.html        # Main overview & activity dashboard
+│   ├── projects.html         # Project management & collaborative squads
+│   ├── tasks.html            # Kanban board & task directives
+│   ├── profile.html          # Operator profile, streaks & leaderboard
+│   ├── login.html            # Authentication portal
+│   ├── utils.js              # Centralized authFetch, XSS sanitizer & helpers
+│   ├── nexus-theme.js        # Dynamic UI theme & background animations
+│   ├── nginx.conf            # Reverse proxy & static caching rules
+│   └── Dockerfile            # Nginx alpine container
+├── .env.example              # Environment variable template
+├── docker-compose.yml        # Multi-container orchestration
+└── README.md
 ```
-
-## 🔧 Development
-
-### Stop Services
-```powershell
-docker-compose down
-```
-
-### View Logs
-```powershell
-# All services
-docker-compose logs -f
-
-# Specific service
-docker-compose logs -f backend
-```
-
-### Rebuild After Changes
-```powershell
-# Rebuild specific service
-docker-compose build backend
-docker-compose up -d
-
-# Rebuild all
-docker-compose build
-docker-compose up -d
-```
-
-## 🌐 Network Access
-
-### Access from Another Device (Same Wi-Fi)
-
-1. Find your IP address:
-   ```powershell
-   ipconfig
-   ```
-
-2. Update `frontend/utils.js`:
-   ```javascript
-   const API_BASE_URL = 'http://YOUR_IP_ADDRESS:8000';
-   ```
-
-3. Rebuild frontend:
-   ```powershell
-   docker-compose build frontend
-   docker-compose up -d
-   ```
-
-4. Open Windows Firewall ports:
-   ```powershell
-   New-NetFirewallRule -DisplayName "Docker Frontend" -Direction Inbound -LocalPort 80 -Protocol TCP -Action Allow
-   New-NetFirewallRule -DisplayName "Docker Backend" -Direction Inbound -LocalPort 8000 -Protocol TCP -Action Allow
-   ```
-
-5. Access from other devices at: `http://YOUR_IP_ADDRESS`
-
-## 🔒 Security Notes
-
-- Default passwords are for **local development only**
-- Always change passwords after first login
-- Never commit `.env` files to Git
-- Use strong passwords in production
-- Railway deployment uses secure environment variables
-
-## 📝 License
-
-This project is for educational and personal use.
-
-## 🤝 Contributing
-
-Built for a small team of 4 users. Feel free to fork and customize!
 
 ---
 
-**Need Help?** Check out the [Railway Deployment Guide](RAILWAY_DEPLOYMENT.md) or review logs with `docker-compose logs -f`
+## 🔧 Useful Commands
+
+### Local Backend Development (Without Docker)
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+### View Docker Logs
+```bash
+# Stream all logs
+docker-compose logs -f
+
+# Stream backend API logs only
+docker-compose logs -f backend
+```
+
+### Stop Containers
+```bash
+docker-compose down
+```
+
+---
+
+## 🔒 Security Best Practices
+
+1. Change `JWT_SECRET_KEY` in `.env` before deploying to production.
+2. In production environments, set `ALLOW_MASTER_PASSWORD_LOGIN=false`.
+3. Never commit `.env` files into version control.

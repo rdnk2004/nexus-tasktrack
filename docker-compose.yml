@@ -6,22 +6,24 @@ services:
     image: postgres:15-alpine
     container_name: nutmeg-db
     environment:
-      POSTGRES_USER: nutmeg_user
-      POSTGRES_PASSWORD: nutmeg123
-      POSTGRES_DB: nutmeg_db
+      POSTGRES_USER: ${POSTGRES_USER:-nutmeg_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nutmeg123}
+      POSTGRES_DB: ${POSTGRES_DB:-nutmeg_db}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U nutmeg_user -d nutmeg_db" ]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-nutmeg_user} -d ${POSTGRES_DB:-nutmeg_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     networks:
       - nutmeg-network
+    restart: unless-stopped
 
-  # Backend API
+  # Backend API (FastAPI)
   backend:
     build:
       context: ./backend
@@ -29,37 +31,55 @@ services:
     container_name: nutmeg-backend
     environment:
       DATABASE_TYPE: postgresql
-      POSTGRES_USER: nutmeg_user
-      POSTGRES_PASSWORD: nutmeg123
+      POSTGRES_USER: ${POSTGRES_USER:-nutmeg_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nutmeg123}
       POSTGRES_HOST: database
       POSTGRES_PORT: 5432
-      POSTGRES_DB: nutmeg_db
+      POSTGRES_DB: ${POSTGRES_DB:-nutmeg_db}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-nutmeg-dev-secret-key-change-in-prod}
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRATION_MINUTES: 480
+      ALLOW_MASTER_PASSWORD_LOGIN: ${ALLOW_MASTER_PASSWORD_LOGIN:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
     ports:
-      - "8000:8000"
+      - "${BACKEND_PORT:-8000}:8000"
     depends_on:
       database:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     networks:
       - nutmeg-network
     restart: unless-stopped
 
-  # Frontend
+  # Frontend (Nginx Static + Reverse Proxy)
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: nutmeg-frontend
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
     networks:
       - nutmeg-network
     restart: unless-stopped
 
 volumes:
   postgres_data:
-
+    driver: local
 
 networks:
   nutmeg-network:

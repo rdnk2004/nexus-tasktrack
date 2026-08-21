@@ -1,4 +1,8 @@
 .git
 .gitignore
 *.md
-node_modules
+.env*
+Dockerfile
+nginx.conf
+.DS_Store
+Thumbs.db
