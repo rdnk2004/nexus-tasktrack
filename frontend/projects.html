@@ -83,12 +83,6 @@
             background: #444;
         }
     </style>
-
-    <!-- API Configuration -->
-    <script>
-        //window.NUTMEG_API_URL = 'http://localhost:8000';
-        window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
-    </script>
 </head>
 
 <body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
@@ -418,71 +412,6 @@
         let currentFilter = 'all';
         let currentUser = null;
 
-        // Authentication Check
-        async function checkAuth() {
-            const token = getToken();
-            if (!token) {
-                window.location.href = 'login.html';
-                return null;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!response.ok) throw new Error('Invalid token');
-                return await response.json();
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                removeToken();
-                removeCurrentUser();
-                window.location.href = 'login.html';
-                return null;
-            }
-        }
-
-        // Utility Functions
-        function getFirstName(email) {
-            return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
-        }
-
-        function getDaysUntil(dateString) {
-            const deadline = new Date(dateString);
-            const now = new Date();
-            const diffMs = deadline - now;
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-            if (diffDays < 0) return { text: `${Math.abs(diffDays)}d overdue`, color: 'text-red-400', urgency: 'high' };
-            if (diffDays === 0) return { text: 'Due today', color: 'text-yellow-400', urgency: 'medium' };
-            if (diffDays === 1) return { text: '1d left', color: 'text-yellow-400', urgency: 'medium' };
-            if (diffDays <= 3) return { text: `${diffDays}d left`, color: 'text-orange-400', urgency: 'medium' };
-            if (diffDays <= 7) return { text: `${diffDays}d left`, color: 'text-yellow-200/70', urgency: 'low' };
-            return { text: `${diffDays}d left`, color: 'text-gray-500', urgency: 'low' };
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-
-        function getAvatarColor(email) {
-            const colors = [
-                'bg-orange-500/20 text-orange-400 border-orange-500/30',
-                'bg-blue-500/20 text-blue-400 border-blue-500/30',
-                'bg-green-500/20 text-green-400 border-green-500/30',
-                'bg-purple-500/20 text-purple-400 border-purple-500/30',
-                'bg-pink-500/20 text-pink-400 border-pink-500/30',
-                'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
-                'bg-teal-500/20 text-teal-400 border-teal-500/30'
-            ];
-            let hash = 0;
-            for (let i = 0; i < email.length; i++) {
-                hash = email.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return colors[Math.abs(hash) % colors.length];
-        }
-
         // Modal Functions
         function openModal() {
             document.getElementById('projectModal').classList.remove('hidden');
@@ -515,7 +444,7 @@
                 maxDate: maxDate,
                 dateFormat: "Y-m-d",
                 theme: "dark",
-                disableMobile: true  // Force calendar on mobile
+                disableMobile: true
             });
 
             // Check if user has 2 active projects
@@ -525,7 +454,6 @@
             } else {
                 document.getElementById('projectLimitWarning').classList.add('hidden');
             }
-
         }
 
         async function populateCollaborators() {
@@ -533,13 +461,12 @@
             container.innerHTML = '';
 
             try {
-                const response = await fetch(`${API_BASE_URL}/users`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
+                const response = await authFetch('/users');
+                if (!response || !response.ok) throw new Error('Failed to load users');
                 const users = await response.json();
 
-                // Exclude current user and hidden test account
-                const otherUsers = users.filter(email => email !== currentUser.email && email !== 'test@nutmeg.com');
+                // Exclude current user and test account
+                const otherUsers = users.filter(email => email !== currentUser?.email && email !== 'test@nutmeg.com');
 
                 otherUsers.forEach(email => {
                     const checkbox = document.createElement('label');
@@ -548,13 +475,13 @@
                         <input 
                             type="checkbox" 
                             name="collaborator" 
-                            value="${email}"
+                            value="${escapeHtml(email)}"
                             class="w-4 h-4 text-yellow-500 bg-black border-gray-600 rounded focus:ring-yellow-500 focus:ring-offset-black"
                         />
                         <div class="${getAvatarColor(email)} w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border border-white/5">
-                            ${getFirstName(email).charAt(0)}
+                            ${escapeHtml(getFirstName(email).charAt(0))}
                         </div>
-                        <span class="text-gray-300 font-medium">${email}</span>
+                        <span class="text-gray-300 font-medium">${escapeHtml(email)}</span>
                     `;
                     container.appendChild(checkbox);
                 });
@@ -566,11 +493,8 @@
         // Fetch Projects
         async function fetchProjects() {
             try {
-                const response = await fetch(`${API_BASE_URL}/projects`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch projects');
+                const response = await authFetch('/projects');
+                if (!response || !response.ok) throw new Error('Failed to fetch projects');
                 allProjects = await response.json();
                 renderProjects();
             } catch (error) {
@@ -584,7 +508,6 @@
             const activeGrid = document.getElementById('activeProjectsGrid');
             const completedGrid = document.getElementById('completedProjectsGrid');
 
-            // Filter projects based on current filter
             let filteredProjects = allProjects;
             if (currentFilter === 'individual') {
                 filteredProjects = allProjects.filter(p => !p.is_collaborative);
@@ -593,9 +516,8 @@
             }
 
             const activeProjects = filteredProjects.filter(p => p.status === 'active');
-            const completedProjects = filteredProjects.filter(p => p.status === 'done' || p.status === 'archived'); // Include archived as completed visually for now
+            const completedProjects = filteredProjects.filter(p => p.status === 'done' || p.status === 'archived');
 
-            // Update counts
             document.getElementById('activeCount').textContent = activeProjects.length;
             document.getElementById('completedCount').textContent = completedProjects.length;
 
@@ -628,7 +550,7 @@
 
         // Create Project Card HTML
         function createProjectCard(project, type) {
-            const isCreator = project.created_by === currentUser.email;
+            const isCreator = project.created_by === currentUser?.email;
             const typeBadgeColor = project.is_collaborative ? 'bg-purple-900/30 text-purple-300 border-purple-500/20' : 'bg-blue-900/30 text-blue-300 border-blue-500/20';
             const typeBadgeText = project.is_collaborative ? 'Collaborative' : 'Individual';
 
@@ -645,8 +567,8 @@
                             'bg-white/5 border-white/10 text-gray-400';
                     deadlineInfo = `
                         <div class="${urgencyClass} border rounded-lg p-2 mb-4 text-xs font-mono flex justify-between">
-                            <span>Target: ${formatDate(project.end_date)}</span>
-                            <span class="font-bold">${deadline.text}</span>
+                            <span>Target: ${escapeHtml(formatDate(project.end_date))}</span>
+                            <span class="font-bold">${escapeHtml(deadline.text)}</span>
                         </div>
                     `;
                 }
@@ -655,19 +577,18 @@
             }
 
             // Collaborator avatars
-            const collaboratorAvatars = project.members.slice(0, 3).map(member => `
+            const collaboratorAvatars = (project.members || []).slice(0, 3).map(member => `
                 <div class="${getAvatarColor(member.email)} w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 border-black -ml-2 ring-1 ring-white/10">
-                    ${getFirstName(member.email).charAt(0)}
+                    ${escapeHtml(getFirstName(member.email).charAt(0))}
                 </div>
             `).join('');
 
-            const moreCount = project.members.length > 3 ? `
+            const moreCount = (project.members || []).length > 3 ? `
                 <div class="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-gray-400 text-xs font-semibold border-2 border-black -ml-2 ring-1 ring-white/10">
                     +${project.members.length - 3}
                 </div>
             ` : '';
 
-            // Card Style
             const cardBg = type === 'active'
                 ? 'bg-neutral-900/80 hover:bg-neutral-900 border-white/10 hover:border-yellow-500/40 shadow-[0_0_20px_-5px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_-5px_rgba(255,215,0,0.15)]'
                 : 'bg-neutral-900/40 border-white/5 hover:border-white/20';
@@ -677,7 +598,7 @@
                     <!-- Header -->
                     <div class="flex justify-between items-start mb-4">
                         <div class="flex-1">
-                            <h3 class="text-xl font-bold text-gray-200 mb-2 group-hover:text-white transition-colors">${project.name}</h3>
+                            <h3 class="text-xl font-bold text-gray-200 mb-2 group-hover:text-white transition-colors">${escapeHtml(project.name)}</h3>
                             <span class="inline-block px-2 py-0.5 rounded border text-[10px] uppercase tracking-wider font-semibold ${typeBadgeColor}">
                                 ${typeBadgeText}
                             </span>
@@ -696,7 +617,7 @@
                     <!-- Progress -->
                     <div class="mb-5">
                         <div class="flex justify-between text-xs text-gray-500 mb-2 font-mono">
-                            <span>${project.completed_tasks}/${project.total_tasks} TASKS</span>
+                            <span>${project.completed_tasks || 0}/${project.total_tasks || 0} TASKS</span>
                             <span>${Math.round(progress)}%</span>
                         </div>
                         <div class="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
@@ -759,15 +680,15 @@
             const type = document.querySelector('input[name="projectType"]:checked').value;
             const endDate = document.getElementById('endDate').value;
 
-            // Validation
             if (!name) {
                 showToast('Please enter a project name', 'error');
                 return;
             }
 
-            // Check date is within 1-14 days
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const selectedDate = new Date(endDate);
+            selectedDate.setHours(0, 0, 0, 0);
             const diffDays = Math.ceil((selectedDate - today) / (1000 * 60 * 60 * 24));
 
             if (diffDays < 1 || diffDays > 14) {
@@ -775,7 +696,6 @@
                 return;
             }
 
-            // Get collaborators if collaborative
             let collaborators = [];
             if (type === 'collaborative') {
                 const checkboxes = document.querySelectorAll('input[name="collaborator"]:checked');
@@ -787,28 +707,24 @@
                 }
             }
 
-            // Show loading
             const btn = document.getElementById('createProjectBtn');
             const spinner = document.getElementById('createSpinner');
             btn.disabled = true;
             spinner.classList.remove('hidden');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/projects`, {
+                const response = await authFetch('/projects', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${getToken()}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({
                         name,
-                        description: document.getElementById('projectDescription').value,
+                        description: document.getElementById('projectDescription').value.trim(),
                         members: collaborators,
                         start_date: new Date().toISOString(),
-                        end_date: new Date(endDate).toISOString()
+                        end_date: `${endDate}T23:59:59Z`
                     })
                 });
 
+                if (!response) return;
                 const data = await response.json();
 
                 if (response.ok) {
@@ -843,16 +759,12 @@
             if (!confirmed) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+                const response = await authFetch(`/projects/${projectId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${getToken()}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({ status: 'done' })
                 });
 
-                if (response.ok) {
+                if (response && response.ok) {
                     showToast('Protocol complete.', 'success');
                     await fetchProjects();
                 } else {
@@ -875,16 +787,12 @@
             if (!confirmed) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+                const response = await authFetch(`/projects/${projectId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${getToken()}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({ status: 'archived' })
                 });
 
-                if (response.ok) {
+                if (response && response.ok) {
                     showToast('Project archived.', 'success');
                     await fetchProjects();
                 } else {
@@ -896,7 +804,7 @@
             }
         }
 
-        // Extend Project Modal Functions
+        // Extend Project Modal
         let extendingProjectId = null;
 
         function openExtendModal(projectId) {
@@ -906,7 +814,6 @@
             extendingProjectId = projectId;
             document.getElementById('currentDeadline').textContent = new Date(project.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-            // Initialize Flatpickr for new deadline
             const currentDate = new Date(project.end_date);
             const minDate = new Date(currentDate);
             minDate.setDate(currentDate.getDate() + 1);
@@ -941,16 +848,12 @@
             spinner.classList.remove('hidden');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/projects/${extendingProjectId}`, {
+                const response = await authFetch(`/projects/${extendingProjectId}`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${getToken()}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ end_date: new Date(newEndDate).toISOString() })
+                    body: JSON.stringify({ end_date: `${newEndDate}T23:59:59Z` })
                 });
 
-                if (response.ok) {
+                if (response && response.ok) {
                     showToast('Project deadline extended successfully', 'success');
                     closeExtendModal();
                     await fetchProjects();
@@ -978,14 +881,11 @@
             if (!confirmed) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Authorization': `Bearer ${getToken()}`
-                    }
+                const response = await authFetch(`/projects/${projectId}`, {
+                    method: 'DELETE'
                 });
 
-                if (response.ok) {
+                if (response && response.ok) {
                     showToast('Project deleted successfully', 'success');
                     await fetchProjects();
                 } else {
@@ -1001,7 +901,6 @@
         // Filter tabs
         document.querySelectorAll('.filter-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
-                // Update active state
                 document.querySelectorAll('.filter-tab').forEach(t => {
                     t.classList.remove('text-yellow-500', 'border-b-2', 'border-yellow-500');
                     t.classList.add('text-gray-500');
@@ -1009,7 +908,6 @@
                 e.target.classList.remove('text-gray-500');
                 e.target.classList.add('text-yellow-500', 'border-b-2', 'border-yellow-500');
 
-                // Update filter
                 currentFilter = e.target.dataset.filter;
                 renderProjects();
             });
@@ -1028,9 +926,7 @@
             if (confirmed) logout();
         });
 
-        // Check for action parameter
         window.addEventListener('DOMContentLoaded', async () => {
-            // Setup project type radio listeners
             const typeRadios = document.querySelectorAll('input[name="projectType"]');
             typeRadios.forEach(radio => {
                 radio.addEventListener('change', (e) => {
@@ -1043,7 +939,6 @@
                 });
             });
 
-            // Add event listener for extend deadline button
             document.getElementById('extendDeadlineBtn').addEventListener('click', extendDeadline);
 
             currentUser = await checkAuth();
@@ -1054,7 +949,6 @@
             await fetchProjects();
             lucide.createIcons();
 
-            // Check if should open modal
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('action') === 'new') {
                 openModal();

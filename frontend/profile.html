@@ -83,12 +83,6 @@
             background: #444;
         }
     </style>
-
-    <!-- API Configuration -->
-    <script>
-        //window.NUTMEG_API_URL = 'http://localhost:8000';
-        window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
-    </script>
 </head>
 
 <body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
@@ -398,48 +392,6 @@
         let userTasks = [];
         let userActivities = [];
 
-        // Auth Check
-        async function checkAuth() {
-            const token = getToken();
-            if (!token) {
-                window.location.href = 'login.html';
-                return null;
-            }
-            try {
-                const response = await fetch(`${API_BASE_URL}/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) throw new Error('Invalid token');
-                return await response.json();
-            } catch (error) {
-                removeToken();
-                removeCurrentUser();
-                window.location.href = 'login.html';
-                return null;
-            }
-        }
-
-        // Utility Functions
-        function getFirstName(email) {
-            return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
-        }
-
-        function getAvatarColor(email) {
-            // Updated colors for dark theme
-            const colors = [
-                'bg-orange-600 border-orange-400',
-                'bg-blue-600 border-blue-400',
-                'bg-green-600 border-green-400',
-                'bg-purple-600 border-purple-400',
-                'bg-pink-600 border-pink-400'
-            ];
-            let hash = 0;
-            for (let i = 0; i < email.length; i++) {
-                hash = email.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return colors[Math.abs(hash) % colors.length];
-        }
-
         // Animate Counter
         function animateCounter(element, target) {
             let current = 0;
@@ -464,10 +416,8 @@
         // Fetch User Stats
         async function fetchStats() {
             try {
-                const response = await fetch(`${API_BASE_URL}/user/stats`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-                if (response.ok) {
+                const response = await authFetch('/user/stats');
+                if (response && response.ok) {
                     userStats = await response.json();
                     renderStats();
                 }
@@ -479,10 +429,8 @@
         // Fetch User Tasks
         async function fetchTasks() {
             try {
-                const response = await fetch(`${API_BASE_URL}/user/tasks`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-                if (response.ok) {
+                const response = await authFetch('/user/tasks');
+                if (response && response.ok) {
                     userTasks = await response.json();
                     renderTaskStats();
                     renderMonthlyStats();
@@ -495,10 +443,8 @@
         // Fetch User Activities
         async function fetchActivities() {
             try {
-                const response = await fetch(`${API_BASE_URL}/activities/my?limit=100`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-                if (response.ok) {
+                const response = await authFetch('/activities/my?limit=100');
+                if (response && response.ok) {
                     userActivities = await response.json();
                     calculateStreak();
                     renderHeatmap();
@@ -520,14 +466,13 @@
 
         // Render Task Stats
         function renderTaskStats() {
-            // Count tasks by user's individual status
             const doneTasks = userTasks.filter(t => {
-                const myAssignment = t.assignees.find(a => a.email === currentUser.email);
+                const myAssignment = (t.assignees || []).find(a => a.email === currentUser?.email);
                 return myAssignment && myAssignment.status === 'done';
             }).length;
 
             const doingTasks = userTasks.filter(t => {
-                const myAssignment = t.assignees.find(a => a.email === currentUser.email);
+                const myAssignment = (t.assignees || []).find(a => a.email === currentUser?.email);
                 return myAssignment && myAssignment.status === 'doing';
             }).length;
 
@@ -543,14 +488,12 @@
                 return;
             }
 
-            // Group activities by date
             const dateMap = {};
             userActivities.forEach(activity => {
                 const date = new Date(activity.created_at).toDateString();
                 dateMap[date] = true;
             });
 
-            // Find longest consecutive streak
             const dates = Object.keys(dateMap).sort((a, b) => new Date(b) - new Date(a));
             let currentStreak = 0;
             let maxStreak = 0;
@@ -558,7 +501,6 @@
             const today = new Date().toDateString();
             const yesterday = new Date(Date.now() - 86400000).toDateString();
 
-            // Check if streak is still active (today or yesterday)
             if (dateMap[today] || dateMap[yesterday]) {
                 currentStreak = 1;
                 let checkDate = new Date(dateMap[today] ? today : yesterday);
@@ -583,7 +525,6 @@
             const grid = document.getElementById('heatmapGrid');
             grid.innerHTML = '';
 
-            // Get last 28 days
             const days = [];
             for (let i = 27; i >= 0; i--) {
                 const date = new Date();
@@ -591,7 +532,6 @@
                 days.push(date);
             }
 
-            // Count tasks completed per day
             const taskCountByDay = {};
             userActivities.forEach(activity => {
                 if (activity.activity_type === 'task_completed') {
@@ -600,7 +540,6 @@
                 }
             });
 
-            // Create grid (7 rows x 4 columns)
             for (let week = 0; week < 4; week++) {
                 const weekDiv = document.createElement('div');
                 weekDiv.className = 'flex flex-col gap-2';
@@ -613,7 +552,7 @@
                     const dateStr = date.toDateString();
                     const count = taskCountByDay[dateStr] || 0;
 
-                    let bgColor = 'bg-neutral-800'; // Default dark
+                    let bgColor = 'bg-neutral-800';
                     if (count >= 5) bgColor = 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]';
                     else if (count >= 3) bgColor = 'bg-yellow-600/80';
                     else if (count >= 1) bgColor = 'bg-yellow-800/60';
@@ -707,8 +646,8 @@
                     <div class="flex items-start gap-4">
                         <span class="text-3xl filter drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">${achievement.icon}</span>
                         <div class="flex-1">
-                            <h4 class="font-bold text-gray-200 mb-1 tracking-wide text-sm">${achievement.name}</h4>
-                            <p class="text-xs text-gray-400 mb-3">${achievement.description}</p>
+                            <h4 class="font-bold text-gray-200 mb-1 tracking-wide text-sm">${escapeHtml(achievement.name)}</h4>
+                            <p class="text-xs text-gray-400 mb-3">${escapeHtml(achievement.description)}</p>
                             <span class="text-[10px] uppercase tracking-wider font-bold ${unlocked ? 'text-green-500' : 'text-gray-600'}">
                                 ${unlocked ? '✓ Unlocked' : '🔒 Locked'}
                             </span>
@@ -726,7 +665,6 @@
             const thisMonth = now.getMonth();
             const thisYear = now.getFullYear();
 
-            // Filter tasks completed this month
             const monthlyTasks = userActivities.filter(a => {
                 if (a.activity_type !== 'task_completed') return false;
                 const date = new Date(a.created_at);
@@ -735,7 +673,6 @@
 
             document.getElementById('monthTasks').textContent = monthlyTasks.length;
 
-            // Count projects created this month
             const monthlyProjects = userActivities.filter(a => {
                 if (a.activity_type !== 'project_created') return false;
                 const date = new Date(a.created_at);
@@ -744,9 +681,8 @@
 
             document.getElementById('monthProjects').textContent = monthlyProjects.length;
 
-            // Calculate average completion time
             const completedTasks = userTasks.filter(t => {
-                const myAssignment = t.assignees.find(a => a.email === currentUser.email);
+                const myAssignment = (t.assignees || []).find(a => a.email === currentUser?.email);
                 return myAssignment && myAssignment.status === 'done' && myAssignment.completed_at;
             });
 
@@ -764,7 +700,6 @@
                 document.getElementById('avgCompletionTime').textContent = '0 days';
             }
 
-            // Most productive day
             const dayCount = {};
             monthlyTasks.forEach(a => {
                 const day = new Date(a.created_at).toLocaleDateString('en-US', { weekday: 'long' });
@@ -786,15 +721,11 @@
         // Fetch Team Stats and Render Leaderboard
         async function renderLeaderboard() {
             try {
-                const response = await fetch(`${API_BASE_URL}/dashboard/stats`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-
-                if (response.ok) {
+                const response = await authFetch('/dashboard/stats');
+                if (response && response.ok) {
                     const teamStats = await response.json();
                     const members = (teamStats.members || []).filter(m => m.email !== 'test@nutmeg.com');
 
-                    // Sort by completed tasks
                     members.sort((a, b) => b.completed_tasks_this_week - a.completed_tasks_this_week);
 
                     const leaderboard = document.getElementById('leaderboard');
@@ -804,7 +735,7 @@
                     const maxTasks = Math.max(...members.map(m => m.completed_tasks_this_week), 1);
 
                     members.forEach((member, index) => {
-                        const isCurrentUser = member.email === currentUser.email;
+                        const isCurrentUser = member.email === currentUser?.email;
                         const progressWidth = (member.completed_tasks_this_week / maxTasks) * 100;
 
                         const row = document.createElement('div');
@@ -816,7 +747,7 @@
                                     <span class="text-lg font-black text-gray-600 font-mono w-6">#${index + 1}</span>
                                     ${index < 3 ? `<span class="text-2xl drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]">${medals[index]}</span>` : ''}
                                     <span class="font-bold tracking-wide ${isCurrentUser ? 'text-yellow-500' : 'text-gray-300'}">
-                                        ${getFirstName(member.email).toUpperCase()}
+                                        ${escapeHtml(getFirstName(member.email).toUpperCase())}
                                     </span>
                                 </div>
                                 <span class="font-bold font-mono text-lg ${isCurrentUser ? 'text-yellow-500' : 'text-gray-400'}">
@@ -867,7 +798,6 @@
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
-            // Validation
             if (newPassword !== confirmPassword) {
                 showToast('New passwords do not match', 'error');
                 return;
@@ -879,18 +809,15 @@
             }
 
             try {
-                const response = await fetch(`${API_BASE_URL}/me/password`, {
+                const response = await authFetch('/me/password', {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${getToken()}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({
                         current_password: currentPassword,
                         new_password: newPassword
                     })
                 });
 
+                if (!response) return;
                 const data = await response.json();
 
                 if (response.ok) {
@@ -925,7 +852,6 @@
 
             renderProfileHeader();
 
-            // Fetch all data
             await Promise.all([
                 fetchStats(),
                 fetchTasks(),

@@ -49,12 +49,6 @@
             background: #444;
         }
     </style>
-
-    <!-- API Configuration -->
-    <script>
-        //window.NUTMEG_API_URL = 'http://localhost:8000';
-        window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
-    </script>
 </head>
 
 <body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
@@ -232,100 +226,13 @@
 
     <script src="utils.js"></script>
     <script>
-        // Authentication Check
-        async function checkAuth() {
-            const token = getToken();
-            if (!token) {
-                window.location.href = 'login.html';
-                return null;
-            }
-
-            try {
-                // Validate token with backend
-                const response = await fetch(`${API_BASE_URL}/me`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Invalid token');
-                }
-
-                const user = await response.json();
-                return user;
-            } catch (error) {
-                console.error('Auth check failed:', error);
-                // Clear localStorage and redirect to login
-                removeToken();
-                removeCurrentUser();
-                window.location.href = 'login.html';
-                return null;
-            }
-        }
-
-        // Extract first name from email
-        function getFirstName(email) {
-            return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
-        }
-
-        // Get relative time
-        function getRelativeTime(dateString) {
-            const date = new Date(dateString);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffSecs = Math.floor(diffMs / 1000);
-            const diffMins = Math.floor(diffSecs / 60);
-            const diffHours = Math.floor(diffMins / 60);
-            const diffDays = Math.floor(diffHours / 24);
-
-            if (diffSecs < 60) return 'just now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            if (diffHours < 24) return `${diffHours}h ago`;
-            if (diffDays === 1) return 'yesterday';
-            if (diffDays < 7) return `${diffDays}d ago`;
-            return date.toLocaleDateString();
-        }
-
-        // Get days until deadline
-        function getDaysUntil(dateString) {
-            const deadline = new Date(dateString);
-            const now = new Date();
-            const diffMs = deadline - now;
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-            if (diffDays < 0) return { text: `${Math.abs(diffDays)}d overdue`, color: 'text-red-400' };
-            if (diffDays === 0) return { text: 'Due today', color: 'text-yellow-400' };
-            if (diffDays === 1) return { text: '1d left', color: 'text-yellow-400' };
-            if (diffDays <= 3) return { text: `${diffDays}d left`, color: 'text-orange-400' };
-            return { text: `${diffDays}d left`, color: 'text-gray-500' };
-        }
-
-        // Show skeleton loaders
-        function showSkeletons(containerId, count) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-
-            for (let i = 0; i < count; i++) {
-                const skeleton = document.createElement('div');
-                skeleton.className = 'skeleton h-20 rounded-xl opacity-10';
-                container.appendChild(skeleton);
-            }
-        }
-
         // Fetch Projects
         async function fetchProjects() {
             showSkeletons('projectsList', 3);
 
             try {
-                const token = getToken();
-                const response = await fetch(`${API_BASE_URL}/projects`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch projects');
+                const response = await authFetch('/projects');
+                if (!response || !response.ok) throw new Error('Failed to fetch projects');
 
                 const projects = await response.json();
                 const activeProjects = projects.filter(p => p.status === 'active').slice(0, 3);
@@ -359,7 +266,7 @@
 
                         projectCard.innerHTML = `
                             <div class="flex items-start justify-between mb-3">
-                                <h3 class="font-semibold text-gray-200 group-hover:text-white transition-colors text-sm">${project.name}</h3>
+                                <h3 class="font-semibold text-gray-200 group-hover:text-white transition-colors text-sm">${escapeHtml(project.name)}</h3>
                                 <div class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
                             </div>
                             <div class="mb-3">
@@ -371,7 +278,7 @@
                                     <div class="bg-gradient-to-r from-orange-600 to-orange-400 h-1 rounded-full transition-all shadow-[0_0_10px_rgba(249,115,22,0.3)]" style="width: ${progress}%"></div>
                                 </div>
                             </div>
-                            ${deadline ? `<p class="text-[10px] ${deadline.color} font-medium text-right">${deadline.text}</p>` : ''}
+                            ${deadline ? `<p class="text-[10px] ${deadline.color} font-medium text-right">${escapeHtml(deadline.text)}</p>` : ''}
                         `;
 
                         projectsList.appendChild(projectCard);
@@ -402,27 +309,21 @@
             showSkeletons('tasksList', 5);
 
             try {
-                const token = getToken();
                 const currentUser = getCurrentUser();
-                const response = await fetch(`${API_BASE_URL}/user/tasks`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch tasks');
+                const response = await authFetch('/user/tasks');
+                if (!response || !response.ok) throw new Error('Failed to fetch tasks');
 
                 const allTasks = await response.json();
 
                 // Filter tasks where current user's status is not done
                 const myTasks = allTasks.filter(task => {
-                    const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+                    const myAssignment = (task.assignees || []).find(a => a.email === currentUser?.email);
                     return myAssignment && myAssignment.status !== 'done';
                 }).slice(0, 5);
 
                 // Count tasks where current user completed
                 const completedCount = allTasks.filter(task => {
-                    const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+                    const myAssignment = (task.assignees || []).find(a => a.email === currentUser?.email);
                     return myAssignment && myAssignment.status === 'done';
                 }).length;
 
@@ -456,12 +357,12 @@
 
                         taskCard.innerHTML = `
                             <div class="flex-1 min-w-0">
-                                <h4 class="font-medium text-gray-300 group-hover:text-white truncate text-sm mb-1">${task.title}</h4>
+                                <h4 class="font-medium text-gray-300 group-hover:text-white truncate text-sm mb-1">${escapeHtml(task.title)}</h4>
                                 <p class="text-[10px] text-gray-600 font-mono">Project #${task.project_id}</p>
                             </div>
                             <div class="flex flex-col items-end gap-1">
-                                <span class="text-[10px] px-2 py-0.5 rounded border ${priorityStyles[task.priority] || priorityStyles['low']} uppercase tracking-wider font-bold">${task.priority}</span>
-                                ${deadline ? `<p class="text-[10px] ${deadline.color} font-medium">${deadline.text}</p>` : ''}
+                                <span class="text-[10px] px-2 py-0.5 rounded border ${priorityStyles[task.priority] || priorityStyles['low']} uppercase tracking-wider font-bold">${escapeHtml(task.priority)}</span>
+                                ${deadline ? `<p class="text-[10px] ${deadline.color} font-medium">${escapeHtml(deadline.text)}</p>` : ''}
                             </div>
                         `;
 
@@ -493,14 +394,8 @@
             showSkeletons('activityFeed', 5);
 
             try {
-                const token = getToken();
-                const response = await fetch(`${API_BASE_URL}/activities?limit=5`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch activities');
+                const response = await authFetch('/activities?limit=5');
+                if (!response || !response.ok) throw new Error('Failed to fetch activities');
 
                 const activities = await response.json();
 
@@ -517,18 +412,10 @@
                     `;
                     lucide.createIcons();
                 } else {
-                    const avatarStyles = [
-                        'bg-orange-500/20 text-orange-400 border-orange-500/30',
-                        'bg-blue-500/20 text-blue-400 border-blue-500/30',
-                        'bg-green-500/20 text-green-400 border-green-500/30',
-                        'bg-purple-500/20 text-purple-400 border-purple-500/30',
-                        'bg-pink-500/20 text-pink-400 border-pink-500/30'
-                    ];
-
-                    activities.forEach((activity, index) => {
+                    activities.forEach(activity => {
                         const userName = activity.user_email ? getFirstName(activity.user_email) : 'User';
                         const initial = userName.charAt(0).toUpperCase();
-                        const avatarStyle = avatarStyles[index % avatarStyles.length];
+                        const avatarStyle = getAvatarColor(activity.user_email);
                         const timestamp = getRelativeTime(activity.created_at);
 
                         const activityItem = document.createElement('div');
@@ -539,8 +426,8 @@
                                 ${initial}
                             </div>
                             <div class="flex-1 min-w-0 pt-0.5">
-                                <p class="text-sm text-gray-400 group-hover:text-gray-300 transition-colors leading-relaxed">${activity.description}</p>
-                                <p class="text-[10px] text-gray-600 mt-1 font-mono">${timestamp}</p>
+                                <p class="text-sm text-gray-400 group-hover:text-gray-300 transition-colors leading-relaxed">${escapeHtml(activity.description)}</p>
+                                <p class="text-[10px] text-gray-600 mt-1 font-mono">${escapeHtml(timestamp)}</p>
                             </div>
                         `;
 

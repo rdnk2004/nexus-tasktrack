@@ -105,12 +105,6 @@
             animation: slideUp 0.3s ease-out;
         }
     </style>
-
-    <!-- API Configuration -->
-    <script>
-        //window.NUTMEG_API_URL = 'http://localhost:8000';
-        window.NUTMEG_API_URL = 'https://nutmeg-tasktracker.onrender.com';
-    </script>
 </head>
 
 <body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
@@ -418,67 +412,11 @@
         let projectId = null;
         let selectedTaskId = null;
 
-        // Auth Check
-        async function checkAuth() {
-            const token = getToken();
-            if (!token) {
-                window.location.href = 'login.html';
-                return null;
-            }
-            try {
-                const response = await fetch(`${API_BASE_URL}/me`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) throw new Error('Invalid token');
-                return await response.json();
-            } catch (error) {
-                removeToken();
-                removeCurrentUser();
-                window.location.href = 'login.html';
-                return null;
-            }
-        }
-
-        // Utility Functions
-        function getFirstName(email) {
-            return email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
-        }
-
-        function getAvatarColor(email) {
-            const colors = [
-                'bg-orange-600/20 text-orange-400 border-orange-500/30',
-                'bg-blue-600/20 text-blue-400 border-blue-500/30',
-                'bg-green-600/20 text-green-400 border-green-500/30',
-                'bg-purple-600/20 text-purple-400 border-purple-500/30',
-                'bg-pink-600/20 text-pink-400 border-pink-500/30',
-                'bg-indigo-600/20 text-indigo-400 border-indigo-500/30'
-            ];
-            let hash = 0;
-            for (let i = 0; i < email.length; i++) {
-                hash = email.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            return colors[Math.abs(hash) % colors.length];
-        }
-
-        function getDaysUntil(dateString) {
-            const deadline = new Date(dateString);
-            const now = new Date();
-            const diffMs = deadline - now;
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-            if (diffDays < 0) return { text: `${Math.abs(diffDays)}d overdue`, color: 'text-red-400 font-bold' };
-            if (diffDays === 0) return { text: 'Due today', color: 'text-red-400 font-bold' };
-            if (diffDays === 1) return { text: 'Tomorrow', color: 'text-yellow-400' };
-            return { text: `${diffDays}d left`, color: 'text-gray-500' };
-        }
-
         // Fetch Project Details
         async function fetchProject() {
             try {
-                const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-                if (!response.ok) throw new Error('Project not found');
+                const response = await authFetch(`/projects/${projectId}`);
+                if (!response || !response.ok) throw new Error('Project not found');
                 currentProject = await response.json();
                 renderProjectHeader();
             } catch (error) {
@@ -496,17 +434,17 @@
                 '<span class="bg-purple-900/30 text-purple-300 border border-purple-500/20 px-3 py-1 rounded-lg font-bold uppercase text-[10px] tracking-wider"> Collaborative </span>' :
                 '<span class="bg-blue-900/30 text-blue-300 border border-blue-500/20 px-3 py-1 rounded-lg font-bold uppercase text-[10px] tracking-wider"> Individual </span>';
 
-            const collaborators = currentProject.members.slice(0, 3).map(m => `
+            const collaborators = (currentProject.members || []).slice(0, 3).map(m => `
                 <div class="${getAvatarColor(m.email)} w-7 h-7 rounded-lg border flex items-center justify-center font-bold text-xs -ml-2 shadow-lg">
-                    ${getFirstName(m.email).charAt(0)}
+                    ${escapeHtml(getFirstName(m.email).charAt(0))}
                 </div>
             `).join('');
 
-            const moreCount = currentProject.members.length > 3 ?
+            const moreCount = (currentProject.members || []).length > 3 ?
                 `<div class="w-7 h-7 rounded-lg bg-neutral-800 border border-white/10 flex items-center justify-center text-gray-500 text-xs font-bold -ml-2 shadow-lg">+${currentProject.members.length - 3}</div>` : '';
 
             const deadline = currentProject.end_date ?
-                `<span class="text-gray-500 text-xs flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${new Date(currentProject.end_date).toLocaleDateString()}</span>` : '';
+                `<span class="text-gray-500 text-xs flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${escapeHtml(formatDate(currentProject.end_date))}</span>` : '';
 
             document.getElementById('projectMeta').innerHTML = `
                 ${typeBadge}
@@ -520,10 +458,8 @@
         // Fetch Tasks
         async function fetchTasks() {
             try {
-                const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks`, {
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
-                });
-                if (!response.ok) throw new Error('Failed to fetch tasks');
+                const response = await authFetch(`/projects/${projectId}/tasks`);
+                if (!response || !response.ok) throw new Error('Failed to fetch tasks');
                 allTasks = await response.json();
                 renderKanbanBoard();
             } catch (error) {
@@ -538,12 +474,10 @@
             const doingColumn = document.getElementById('doingColumn');
             const doneColumn = document.getElementById('doneColumn');
 
-            // Clear columns
             todoColumn.innerHTML = '';
             doingColumn.innerHTML = '';
             doneColumn.innerHTML = '';
 
-            // Group tasks by current user's status
             const myTasks = {
                 todo: [],
                 doing: [],
@@ -551,7 +485,7 @@
             };
 
             allTasks.forEach(task => {
-                const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+                const myAssignment = (task.assignees || []).find(a => a.email === currentUser?.email);
                 if (myAssignment) {
                     const status = myAssignment.status;
                     if (status === 'todo') myTasks.todo.push(task);
@@ -560,17 +494,14 @@
                 }
             });
 
-            // Update counts
             document.getElementById('todoCount').textContent = myTasks.todo.length;
             document.getElementById('doingCount').textContent = myTasks.doing.length;
             document.getElementById('doneCount').textContent = myTasks.done.length;
 
-            // Render cards
             myTasks.todo.forEach(task => todoColumn.appendChild(createTaskCard(task)));
             myTasks.doing.forEach(task => doingColumn.appendChild(createTaskCard(task)));
             myTasks.done.forEach(task => doneColumn.appendChild(createTaskCard(task)));
 
-            // Show placeholders if empty
             if (myTasks.todo.length === 0) todoColumn.innerHTML = '<div class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl"><p class="text-xs uppercase tracking-widest opacity-50">Empty Queue</p></div>';
             if (myTasks.doing.length === 0) doingColumn.innerHTML = '<div class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl"><p class="text-xs uppercase tracking-widest opacity-50">No Active Operations</p></div>';
             if (myTasks.done.length === 0) doneColumn.innerHTML = '<div class="text-center py-20 text-gray-600 empty-placeholder border-2 border-dashed border-white/5 rounded-xl"><p class="text-xs uppercase tracking-widest opacity-50">Nothing Archived</p></div>';
@@ -581,11 +512,12 @@
         // Create Task Card
         function createTaskCard(task) {
             const card = document.createElement('div');
-            const myAssignment = task.assignees.find(a => a.email === currentUser.email);
+            const myAssignment = (task.assignees || []).find(a => a.email === currentUser?.email);
             const isMyTask = !!myAssignment;
 
             const priorityStyles = {
                 high: 'text-red-400 bg-red-400/10 border-red-400/20',
+                urgent: 'text-red-500 bg-red-500/10 border-red-500/20',
                 medium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
                 low: 'text-blue-400 bg-blue-400/10 border-blue-400/20'
             };
@@ -593,13 +525,13 @@
             const isDone = myAssignment && myAssignment.status === 'done';
             const deadline = (!isDone && task.deadline) ? getDaysUntil(task.deadline) : null;
 
-            const assigneeAvatars = task.assignees.slice(0, 3).map(a => `
+            const assigneeAvatars = (task.assignees || []).slice(0, 3).map(a => `
                 <div class="${getAvatarColor(a.email)} w-6 h-6 rounded-lg border border-black/20 flex items-center justify-center text-white font-semibold text-[10px] -ml-1">
-                    ${getFirstName(a.email).charAt(0)}
+                    ${escapeHtml(getFirstName(a.email).charAt(0))}
                 </div>
             `).join('');
 
-            const isTeamTask = task.assignees.length > 1;
+            const isTeamTask = (task.assignees || []).length > 1;
             const myTaskBadge = isMyTask && isTeamTask ? '<span class="text-[10px] bg-white/10 text-gray-300 px-1.5 py-0.5 rounded border border-white/5">You</span>' : '';
 
             card.className = `task-card bg-black/60 backdrop-blur-sm border border-white/5 rounded-xl p-4 transition-all group ${isMyTask ? '' : 'not-draggable opacity-60'}`;
@@ -608,21 +540,21 @@
 
             card.innerHTML = `
                 <div class="flex justify-between items-start mb-2">
-                    <h4 class="font-semibold text-gray-200 group-hover:text-white transition-colors text-sm leading-snug pr-2">${task.title}</h4>
-                    <span class="text-[10px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider ${priorityStyles[task.priority]}">${task.priority.charAt(0)}</span>
+                    <h4 class="font-semibold text-gray-200 group-hover:text-white transition-colors text-sm leading-snug pr-2">${escapeHtml(task.title)}</h4>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded border font-bold uppercase tracking-wider ${priorityStyles[task.priority] || priorityStyles['low']}">${escapeHtml(task.priority.charAt(0))}</span>
                 </div>
                 
                 <div class="flex items-center gap-2 mb-3">
                     ${myTaskBadge}
                 </div>
                 
-                ${deadline ? `<div class="flex items-center gap-1.5 mb-3"><i data-lucide="calendar" class="w-3 h-3 ${deadline.color}"></i> <p class="text-xs ${deadline.color} font-medium font-mono">${deadline.text}</p></div>` : ''}
+                ${deadline ? `<div class="flex items-center gap-1.5 mb-3"><i data-lucide="calendar" class="w-3 h-3 ${deadline.color}"></i> <p class="text-xs ${deadline.color} font-medium font-mono">${escapeHtml(deadline.text)}</p></div>` : ''}
                 
                 <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/5">
                     <div class="flex items-center pl-1">
                         ${assigneeAvatars}
                     </div>
-                    ${isTeamTask ? `<span class="text-[10px] text-gray-600 font-mono">${task.assignees.filter(a => a.status === 'done').length}/${task.assignees.length}</span>` : ''}
+                    ${isTeamTask ? `<span class="text-[10px] text-gray-600 font-mono">${(task.assignees || []).filter(a => a.status === 'done').length}/${(task.assignees || []).length}</span>` : ''}
                 </div>
             `;
 
@@ -648,7 +580,6 @@
                     onEnd: async function (evt) {
                         const taskId = parseInt(evt.item.dataset.taskId);
                         const newStatus = statusMap[evt.to.id];
-
                         await updateTaskStatus(taskId, newStatus);
                     }
                 });
@@ -658,18 +589,14 @@
         // Update Task Status
         async function updateTaskStatus(taskId, newStatus) {
             try {
-                const response = await fetch(`${API_BASE_URL}/tasks/${taskId}/my-status`, {
+                const response = await authFetch(`/tasks/${taskId}/my-status`, {
                     method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${getToken()}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({ status: newStatus })
                 });
 
-                if (response.ok) {
+                if (response && response.ok) {
                     const statusTexts = { todo: 'Pending', doing: 'In Progress', done: 'Executed' };
-                    showToast(`Status updated: ${statusTexts[newStatus]}`, 'success');
+                    showToast(`Status updated: ${statusTexts[newStatus] || newStatus}`, 'success');
                     await fetchTasks();
                 } else {
                     throw new Error('Failed to update task status');
@@ -677,7 +604,7 @@
             } catch (error) {
                 console.error('Error updating task:', error);
                 showToast('Error updating task status', 'error');
-                await fetchTasks(); // Revert UI
+                await fetchTasks();
             }
         }
 
@@ -694,14 +621,12 @@
         }
 
         function setupNewTaskModal() {
-            // Set deadline limits (today to +2 days max)
             const today = new Date();
             const maxDate = new Date(today);
             maxDate.setDate(today.getDate() + 2);
 
-            //Initialize Flatpickr on task deadline input
             flatpickr("#taskDeadline", {
-                defaultDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), // +2 days
+                defaultDate: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000),
                 minDate: today,
                 maxDate: maxDate,
                 dateFormat: "Y-m-d",
@@ -709,7 +634,6 @@
                 disableMobile: true
             });
 
-            // Assignment type handling
             const assignmentTypes = document.querySelectorAll('input[name="assignmentType"]');
             assignmentTypes.forEach(radio => {
                 radio.addEventListener('change', (e) => {
@@ -727,15 +651,15 @@
             const container = document.getElementById('assigneesList');
             container.innerHTML = '';
 
-            currentProject.members.forEach(member => {
+            (currentProject.members || []).forEach(member => {
                 const checkbox = document.createElement('label');
                 checkbox.className = 'flex items-center gap-3 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors border border-transparent hover:border-white/5';
                 checkbox.innerHTML = `
-                    <input type="checkbox" name="assignee" value="${member.email}" class="w-4 h-4 text-yellow-500 bg-black border-gray-600 rounded focus:ring-yellow-500 focus:ring-offset-black" />
+                    <input type="checkbox" name="assignee" value="${escapeHtml(member.email)}" class="w-4 h-4 text-yellow-500 bg-black border-gray-600 rounded focus:ring-yellow-500 focus:ring-offset-black" />
                     <div class="${getAvatarColor(member.email)} w-8 h-8 rounded-lg border border-black/20 flex items-center justify-center font-bold text-xs">
-                        ${getFirstName(member.email).charAt(0)}
+                        ${escapeHtml(getFirstName(member.email).charAt(0))}
                     </div>
-                    <span class="text-gray-300 font-medium">${member.email}</span>
+                    <span class="text-gray-300 font-medium">${escapeHtml(member.email)}</span>
                 `;
                 container.appendChild(checkbox);
             });
@@ -749,7 +673,6 @@
             const priority = document.querySelector('input[name="priority"]:checked').value;
             const deadline = document.getElementById('taskDeadline').value;
 
-            // Validation
             if (!title) {
                 showToast('Please enter a directive title', 'error');
                 return;
@@ -769,34 +692,31 @@
                 assignees = ['ALL'];
             }
 
-            // Show loading
             const btn = document.getElementById('createTaskBtn');
             const spinner = document.getElementById('createTaskSpinner');
             btn.disabled = true;
             spinner.classList.remove('hidden');
 
             try {
-                const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks`, {
+                const response = await authFetch(`/projects/${projectId}/tasks`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${getToken()}`,
-                        'Content-Type': 'application/json'
-                    },
                     body: JSON.stringify({
                         title,
                         description: description || null,
                         assignees,
                         priority,
-                        deadline: deadline ? new Date(deadline).toISOString() : null
+                        deadline: deadline ? `${deadline}T23:59:59Z` : null
                     })
                 });
+
+                if (!response) return;
+                const data = await response.json();
 
                 if (response.ok) {
                     showToast('Directive executed.', 'success');
                     closeNewTaskModal();
                     await fetchTasks();
                 } else {
-                    const data = await response.json();
                     throw new Error(data.detail || 'Failed to create task');
                 }
             } catch (error) {
@@ -816,11 +736,12 @@
 
             const priorityStyles = {
                 high: 'text-red-400 bg-red-400/10 border-red-400/20',
+                urgent: 'text-red-500 bg-red-500/10 border-red-500/20',
                 medium: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
                 low: 'text-blue-400 bg-blue-400/10 border-blue-400/20'
             };
 
-            const assigneesList = task.assignees.map(a => {
+            const assigneesList = (task.assignees || []).map(a => {
                 const statusIcons = {
                     todo: '⏳',
                     doing: '🔄',
@@ -835,11 +756,11 @@
                     <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                         <div class="flex items-center gap-3">
                             <div class="${getAvatarColor(a.email)} w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shadow-lg">
-                                ${getFirstName(a.email).charAt(0)}
+                                ${escapeHtml(getFirstName(a.email).charAt(0))}
                             </div>
-                            <span class="text-sm text-gray-300 font-medium">${a.email}</span>
+                            <span class="text-sm text-gray-300 font-medium">${escapeHtml(a.email)}</span>
                         </div>
-                        <span class="text-xs font-mono font-bold uppercase tracking-wider ${statusStyles[a.status]}">${statusIcons[a.status]} ${a.status.toUpperCase()}</span>
+                        <span class="text-xs font-mono font-bold uppercase tracking-wider ${statusStyles[a.status]}">${statusIcons[a.status] || ''} ${escapeHtml(a.status.toUpperCase())}</span>
                     </div>
                 `;
             }).join('');
@@ -847,14 +768,14 @@
             document.getElementById('taskDetailContent').innerHTML = `
                 <div class="space-y-6">
                     <div>
-                        <h4 class="text-3xl font-bold text-white mb-2 leading-tight">${task.title}</h4>
-                        <span class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest border ${priorityStyles[task.priority]}">${task.priority.toUpperCase()} PRIORITY</span>
+                        <h4 class="text-3xl font-bold text-white mb-2 leading-tight">${escapeHtml(task.title)}</h4>
+                        <span class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-widest border ${priorityStyles[task.priority] || priorityStyles['low']}">${escapeHtml(task.priority.toUpperCase())} PRIORITY</span>
                     </div>
                     
                     ${task.description ? `
                         <div class="bg-black/20 p-4 rounded-xl border border-white/5">
                             <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Details</p>
-                            <p class="text-gray-300 leading-relaxed text-sm">${task.description}</p>
+                            <p class="text-gray-300 leading-relaxed text-sm">${escapeHtml(task.description)}</p>
                         </div>
                     ` : ''}
                     
@@ -862,7 +783,7 @@
                         <div class="flex items-center gap-3 text-sm">
                             <i data-lucide="calendar" class="w-4 h-4 text-yellow-500"></i>
                             <span class="text-gray-400">Target Deadline:</span>
-                            <span class="text-white font-mono">${new Date(task.deadline).toLocaleDateString()}</span>
+                            <span class="text-white font-mono">${escapeHtml(formatDate(task.deadline))}</span>
                         </div>
                     ` : ''}
                     
@@ -895,12 +816,11 @@
             if (!confirmed) return;
 
             try {
-                const response = await fetch(`${API_BASE_URL}/tasks/${selectedTaskId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                const response = await authFetch(`/tasks/${selectedTaskId}`, {
+                    method: 'DELETE'
                 });
 
-                if (response.ok) {
+                if (response && response.ok) {
                     showToast('Directive terminated.', 'success');
                     closeTaskDetailModal();
                     await fetchTasks();
@@ -927,14 +847,12 @@
             if (confirmed) logout();
         });
 
-        // Initialize
         window.addEventListener('DOMContentLoaded', async () => {
             currentUser = await checkAuth();
             if (!currentUser) return;
 
             document.getElementById('userName').textContent = getFirstName(currentUser.email);
 
-            // Get project ID from URL
             const urlParams = new URLSearchParams(window.location.search);
             projectId = parseInt(urlParams.get('project_id'));
 
