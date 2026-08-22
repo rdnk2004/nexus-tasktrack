@@ -1,179 +1,208 @@
 /**
- * NEXUS THEME ENGINE v4.1 (Heat Haze & Ripples)
+ * NEXUS THEME ENGINE v5.0 (High-Performance Ambient Engine)
  * Features:
- * - Deep Obsidian Background
- * - Fire Side (Left): Upward "Heat Haze" displacement animation
- * - Water Side (Right): Fluid "Ripple" displacement animation
- * - Subtle Glassmorphism
- * - Performance optimized: Animation pauses when browser tab is inactive
+ * - Ultra-low CPU/GPU footprint (pure CSS hardware-accelerated ambient mesh)
+ * - Zero JS requestAnimationFrame loops / Zero SVG displacement filter overhead
+ * - Cohesive dark glassmorphic design system tokens
+ * - Respects prefers-reduced-motion
+ * - Non-invasive styling (no !important Tailwind hijacking)
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    initNexusTheme();
-});
+(function () {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initNexusTheme);
+    } else {
+        initNexusTheme();
+    }
 
-function initNexusTheme() {
-    injectStyles();
-    injectStructure();
-    startElementalEngine();
-}
+    function initNexusTheme() {
+        injectStyles();
+        injectStructure();
+    }
 
-function injectStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        /* GLOBAL CURSOR STYLES */
-        body, a, button, select {
-            cursor: default;
-        }
-        
-        a, button, input[type="submit"], input[type="button"], .clickable {
-            cursor: pointer;
-        }
+    function injectStyles() {
+        if (document.getElementById('nexus-theme-styles')) return;
 
-        input[type="text"], input[type="password"], input[type="email"], input[type="date"], textarea {
-            cursor: text;
-        }
+        const style = document.createElement('style');
+        style.id = 'nexus-theme-styles';
+        style.textContent = `
+            :root {
+                --nexus-bg: #050507;
+                --nexus-surface: rgba(18, 18, 22, 0.75);
+                --nexus-surface-hover: rgba(26, 26, 32, 0.85);
+                --nexus-surface-solid: #121216;
+                --nexus-border: rgba(255, 255, 255, 0.08);
+                --nexus-border-hover: rgba(234, 179, 8, 0.35);
+                --nexus-accent: #eab308;
+                --nexus-accent-glow: rgba(234, 179, 8, 0.15);
+            }
 
-        /* CONTAINER */
-        #nexus-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: -1;
-            background: #000000;
-            overflow: hidden;
-            pointer-events: none;
-        }
+            /* BASE SMOOTHNESS & DEEP OBSIDIAN CANVAS */
+            html {
+                background-color: var(--nexus-bg);
+                color-scheme: dark;
+            }
 
-        /* ELEMENTAL ZONES */
-        .elemental-zone {
-            position: absolute;
-            width: 60vw;
-            height: 100vh;
-            top: 0;
-            opacity: 0.4;
-            mix-blend-mode: screen;
-        }
+            body {
+                background-color: var(--nexus-bg);
+                color: #e5e7eb;
+                overflow-x: hidden;
+            }
 
-        /* FIRE SIDE (Left) */
-        #zone-fire {
-            left: -10vw;
-            background: radial-gradient(ellipse at 30% 50%, #ff4500 0%, #8b0000 40%, transparent 70%);
-            mask-image: linear-gradient(to right, black 0%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to right, black 0%, transparent 100%);
-            filter: url(#heatFilter);
-        }
+            /* SELECTION */
+            ::selection {
+                background: rgba(234, 179, 8, 0.3);
+                color: #ffffff;
+            }
 
-        /* WATER SIDE (Right) */
-        #zone-water {
-            right: -10vw;
-            background: radial-gradient(ellipse at 70% 50%, #00bfff 0%, #00008b 40%, transparent 70%);
-            mask-image: linear-gradient(to left, black 0%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to left, black 0%, transparent 100%);
-            filter: url(#waterFilter);
-        }
+            /* ACCESSIBLE CUSTOM SCROLLBARS */
+            ::-webkit-scrollbar {
+                width: 7px;
+                height: 7px;
+            }
+            ::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.4);
+            }
+            ::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 9999px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.28);
+            }
 
-        /* VIGNETTE OVERLAY */
-        #nexus-vignette {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, transparent 20%, #000000 100%);
-            opacity: 0.7;
-        }
+            /* FIXED AMBIENT CANVAS */
+            #nexus-canvas {
+                position: fixed;
+                inset: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: 0;
+                pointer-events: none;
+                overflow: hidden;
+                background: radial-gradient(circle at 50% 0%, #0c0d14 0%, #050507 70%);
+            }
 
-        /* CARD STYLES */
-        .glass-card, 
-        .bg-neutral-900\\/60,
-        .bg-neutral-900\\/80,
-        .bg-black\\/20 {
-            background: rgba(10, 10, 10, 0.4) !important;
-            backdrop-filter: blur(12px) !important;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease, border-color 0.3s ease;
-        }
+            /* GPU-ACCELERATED AMBIENT GLOW ORBS */
+            .nexus-orb {
+                position: absolute;
+                border-radius: 50%;
+                filter: blur(90px);
+                opacity: 0.28;
+                pointer-events: none;
+                transform: translate3d(0, 0, 0);
+                will-change: transform, opacity;
+            }
 
-        .glass-card:hover,
-        .bg-neutral-900\\/60:hover {
-            transform: translateY(-2px);
-            border-color: rgba(255, 255, 255, 0.15);
-        }
-    `;
-    document.head.appendChild(style);
-}
+            .nexus-orb-amber {
+                top: -10vw;
+                left: 15vw;
+                width: 45vw;
+                height: 45vw;
+                background: radial-gradient(circle, #f59e0b 0%, #b45309 50%, transparent 80%);
+                animation: nexusFloatAmber 24s ease-in-out infinite alternate;
+            }
 
-function injectStructure() {
-    const existing = document.getElementById('nexus-background');
-    if (existing) existing.remove();
+            .nexus-orb-blue {
+                bottom: -10vw;
+                right: 10vw;
+                width: 50vw;
+                height: 50vw;
+                background: radial-gradient(circle, #3b82f6 0%, #1d4ed8 45%, transparent 75%);
+                opacity: 0.18;
+                animation: nexusFloatBlue 28s ease-in-out infinite alternate;
+            }
 
-    const html = `
-        <div id="nexus-background">
-            <div id="zone-fire" class="elemental-zone"></div>
-            <div id="zone-water" class="elemental-zone"></div>
+            .nexus-orb-purple {
+                top: 40vh;
+                right: -10vw;
+                width: 35vw;
+                height: 35vw;
+                background: radial-gradient(circle, #8b5cf6 0%, #6d28d9 50%, transparent 80%);
+                opacity: 0.14;
+                animation: nexusFloatPurple 32s ease-in-out infinite alternate;
+            }
+
+            /* SUBTLE GRID TEXTURE OVERLAY */
+            #nexus-grid-overlay {
+                position: absolute;
+                inset: 0;
+                background-image: linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                                  linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+                background-size: 48px 48px;
+                mask-image: radial-gradient(ellipse at 50% 50%, black 40%, transparent 85%);
+                -webkit-mask-image: radial-gradient(ellipse at 50% 50%, black 40%, transparent 85%);
+            }
+
+            /* VIGNETTE SHADOW */
+            #nexus-vignette {
+                position: absolute;
+                inset: 0;
+                background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.65) 100%);
+            }
+
+            /* KEYFRAMES */
+            @keyframes nexusFloatAmber {
+                0% { transform: translate3d(0, 0, 0) scale(1); }
+                50% { transform: translate3d(3vw, 4vh, 0) scale(1.08); }
+                100% { transform: translate3d(-3vw, 2vh, 0) scale(0.95); }
+            }
+
+            @keyframes nexusFloatBlue {
+                0% { transform: translate3d(0, 0, 0) scale(1); }
+                50% { transform: translate3d(-4vw, -5vh, 0) scale(1.1); }
+                100% { transform: translate3d(2vw, -2vh, 0) scale(0.92); }
+            }
+
+            @keyframes nexusFloatPurple {
+                0% { transform: translate3d(0, 0, 0) scale(1); }
+                50% { transform: translate3d(-3vw, 3vh, 0) scale(1.06); }
+                100% { transform: translate3d(2vw, -4vh, 0) scale(0.96); }
+            }
+
+            /* ACCESSIBILITY REDUCED MOTION */
+            @media (prefers-reduced-motion: reduce) {
+                .nexus-orb {
+                    animation: none !important;
+                }
+            }
+
+            /* GLASSMORPHISM PRIMITIVES */
+            .nexus-card {
+                background: var(--nexus-surface);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border: 1px solid var(--nexus-border);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+                transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                            border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+                            box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+
+            .nexus-card-interactive:hover {
+                transform: translateY(-2px);
+                border-color: var(--nexus-border-hover);
+                box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 20px 0 var(--nexus-accent-glow);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function injectStructure() {
+        const existing = document.getElementById('nexus-canvas');
+        if (existing) existing.remove();
+
+        const canvas = document.createElement('div');
+        canvas.id = 'nexus-canvas';
+        canvas.setAttribute('aria-hidden', 'true');
+        canvas.innerHTML = `
+            <div class="nexus-orb nexus-orb-amber"></div>
+            <div class="nexus-orb nexus-orb-blue"></div>
+            <div class="nexus-orb nexus-orb-purple"></div>
+            <div id="nexus-grid-overlay"></div>
             <div id="nexus-vignette"></div>
+        `;
 
-            <!-- FILTERS -->
-            <svg style="width:0; height:0; position:absolute;">
-                <defs>
-                    <!-- FIRE HEAT FILTER -->
-                    <filter id="heatFilter">
-                        <feTurbulence id="heat-turb" type="turbulence" baseFrequency="0.01 0.03" numOctaves="2" seed="1" />
-                        <feDisplacementMap in="SourceGraphic" scale="40" xChannelSelector="R" yChannelSelector="G" />
-                        <feGaussianBlur stdDeviation="0.5" /> 
-                    </filter>
-
-                    <!-- WATER RIPPLE FILTER -->
-                    <filter id="waterFilter">
-                        <feTurbulence id="water-turb" type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="5" />
-                        <feDisplacementMap in="SourceGraphic" scale="60" xChannelSelector="R" yChannelSelector="B" />
-                    </filter>
-                </defs>
-            </svg>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('afterbegin', html);
-}
-
-function startElementalEngine() {
-    const heatTurb = document.getElementById('heat-turb');
-    const waterTurb = document.getElementById('water-turb');
-
-    if (!heatTurb || !waterTurb) return;
-
-    let frames = 0;
-    let isRunning = true;
-
-    // Pause animation when tab is in background to preserve CPU/GPU battery
-    document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            isRunning = false;
-        } else if (!isRunning) {
-            isRunning = true;
-            requestAnimationFrame(animate);
-        }
-    });
-
-    const animate = () => {
-        if (!isRunning) return;
-
-        frames++;
-
-        // Heat Animation (Rising Frequency Oscillations)
-        const heatLowY = 0.03;
-        const heatVarY = 0.005 * Math.sin(frames * 0.05);
-        const heatX = 0.01;
-        heatTurb.setAttribute('baseFrequency', `${heatX} ${heatLowY + heatVarY}`);
-
-        // Water Animation (Smooth Undulation)
-        const waterGlobal = 0.008 + 0.002 * Math.sin(frames * 0.01);
-        waterTurb.setAttribute('baseFrequency', `${waterGlobal} ${waterGlobal}`);
-
-        requestAnimationFrame(animate);
-    };
-
-    animate();
-}
-
+        document.body.insertAdjacentElement('afterbegin', canvas);
+    }
+})();
