@@ -4,386 +4,372 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile - NEXUS</title>
+    <title>Profile &amp; Performance - Nutmeg Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap');
-
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #000;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #050507;
         }
 
-        @keyframes countUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .profile-card {
+            background: rgba(18, 18, 24, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
         }
 
-        @keyframes pulse {
-
-            0%,
-            100% {
-                transform: scale(1);
-            }
-
-            50% {
-                transform: scale(1.1);
-            }
+        .heatmap-cell {
+            transition: all 0.15s ease;
         }
-
-        .counter {
-            animation: countUp 0.6s ease-out;
-        }
-
-        .streak-fire {
-            animation: pulse 2s infinite;
-        }
-
-        .heatmap-square {
-            transition: all 0.2s ease;
-        }
-
-        .heatmap-square:hover {
-            transform: scale(1.4);
-            border: 1px solid #ffd700;
+        .heatmap-cell:hover {
+            transform: scale(1.3);
             z-index: 10;
         }
 
+        .achievement-card {
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
         .achievement-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-2px);
+            border-color: rgba(245, 158, 11, 0.35);
         }
-
         .achievement-locked {
-            filter: grayscale(100%) opacity(0.3);
+            opacity: 0.35;
+            filter: grayscale(100%);
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #000;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #444;
+        .modal-card {
+            background: #111116;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
     </style>
 </head>
 
-<body class="min-h-screen text-gray-300 selection:bg-yellow-500/30 overflow-x-hidden">
-
-
+<body class="min-h-screen text-gray-200 selection:bg-amber-500/30 overflow-x-hidden">
 
     <!-- Top Navigation Bar -->
-    <nav class="bg-black/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
+    <header class="bg-neutral-950/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
-                <div class="flex items-center gap-4">
-                    <i data-lucide="network"
-                        class="w-8 h-8 text-yellow-500 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]"></i>
-                    <span
-                        class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 tracking-tight">NEXUS</span>
+            <div class="flex justify-between items-center h-16 sm:h-20">
+                <!-- Brand / Logo -->
+                <div class="flex items-center gap-3">
+                    <a href="dashboard.html" class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.2)]">
+                            <i data-lucide="layers" class="w-5 h-5 text-amber-400"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-black text-white tracking-tight">NUTMEG</span>
+                            <span class="hidden sm:inline-block text-[10px] uppercase font-bold tracking-widest text-amber-400/80 bg-amber-400/10 px-2 py-0.5 rounded ml-2 border border-amber-400/20">Workspace</span>
+                        </div>
+                    </a>
                 </div>
-                <div class="hidden md:flex items-center gap-8">
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden md:flex items-center gap-8">
                     <a href="dashboard.html"
-                        class="text-gray-400 hover:text-white transition-colors font-medium">Dashboard</a>
+                        class="text-gray-400 hover:text-white transition-colors font-medium text-sm flex items-center gap-2">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        Dashboard
+                    </a>
                     <a href="projects.html"
-                        class="text-gray-400 hover:text-white transition-colors font-medium">Projects</a>
+                        class="text-gray-400 hover:text-white transition-colors font-medium text-sm flex items-center gap-2">
+                        <i data-lucide="folder-kanban" class="w-4 h-4"></i>
+                        Projects
+                    </a>
                     <a href="profile.html"
-                        class="text-yellow-500 font-medium border-b-2 border-yellow-500 pb-1 transition-all drop-shadow-[0_0_8px_rgba(255,215,0,0.3)]">Profile</a>
-                </div>
-                <div class="flex items-center gap-6">
-                    <div class="hidden sm:block text-right">
-                        <p class="text-xs text-gray-500 uppercase tracking-wider">Operator</p>
-                        <p id="userName" class="text-sm font-bold text-white">Loading...</p>
+                        class="text-amber-400 font-semibold border-b-2 border-amber-400 pb-1 transition-all text-sm flex items-center gap-2">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                        Profile
+                    </a>
+                </nav>
+
+                <!-- User Info & Logout -->
+                <div class="flex items-center gap-4 sm:gap-6">
+                    <div class="hidden sm:flex items-center gap-3 pl-4 border-l border-white/10">
+                        <div id="userAvatarPill" class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center font-bold text-xs">
+                            U
+                        </div>
+                        <div class="text-left">
+                            <p id="userName" class="text-xs font-bold text-white leading-tight">Loading...</p>
+                            <p class="text-[10px] text-gray-400 font-medium">Team Member</p>
+                        </div>
                     </div>
-                    <button id="logoutBtn"
-                        class="group bg-neutral-900 hover:bg-neutral-800 text-white px-4 py-2 rounded-xl transition-all border border-white/10 hover:border-red-500/50 flex items-center gap-2">
-                        <i data-lucide="log-out"
-                            class="w-4 h-4 text-gray-400 group-hover:text-red-500 transition-colors"></i>
-                        <span class="hidden sm:inline text-sm font-medium">Logout</span>
+                    <button id="logoutBtn" type="button"
+                        class="group bg-neutral-900 hover:bg-neutral-800 text-gray-300 hover:text-white px-3 sm:px-4 py-2 rounded-xl transition-all border border-white/10 hover:border-rose-500/40 flex items-center gap-2 text-xs font-semibold">
+                        <i data-lucide="log-out" class="w-4 h-4 text-gray-400 group-hover:text-rose-400 transition-colors"></i>
+                        <span class="hidden sm:inline">Sign Out</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Mobile Navigation -->
-        <div class="md:hidden border-t border-white/10 px-4 py-3 flex gap-2 bg-black/90 backdrop-blur-md">
+        <!-- Mobile Navigation Strip -->
+        <nav class="md:hidden border-t border-white/10 px-4 py-2 flex gap-2 bg-black/60 backdrop-blur-md">
             <a href="dashboard.html"
-                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors">Dashboard</a>
+                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors text-xs">
+                Dashboard
+            </a>
             <a href="projects.html"
-                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors">Projects</a>
+                class="flex-1 text-center text-gray-400 py-2 hover:bg-white/5 rounded-lg transition-colors text-xs">
+                Projects
+            </a>
             <a href="profile.html"
-                class="flex-1 text-center text-yellow-500 font-medium py-2 bg-yellow-500/10 rounded-lg border border-yellow-500/20">Profile</a>
-        </div>
-    </nav>
+                class="flex-1 text-center text-amber-400 font-semibold py-2 bg-amber-500/10 rounded-lg border border-amber-500/20 text-xs">
+                Profile
+            </a>
+        </nav>
+    </header>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 relative z-10">
 
-        <!-- Profile Header -->
-        <div
-            class="bg-neutral-900/60 backdrop-blur-md border border-white/10 rounded-3xl p-8 mb-10 shadow-2xl relative overflow-hidden group">
-            <div
-                class="absolute top-0 right-0 w-[300px] h-[300px] bg-gradient-to-br from-yellow-500/10 to-transparent blur-3xl opacity-50">
-            </div>
-
-            <div class="flex flex-col sm:flex-row items-center gap-8 relative z-10">
-                <!-- Avatar with glowing ring -->
+        <!-- Profile Card Header -->
+        <div class="profile-card rounded-3xl p-6 sm:p-8 mb-8 relative overflow-hidden">
+            <div class="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 relative z-10">
+                <!-- Avatar with glow -->
                 <div class="relative">
-                    <div
-                        class="absolute inset-0 rounded-full bg-gradient-to-br from-yellow-400 to-orange-600 blur-lg opacity-40 group-hover:opacity-60 transition-opacity duration-500">
-                    </div>
                     <div id="profileAvatar"
-                        class="relative w-28 h-28 rounded-full bg-black border-2 border-white/10 flex items-center justify-center text-white text-4xl font-black shadow-inner ring-4 ring-black">
-                        N
+                        class="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-amber-500/15 border-2 border-amber-500/30 text-amber-400 flex items-center justify-center text-3xl sm:text-4xl font-extrabold shadow-[0_0_30px_rgba(245,158,11,0.2)]">
+                        U
                     </div>
-                    <div class="absolute bottom-1 right-1 w-6 h-6 bg-green-500 border-4 border-black rounded-full">
-                    </div>
+                    <span class="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-400 border-2 border-black rounded-full" title="Active"></span>
                 </div>
 
                 <div class="text-center sm:text-left flex-1">
-                    <h1 id="profileName" class="text-4xl font-black text-white mb-2 tracking-tight">NIKHIL</h1>
-                    <div
-                        class="flex items-center justify-center sm:justify-start gap-2 text-gray-400 mb-4 bg-black/30 inline-flex px-3 py-1 rounded-lg border border-white/5">
-                        <i data-lucide="mail" class="w-4 h-4"></i>
-                        <span id="profileEmail" class="text-sm font-mono">nikhil@nutmeg.com</span>
+                    <h1 id="profileName" class="text-2xl sm:text-3xl font-extrabold text-white mb-1 tracking-tight">Member Profile</h1>
+                    <div class="flex items-center justify-center sm:justify-start gap-2 text-gray-400 mb-2">
+                        <i data-lucide="mail" class="w-3.5 h-3.5 text-gray-500"></i>
+                        <span id="profileEmail" class="text-xs font-mono">user@nutmeg.com</span>
                     </div>
-                    <p class="text-xs text-gray-600 uppercase tracking-widest">Active Operative since January 2026</p>
+                    <p class="text-[11px] text-gray-500 uppercase tracking-widest font-semibold">Nutmeg Team Member</p>
                 </div>
 
-                <!-- Change Password Button -->
-                <button id="changePasswordBtn"
-                    class="group bg-neutral-900 hover:bg-neutral-800 text-white px-5 py-3 rounded-xl transition-all border border-white/10 hover:border-yellow-500/50 flex items-center gap-2">
-                    <i data-lucide="key"
-                        class="w-4 h-4 text-gray-400 group-hover:text-yellow-500 transition-colors"></i>
-                    <span class="text-sm font-medium">Change Password</span>
+                <!-- Change Password CTA -->
+                <button id="changePasswordBtn" type="button"
+                    class="bg-neutral-900 hover:bg-neutral-800 text-gray-200 hover:text-white px-4 py-2.5 rounded-xl transition-all border border-white/10 hover:border-amber-500/40 flex items-center gap-2 text-xs font-semibold">
+                    <i data-lucide="key" class="w-4 h-4 text-amber-400"></i>
+                    Change Password
                 </button>
             </div>
         </div>
 
-        <!-- Change Password Modal -->
-        <div id="passwordModal"
-            class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-            <div
-                class="bg-neutral-900 border border-white/10 rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden">
-                <div class="border-b border-white/10 px-8 py-6 flex justify-between items-center bg-black/20">
-                    <h3 class="text-2xl font-bold text-white tracking-tight">Change Password</h3>
-                    <button onclick="closePasswordModal()"
-                        class="text-gray-500 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full">
-                        <i data-lucide="x" class="w-6 h-6"></i>
+        <!-- Metric KPI Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+            <!-- Projects KPI Card -->
+            <div class="profile-card rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Projects</h3>
+                    <i data-lucide="folder-kanban" class="w-4 h-4 text-amber-400"></i>
+                </div>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400">Active</span>
+                        <span id="activeProjects" class="font-mono text-emerald-400 font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400">Completed</span>
+                        <span id="doneProjects" class="font-mono text-blue-400 font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between items-baseline pt-3 border-t border-white/5">
+                        <span class="text-gray-400 text-xs font-semibold uppercase">Total Tracked</span>
+                        <span id="totalProjects" class="text-2xl font-black text-white">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tasks KPI Card -->
+            <div class="profile-card rounded-2xl p-5">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Tasks</h3>
+                    <i data-lucide="check-square" class="w-4 h-4 text-blue-400"></i>
+                </div>
+                <div class="space-y-2.5">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400">Completed</span>
+                        <span id="doneTasks" class="font-mono text-emerald-400 font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400">In Progress</span>
+                        <span id="doingTasks" class="font-mono text-amber-400 font-bold">0</span>
+                    </div>
+                    <div class="flex justify-between items-baseline pt-3 border-t border-white/5">
+                        <span class="text-gray-400 text-xs font-semibold uppercase">Total Assigned</span>
+                        <span id="totalTasks" class="text-2xl font-black text-white">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Streak KPI Card -->
+            <div class="profile-card rounded-2xl p-5 relative overflow-hidden bg-gradient-to-br from-amber-500/10 to-transparent">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Active Streak</h3>
+                    <span class="text-xl">🔥</span>
+                </div>
+                <div class="text-center py-2">
+                    <div class="text-4xl sm:text-5xl font-black text-amber-400 tracking-tight mb-1">
+                        <span id="streakDays">0</span>
+                    </div>
+                    <p class="text-[11px] text-amber-200/70 uppercase tracking-widest font-semibold">Consecutive Days Active</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 30-Day Activity Heatmap Grid -->
+        <div class="profile-card rounded-2xl p-6 mb-8">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                <div>
+                    <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
+                        30-Day Contribution Grid
+                    </h2>
+                    <p class="text-[11px] text-gray-500 mt-0.5">Tasks and milestones completed over the past month</p>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] text-gray-500 font-medium">
+                    <span>Less</span>
+                    <div class="flex gap-1">
+                        <div class="w-3 h-3 bg-neutral-800 rounded"></div>
+                        <div class="w-3 h-3 bg-amber-950 rounded"></div>
+                        <div class="w-3 h-3 bg-amber-700/80 rounded"></div>
+                        <div class="w-3 h-3 bg-amber-500 rounded"></div>
+                    </div>
+                    <span>More</span>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto pb-2">
+                <div id="heatmapGrid" class="flex gap-2 min-w-max">
+                    <!-- Heatmap weeks injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievements & Accolades -->
+        <div class="profile-card rounded-2xl p-6 mb-8">
+            <div class="mb-6">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <i data-lucide="award" class="w-4 h-4 text-amber-400"></i>
+                    Achievements &amp; Milestones
+                </h2>
+            </div>
+            <div id="achievementsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Injected dynamically -->
+            </div>
+        </div>
+
+        <!-- Two Column Bottom Section: Monthly Summary & Leaderboard -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Monthly Report -->
+            <div class="profile-card rounded-2xl p-6">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <i data-lucide="bar-chart-2" class="w-4 h-4 text-purple-400"></i>
+                    Monthly Performance
+                </h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-xs text-gray-400">Projects Created</span>
+                        <span id="monthProjects" class="font-bold text-amber-400 font-mono text-sm">0</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-xs text-gray-400">Tasks Completed</span>
+                        <span id="monthTasks" class="font-bold text-emerald-400 font-mono text-sm">0</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-xs text-gray-400">Avg. Completion Time</span>
+                        <span id="avgCompletionTime" class="font-bold text-blue-400 font-mono text-sm">0 days</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-black/40 rounded-xl border border-white/5">
+                        <span class="text-xs text-gray-400">Most Productive Day</span>
+                        <span id="mostProductiveDay" class="font-bold text-purple-300 font-mono text-xs">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Leaderboard -->
+            <div class="profile-card rounded-2xl p-6">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider mb-6 flex items-center gap-2">
+                    <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
+                    Team Leaderboard (This Week)
+                </h2>
+                <div id="leaderboard" class="space-y-3">
+                    <!-- Leaderboard rows injected here -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Change Password Modal -->
+    <div id="passwordModal" class="hidden fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+        <div class="fixed inset-0 bg-black/80 backdrop-blur-sm" onclick="closePasswordModal()"></div>
+        <div class="flex min-h-screen items-center justify-center p-4">
+            <div class="modal-card rounded-3xl shadow-2xl w-full max-w-md relative z-10 overflow-hidden">
+                <div class="h-1 w-full bg-amber-500"></div>
+
+                <div class="border-b border-white/10 px-6 py-5 flex justify-between items-center bg-black/40">
+                    <h3 id="passwordModalTitle" class="text-lg font-bold text-white tracking-tight">Change Password</h3>
+                    <button type="button" onclick="closePasswordModal()" aria-label="Close modal"
+                        class="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-white/5 rounded-lg">
+                        <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
 
-                <form id="passwordForm" class="px-8 py-6 space-y-6">
-                    <!-- Current Password -->
+                <form id="passwordForm" class="px-6 py-6 space-y-4" onsubmit="changePassword(event)">
                     <div>
-                        <label for="currentPassword"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label for="currentPassword" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                             Current Password
                         </label>
-                        <input type="password" id="currentPassword" required
-                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all outline-none"
+                        <input type="password" id="currentPassword" required autocomplete="current-password"
+                            class="w-full px-4 py-3 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all text-sm outline-none placeholder-gray-600"
                             placeholder="Enter current password" />
                     </div>
 
-                    <!-- New Password -->
                     <div>
-                        <label for="newPassword"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label for="newPassword" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                             New Password
                         </label>
-                        <input type="password" id="newPassword" required
-                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all outline-none"
-                            placeholder="Enter new password (min. 6 characters)" />
+                        <input type="password" id="newPassword" required minlength="6" autocomplete="new-password"
+                            class="w-full px-4 py-3 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all text-sm outline-none placeholder-gray-600"
+                            placeholder="Minimum 6 characters" />
                     </div>
 
-                    <!-- Confirm Password -->
                     <div>
-                        <label for="confirmPassword"
-                            class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        <label for="confirmPassword" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1.5">
                             Confirm New Password
                         </label>
-                        <input type="password" id="confirmPassword" required
-                            class="w-full px-5 py-4 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500/50 transition-all outline-none"
-                            placeholder="Confirm new password" />
+                        <input type="password" id="confirmPassword" required minlength="6" autocomplete="new-password"
+                            class="w-full px-4 py-3 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all text-sm outline-none placeholder-gray-600"
+                            placeholder="Re-enter new password" />
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex gap-4 pt-4">
+                    <div class="flex gap-3 pt-4 border-t border-white/10">
                         <button type="button" onclick="closePasswordModal()"
-                            class="flex-1 px-6 py-3 bg-neutral-800 hover:bg-neutral-700 text-gray-300 rounded-xl transition-all font-semibold border border-white/10">
+                            class="flex-1 px-4 py-2.5 bg-neutral-900 hover:bg-neutral-800 text-gray-300 rounded-xl transition-all text-xs font-semibold border border-white/10">
                             Cancel
                         </button>
-                        <button type="submit"
-                            class="flex-1 px-6 py-3 bg-yellow-600 hover:bg-yellow-500 text-black rounded-xl transition-all font-semibold shadow-lg shadow-yellow-900/50">
-                            Update Password
+                        <button type="submit" id="updatePasswordBtn"
+                            class="flex-1 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-neutral-950 rounded-xl transition-all text-xs font-bold shadow-lg shadow-amber-950/40 flex items-center justify-center gap-2">
+                            <span>Update Password</span>
+                            <svg id="passwordSpinner" class="hidden animate-spin h-3.5 w-3.5 text-neutral-950"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-
-        <!-- Stats Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-
-            <!-- Projects Card -->
-            <div
-                class="bg-neutral-900/40 border border-white/5 rounded-2xl p-6 hover:bg-neutral-900/60 transition-colors">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Projects</h3>
-                    <i data-lucide="target" class="w-5 h-5 text-yellow-500"></i>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-500">Active Protocol</span>
-                        <span id="activeProjects" class="counter font-mono text-green-400">0</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-500">Completed</span>
-                        <span id="doneProjects" class="counter font-mono text-blue-400">0</span>
-                    </div>
-                    <div class="flex justify-between items-baseline pt-4 border-t border-white/5">
-                        <span class="text-gray-300 font-semibold text-xs uppercase">Total Assigned</span>
-                        <span id="totalProjects" class="counter text-3xl font-black text-white">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tasks Card -->
-            <div
-                class="bg-neutral-900/40 border border-white/5 rounded-2xl p-6 hover:bg-neutral-900/60 transition-colors">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-wider">Tasks</h3>
-                    <i data-lucide="check-square" class="w-5 h-5 text-blue-500"></i>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-500">Executed</span>
-                        <span id="doneTasks" class="counter font-mono text-green-400">0</span>
-                    </div>
-                    <div class="flex justify-between items-center text-sm">
-                        <span class="text-gray-500">In Progress</span>
-                        <span id="doingTasks" class="counter font-mono text-yellow-500">0</span>
-                    </div>
-                    <div class="flex justify-between items-baseline pt-4 border-t border-white/5">
-                        <span class="text-gray-300 font-semibold text-xs uppercase">Total Directives</span>
-                        <span id="totalTasks" class="counter text-3xl font-black text-white">0</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Streak Card -->
-            <div
-                class="bg-gradient-to-br from-yellow-900/40 to-orange-900/40 border border-yellow-700/30 rounded-2xl p-6 relative overflow-hidden group">
-                <div
-                    class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDIxNSwwLDAuMSkiLz48L3N2Zz4=')] opacity-20">
-                </div>
-                <div class="flex items-center justify-between mb-4 relative z-10">
-                    <h3 class="text-sm font-bold text-yellow-500/80 uppercase tracking-wider">Active Streak</h3>
-                    <span class="text-2xl streak-fire drop-shadow-[0_0_10px_rgba(255,100,0,0.5)]">🔥</span>
-                </div>
-                <div class="text-center mt-6 relative z-10">
-                    <div
-                        class="text-6xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 to-orange-600">
-                        <span id="streakDays" class="counter">0</span>
-                    </div>
-                    <p class="text-yellow-200/60 text-xs uppercase tracking-widest">Consecutive Days</p>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Activity Heatmap -->
-        <div class="bg-neutral-900/40 border border-white/5 rounded-2xl p-8 mb-10 overflow-hidden">
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-xl font-bold text-white tracking-tight">ACTIVITY GRID</h2>
-                <div class="flex items-center gap-2 text-[10px] text-gray-500 uppercase tracking-wider">
-                    <span>Dormant</span>
-                    <div class="flex gap-1">
-                        <div class="w-3 h-3 bg-neutral-800 rounded-sm"></div>
-                        <div class="w-3 h-3 bg-yellow-900/40 rounded-sm"></div>
-                        <div class="w-3 h-3 bg-yellow-700/60 rounded-sm"></div>
-                        <div class="w-3 h-3 bg-yellow-500 rounded-sm"></div>
-                    </div>
-                    <span>Active</span>
-                </div>
-            </div>
-
-            <div class="overflow-x-auto pb-2 custom-scrollbar">
-                <div class="inline-flex flex-col gap-2 min-w-max">
-                    <div class="flex gap-2">
-                        <div class="w-8"></div> <!-- Spacer for day labels if needed -->
-                        <div id="heatmapGrid" class="flex gap-2"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Achievements Section -->
-        <div class="bg-neutral-900/40 border border-white/5 rounded-2xl p-8 mb-10">
-            <h2 class="text-xl font-bold text-white tracking-tight mb-8 flex items-center gap-3">
-                <i data-lucide="award" class="w-5 h-5 text-yellow-500"></i>
-                ACCOLADES
-            </h2>
-            <div id="achievementsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Achievement cards will be inserted here -->
-            </div>
-        </div>
-
-        <!-- Two Column Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-            <!-- This Month Stats -->
-            <div class="bg-neutral-900/40 border border-white/5 rounded-2xl p-8">
-                <h2 class="text-xl font-bold text-white tracking-tight mb-8">MONTHLY REPORT</h2>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
-                        <span class="text-gray-400 text-sm">Projects Initiated</span>
-                        <span id="monthProjects" class="font-bold text-yellow-500 font-mono text-lg">0</span>
-                    </div>
-                    <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
-                        <span class="text-gray-400 text-sm">Directives Executed</span>
-                        <span id="monthTasks" class="font-bold text-green-500 font-mono text-lg">0</span>
-                    </div>
-                    <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
-                        <span class="text-gray-400 text-sm">Mean Execution Time</span>
-                        <span id="avgCompletionTime" class="font-bold text-blue-500 font-mono text-lg">0 days</span>
-                    </div>
-                    <div class="flex justify-between items-center p-4 bg-black/40 rounded-xl border border-white/5">
-                        <span class="text-gray-400 text-sm">Peak Performance Day</span>
-                        <span id="mostProductiveDay"
-                            class="font-bold text-purple-400 font-mono text-sm text-right">-</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Team Comparison -->
-            <div class="bg-neutral-900/40 border border-white/5 rounded-2xl p-8">
-                <h2 class="text-xl font-bold text-white tracking-tight mb-8">SQUADRON LEADERBOARD</h2>
-                <div id="leaderboard" class="space-y-4">
-                    <!-- Leaderboard will be inserted here -->
-                </div>
-            </div>
-
-        </div>
-
-    </main>
+    </div>
 
     <script src="utils.js"></script>
     <script>
@@ -392,25 +378,26 @@
         let userTasks = [];
         let userActivities = [];
 
-        // Animate Counter
+        // Counter Animator
         function animateCounter(element, target) {
+            if (!element) return;
             let current = 0;
-            const increment = Math.max(target / 20, 1);
-
-            if (target === 0) {
+            const targetNum = Number(target) || 0;
+            if (targetNum === 0) {
                 element.textContent = '0';
                 return;
             }
 
+            const increment = Math.max(targetNum / 15, 1);
             const timer = setInterval(() => {
                 current += increment;
-                if (current >= target) {
-                    element.textContent = target;
+                if (current >= targetNum) {
+                    element.textContent = targetNum;
                     clearInterval(timer);
                 } else {
                     element.textContent = Math.floor(current);
                 }
-            }, 50);
+            }, 30);
         }
 
         // Fetch User Stats
@@ -458,10 +445,9 @@
         // Render Stats
         function renderStats() {
             if (!userStats) return;
-
-            animateCounter(document.getElementById('activeProjects'), userStats.active_count);
-            animateCounter(document.getElementById('doneProjects'), userStats.done_count);
-            animateCounter(document.getElementById('totalProjects'), userStats.total);
+            animateCounter(document.getElementById('activeProjects'), userStats.active_count || 0);
+            animateCounter(document.getElementById('doneProjects'), userStats.done_count || 0);
+            animateCounter(document.getElementById('totalProjects'), userStats.total || 0);
         }
 
         // Render Task Stats
@@ -481,34 +467,40 @@
             animateCounter(document.getElementById('totalTasks'), userTasks.length);
         }
 
-        // Calculate Streak
+        // Calculate Streak (Safe parsing)
         function calculateStreak() {
-            if (userActivities.length === 0) {
+            if (!userActivities || userActivities.length === 0) {
                 document.getElementById('streakDays').textContent = '0';
                 return;
             }
 
             const dateMap = {};
             userActivities.forEach(activity => {
-                const date = new Date(activity.created_at).toDateString();
-                dateMap[date] = true;
+                if (activity.created_at) {
+                    const date = new Date(activity.created_at);
+                    if (!isNaN(date.getTime())) {
+                        const dateStr = date.toISOString().split('T')[0];
+                        dateMap[dateStr] = true;
+                    }
+                }
             });
 
-            const dates = Object.keys(dateMap).sort((a, b) => new Date(b) - new Date(a));
             let currentStreak = 0;
-            let maxStreak = 0;
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
 
-            const today = new Date().toDateString();
-            const yesterday = new Date(Date.now() - 86400000).toDateString();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().split('T')[0];
 
-            if (dateMap[today] || dateMap[yesterday]) {
+            if (dateMap[todayStr] || dateMap[yesterdayStr]) {
                 currentStreak = 1;
-                let checkDate = new Date(dateMap[today] ? today : yesterday);
+                let checkDate = new Date(dateMap[todayStr] ? today : yesterday);
 
-                while (true) {
+                for (let i = 0; i < 365; i++) {
                     checkDate.setDate(checkDate.getDate() - 1);
-                    const dateStr = checkDate.toDateString();
-                    if (dateMap[dateStr]) {
+                    const checkStr = checkDate.toISOString().split('T')[0];
+                    if (dateMap[checkStr]) {
                         currentStreak++;
                     } else {
                         break;
@@ -516,52 +508,51 @@
                 }
             }
 
-            maxStreak = Math.max(currentStreak, maxStreak);
             animateCounter(document.getElementById('streakDays'), currentStreak);
         }
 
-        // Render Heatmap
+        // Render 30-Day Heatmap
         function renderHeatmap() {
             const grid = document.getElementById('heatmapGrid');
             grid.innerHTML = '';
 
             const days = [];
             for (let i = 27; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                days.push(date);
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                days.push(d);
             }
 
             const taskCountByDay = {};
             userActivities.forEach(activity => {
-                if (activity.activity_type === 'task_completed') {
-                    const dateStr = new Date(activity.created_at).toDateString();
+                if (activity.activity_type === 'task_completed' && activity.created_at) {
+                    const dateStr = new Date(activity.created_at).toISOString().split('T')[0];
                     taskCountByDay[dateStr] = (taskCountByDay[dateStr] || 0) + 1;
                 }
             });
 
             for (let week = 0; week < 4; week++) {
                 const weekDiv = document.createElement('div');
-                weekDiv.className = 'flex flex-col gap-2';
+                weekDiv.className = 'flex flex-col gap-1.5';
 
                 for (let day = 0; day < 7; day++) {
                     const index = week * 7 + day;
                     if (index >= days.length) break;
 
                     const date = days[index];
-                    const dateStr = date.toDateString();
+                    const dateStr = date.toISOString().split('T')[0];
                     const count = taskCountByDay[dateStr] || 0;
 
-                    let bgColor = 'bg-neutral-800';
-                    if (count >= 5) bgColor = 'bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]';
-                    else if (count >= 3) bgColor = 'bg-yellow-600/80';
-                    else if (count >= 1) bgColor = 'bg-yellow-800/60';
+                    let bgColor = 'bg-neutral-800/80';
+                    if (count >= 5) bgColor = 'bg-amber-400 shadow-[0_0_8px_rgba(245,158,11,0.5)]';
+                    else if (count >= 3) bgColor = 'bg-amber-500';
+                    else if (count >= 1) bgColor = 'bg-amber-700/70';
 
-                    const square = document.createElement('div');
-                    square.className = `heatmap-square w-4 h-4 rounded-sm ${bgColor} cursor-help`;
-                    square.title = `${date.toLocaleDateString()} • ${count} directives executed`;
+                    const cell = document.createElement('div');
+                    cell.className = `heatmap-cell w-4 h-4 rounded ${bgColor} cursor-pointer`;
+                    cell.title = `${date.toLocaleDateString()} • ${count} tasks completed`;
 
-                    weekDiv.appendChild(square);
+                    weekDiv.appendChild(cell);
                 }
 
                 grid.appendChild(weekDiv);
@@ -570,66 +561,64 @@
 
         // Check Achievements
         function checkAchievements() {
+            const streakCount = parseInt(document.getElementById('streakDays').textContent) || 0;
+
             const achievements = [
                 {
-                    id: 'speedrunner',
+                    id: 'first_step',
                     icon: '🚀',
-                    name: 'SPEEDRUNNER',
-                    description: 'Completed 10 tasks in one day',
+                    name: 'First Blood',
+                    description: 'Completed your first workspace task',
+                    check: () => userActivities.some(a => a.activity_type === 'task_completed')
+                },
+                {
+                    id: 'speedrunner',
+                    icon: '⚡',
+                    name: 'Power Finisher',
+                    description: 'Completed 5+ tasks in a single day',
                     check: () => {
                         const tasksByDay = {};
                         userActivities.forEach(a => {
-                            if (a.activity_type === 'task_completed') {
-                                const date = new Date(a.created_at).toDateString();
+                            if (a.activity_type === 'task_completed' && a.created_at) {
+                                const date = a.created_at.split('T')[0];
                                 tasksByDay[date] = (tasksByDay[date] || 0) + 1;
                             }
                         });
-                        return Object.values(tasksByDay).some(count => count >= 10);
+                        return Object.values(tasksByDay).some(count => count >= 5);
                     }
                 },
                 {
                     id: 'teamplayer',
                     icon: '🤝',
-                    name: 'TEAM PLAYER',
-                    description: 'Collaborated on 5 projects',
-                    check: () => userStats && userStats.total >= 5
+                    name: 'Collaborator',
+                    description: 'Contributed to collaborative team projects',
+                    check: () => userStats && userStats.total >= 2
                 },
                 {
                     id: 'onfire',
                     icon: '🔥',
-                    name: 'ON FIRE',
-                    description: '7-day streak achieved',
-                    check: () => parseInt(document.getElementById('streakDays').textContent) >= 7
+                    name: 'On Fire',
+                    description: 'Maintained an active 3-day work streak',
+                    check: () => streakCount >= 3
                 },
                 {
-                    id: 'perfectionist',
+                    id: 'project_closer',
                     icon: '🎯',
-                    name: 'PERFECTIONIST',
-                    description: 'All tasks in a project executed',
+                    name: 'Closer',
+                    description: 'Successfully completed and shipped a project',
                     check: () => userStats && userStats.done_count >= 1
                 },
                 {
-                    id: 'nightowl',
-                    icon: '🌙',
-                    name: 'NIGHT OWL',
-                    description: 'Directive executed after 2200h',
+                    id: 'veteran',
+                    icon: '🏆',
+                    name: 'Sprint Master',
+                    description: 'Completed 20+ lifetime tasks',
                     check: () => {
-                        return userActivities.some(a => {
-                            const hour = new Date(a.created_at).getHours();
-                            return a.activity_type === 'task_created' && hour >= 22;
+                        const completed = userTasks.filter(t => {
+                            const myAssignment = (t.assignees || []).find(a => a.email === currentUser?.email);
+                            return myAssignment && myAssignment.status === 'done';
                         });
-                    }
-                },
-                {
-                    id: 'earlybird',
-                    icon: '🌅',
-                    name: 'EARLY BIRD',
-                    description: 'Directive executed before 0600h',
-                    check: () => {
-                        return userActivities.some(a => {
-                            const hour = new Date(a.created_at).getHours();
-                            return a.activity_type === 'task_created' && hour < 6;
-                        });
+                        return completed.length >= 20;
                     }
                 }
             ];
@@ -640,18 +629,18 @@
             achievements.forEach(achievement => {
                 const unlocked = achievement.check();
                 const card = document.createElement('div');
-                card.className = `achievement-card bg-neutral-900 border ${unlocked ? 'border-yellow-500/50 bg-yellow-900/10' : 'border-white/5 bg-black/40'} rounded-xl p-5 transition-all ${unlocked ? '' : 'achievement-locked'}`;
+                card.className = `achievement-card border ${unlocked ? 'border-amber-500/30 bg-amber-500/5' : 'border-white/5 bg-black/40'} rounded-xl p-3.5 flex items-start gap-3 ${unlocked ? '' : 'achievement-locked'}`;
 
                 card.innerHTML = `
-                    <div class="flex items-start gap-4">
-                        <span class="text-3xl filter drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">${achievement.icon}</span>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-gray-200 mb-1 tracking-wide text-sm">${escapeHtml(achievement.name)}</h4>
-                            <p class="text-xs text-gray-400 mb-3">${escapeHtml(achievement.description)}</p>
-                            <span class="text-[10px] uppercase tracking-wider font-bold ${unlocked ? 'text-green-500' : 'text-gray-600'}">
-                                ${unlocked ? '✓ Unlocked' : '🔒 Locked'}
+                    <span class="text-2xl flex-shrink-0 mt-0.5">${achievement.icon}</span>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2 mb-1">
+                            <h4 class="font-bold text-white text-xs truncate">${escapeHtml(achievement.name)}</h4>
+                            <span class="text-[10px] font-bold uppercase tracking-wider ${unlocked ? 'text-emerald-400' : 'text-gray-600'}">
+                                ${unlocked ? 'Unlocked' : 'Locked'}
                             </span>
                         </div>
+                        <p class="text-[11px] text-gray-400 leading-snug">${escapeHtml(achievement.description)}</p>
                     </div>
                 `;
 
@@ -659,47 +648,61 @@
             });
         }
 
-        // Render Monthly Stats
+        // Render Monthly Performance (Hardened against NaN)
         function renderMonthlyStats() {
             const now = new Date();
             const thisMonth = now.getMonth();
             const thisYear = now.getFullYear();
 
             const monthlyTasks = userActivities.filter(a => {
-                if (a.activity_type !== 'task_completed') return false;
+                if (a.activity_type !== 'task_completed' || !a.created_at) return false;
                 const date = new Date(a.created_at);
-                return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+                return !isNaN(date.getTime()) && date.getMonth() === thisMonth && date.getFullYear() === thisYear;
             });
 
             document.getElementById('monthTasks').textContent = monthlyTasks.length;
 
             const monthlyProjects = userActivities.filter(a => {
-                if (a.activity_type !== 'project_created') return false;
+                if (a.activity_type !== 'project_created' || !a.created_at) return false;
                 const date = new Date(a.created_at);
-                return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
+                return !isNaN(date.getTime()) && date.getMonth() === thisMonth && date.getFullYear() === thisYear;
             });
 
             document.getElementById('monthProjects').textContent = monthlyProjects.length;
 
+            // Defensive Average Completion Time
             const completedTasks = userTasks.filter(t => {
                 const myAssignment = (t.assignees || []).find(a => a.email === currentUser?.email);
-                return myAssignment && myAssignment.status === 'done' && myAssignment.completed_at;
+                return myAssignment && myAssignment.status === 'done' && myAssignment.completed_at && t.created_at;
             });
 
             if (completedTasks.length > 0) {
-                const totalDays = completedTasks.reduce((sum, task) => {
-                    const created = new Date(task.created_at);
+                let totalDays = 0;
+                let validCount = 0;
+
+                completedTasks.forEach(task => {
+                    const created = new Date(task.created_at).getTime();
                     const myAssignment = task.assignees.find(a => a.email === currentUser.email);
-                    const completed = new Date(myAssignment.completed_at);
-                    const diffDays = Math.ceil((completed - created) / (1000 * 60 * 60 * 24));
-                    return sum + diffDays;
-                }, 0);
-                const avgDays = Math.round(totalDays / completedTasks.length);
-                document.getElementById('avgCompletionTime').textContent = `${avgDays} days`;
+                    const completed = new Date(myAssignment.completed_at).getTime();
+
+                    if (!isNaN(created) && !isNaN(completed) && completed >= created) {
+                        const diffDays = Math.max(0.1, (completed - created) / (1000 * 60 * 60 * 24));
+                        totalDays += diffDays;
+                        validCount++;
+                    }
+                });
+
+                if (validCount > 0) {
+                    const avg = (totalDays / validCount).toFixed(1);
+                    document.getElementById('avgCompletionTime').textContent = `${avg} days`;
+                } else {
+                    document.getElementById('avgCompletionTime').textContent = '0.0 days';
+                }
             } else {
-                document.getElementById('avgCompletionTime').textContent = '0 days';
+                document.getElementById('avgCompletionTime').textContent = '0.0 days';
             }
 
+            // Most Productive Day
             const dayCount = {};
             monthlyTasks.forEach(a => {
                 const day = new Date(a.created_at).toLocaleDateString('en-US', { weekday: 'long' });
@@ -715,47 +718,55 @@
                 }
             });
 
-            document.getElementById('mostProductiveDay').textContent = maxCount > 0 ? `${maxDay} (${maxCount})` : '-';
+            document.getElementById('mostProductiveDay').textContent = maxCount > 0 ? `${maxDay} (${maxCount} tasks)` : '-';
         }
 
-        // Fetch Team Stats and Render Leaderboard
+        // Team Leaderboard
         async function renderLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            showSkeletons('leaderboard', 4, 'h-12');
+
             try {
                 const response = await authFetch('/dashboard/stats');
                 if (response && response.ok) {
                     const teamStats = await response.json();
                     const members = (teamStats.members || []).filter(m => m.email !== 'test@nutmeg.com');
 
-                    members.sort((a, b) => b.completed_tasks_this_week - a.completed_tasks_this_week);
+                    members.sort((a, b) => (b.completed_tasks_this_week || 0) - (a.completed_tasks_this_week || 0));
 
-                    const leaderboard = document.getElementById('leaderboard');
                     leaderboard.innerHTML = '';
+                    if (members.length === 0) {
+                        leaderboard.innerHTML = '<p class="text-xs text-gray-500 py-4 text-center">No member stats recorded yet.</p>';
+                        return;
+                    }
 
                     const medals = ['🥇', '🥈', '🥉'];
-                    const maxTasks = Math.max(...members.map(m => m.completed_tasks_this_week), 1);
+                    const maxTasks = Math.max(...members.map(m => m.completed_tasks_this_week || 0), 1);
 
                     members.forEach((member, index) => {
                         const isCurrentUser = member.email === currentUser?.email;
-                        const progressWidth = (member.completed_tasks_this_week / maxTasks) * 100;
+                        const tasksThisWeek = member.completed_tasks_this_week || 0;
+                        const progressWidth = Math.max(5, (tasksThisWeek / maxTasks) * 100);
 
                         const row = document.createElement('div');
-                        row.className = `p-4 rounded-xl transition-all border ${isCurrentUser ? 'bg-yellow-900/20 border-yellow-500/50' : 'bg-black/40 border-white/5'}`;
+                        row.className = `p-3 rounded-xl transition-all border ${isCurrentUser ? 'bg-amber-500/10 border-amber-500/40' : 'bg-black/40 border-white/5'}`;
 
                         row.innerHTML = `
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-4">
-                                    <span class="text-lg font-black text-gray-600 font-mono w-6">#${index + 1}</span>
-                                    ${index < 3 ? `<span class="text-2xl drop-shadow-[0_0_5px_rgba(255,215,0,0.5)]">${medals[index]}</span>` : ''}
-                                    <span class="font-bold tracking-wide ${isCurrentUser ? 'text-yellow-500' : 'text-gray-300'}">
-                                        ${escapeHtml(getFirstName(member.email).toUpperCase())}
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-mono font-bold text-gray-500 w-5">#${index + 1}</span>
+                                    ${index < 3 ? `<span class="text-base">${medals[index]}</span>` : ''}
+                                    <span class="text-xs font-bold tracking-wide ${isCurrentUser ? 'text-amber-300' : 'text-gray-200'}">
+                                        ${escapeHtml(getFirstName(member.email))}
+                                        ${isCurrentUser ? '<span class="text-[10px] text-amber-400 font-normal ml-1">(You)</span>' : ''}
                                     </span>
                                 </div>
-                                <span class="font-bold font-mono text-lg ${isCurrentUser ? 'text-yellow-500' : 'text-gray-400'}">
-                                    ${member.completed_tasks_this_week}
+                                <span class="font-mono text-xs font-bold ${isCurrentUser ? 'text-amber-300' : 'text-gray-400'}">
+                                    ${tasksThisWeek} tasks
                                 </span>
                             </div>
-                            <div class="w-full bg-white/5 rounded-full h-1.5">
-                                <div class="bg-gradient-to-r ${isCurrentUser ? 'from-yellow-600 to-yellow-400' : 'from-gray-600 to-gray-400'} h-1.5 rounded-full transition-all shadow-[0_0_8px_rgba(255,255,255,0.2)]" style="width: ${progressWidth}%"></div>
+                            <div class="w-full bg-white/5 rounded-full h-1 overflow-hidden">
+                                <div class="bg-gradient-to-r ${isCurrentUser ? 'from-amber-500 to-amber-400' : 'from-gray-600 to-gray-500'} h-full rounded-full transition-all" style="width: ${progressWidth}%"></div>
                             </div>
                         `;
 
@@ -764,31 +775,32 @@
                 }
             } catch (error) {
                 console.error('Error fetching team stats:', error);
+                leaderboard.innerHTML = '<p class="text-xs text-rose-400/70 text-center py-4">Unable to load leaderboard</p>';
             }
         }
 
-        // Render Profile Header
+        // Profile Header
         function renderProfileHeader() {
             const name = getFirstName(currentUser.email);
             const initial = name.charAt(0);
 
-            document.getElementById('profileName').textContent = name.toUpperCase();
+            document.getElementById('profileName').textContent = name;
             document.getElementById('profileEmail').textContent = currentUser.email;
             document.getElementById('profileAvatar').textContent = initial;
             document.getElementById('userName').textContent = name;
+            document.getElementById('userAvatarPill').textContent = initial;
         }
 
-        // Password Modal Functions
+        // Password Modal Handlers
         function openPasswordModal() {
             document.getElementById('passwordModal').classList.remove('hidden');
-            document.getElementById('passwordModal').classList.add('flex');
             document.getElementById('passwordForm').reset();
             lucide.createIcons();
+            document.getElementById('currentPassword').focus();
         }
 
         function closePasswordModal() {
             document.getElementById('passwordModal').classList.add('hidden');
-            document.getElementById('passwordModal').classList.remove('flex');
         }
 
         async function changePassword(e) {
@@ -807,6 +819,11 @@
                 showToast('New password must be at least 6 characters', 'error');
                 return;
             }
+
+            const btn = document.getElementById('updatePasswordBtn');
+            const spinner = document.getElementById('passwordSpinner');
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
 
             try {
                 const response = await authFetch('/me/password', {
@@ -829,23 +846,34 @@
             } catch (error) {
                 console.error('Error changing password:', error);
                 showToast(error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                spinner.classList.add('hidden');
             }
         }
 
+        // Global Escape Key Listener for Modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('passwordModal').classList.contains('hidden')) {
+                    closePasswordModal();
+                }
+            }
+        });
+
         // Event Listeners
         document.getElementById('changePasswordBtn').addEventListener('click', openPasswordModal);
-        document.getElementById('passwordForm').addEventListener('submit', changePassword);
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             const confirmed = await showConfirm({
-                title: 'Logout',
-                message: 'Are you sure you want to end your session?',
-                confirmText: 'Logout',
+                title: 'Sign Out',
+                message: 'Are you sure you want to end your current session?',
+                confirmText: 'Sign Out',
                 cancelText: 'Stay'
             });
             if (confirmed) logout();
         });
 
-        // Initialize
+        // Initialize Page
         window.addEventListener('DOMContentLoaded', async () => {
             currentUser = await checkAuth();
             if (!currentUser) return;
