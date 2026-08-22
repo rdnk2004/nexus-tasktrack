@@ -1,6 +1,21 @@
-// Nutmeg / Nexus Task Tracker - Shared Utilities & Core Client
+/**
+ * Nutmeg / Nexus Task Tracker - Core Client & Shared Utilities
+ * Senior Architecture v5.0
+ * 
+ * Includes:
+ * - Dynamic API Base URL Resolution
+ * - Session & Token State Management
+ * - Resilient Authenticated Fetch Client (401 Interception & Error Normalization)
+ * - Accessible Stacked Toast Notification System
+ * - Accessible Modal & Confirm Dialog Handlers
+ * - Defensive Date & Time Formatting
+ * - XSS HTML Sanitization & Avatar Color Generators
+ */
 
-// 1. Dynamic API Base URL Resolution
+// ============================================================================
+// 1. DYNAMIC API BASE URL RESOLUTION
+// ============================================================================
+
 function resolveApiBaseUrl() {
     if (window.NUTMEG_API_URL) {
         return window.NUTMEG_API_URL.replace(/\/+$/, '');
@@ -15,22 +30,13 @@ function resolveApiBaseUrl() {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
-// 2. Storage Keys
+// ============================================================================
+// 2. STORAGE KEYS & SESSION MANAGEMENT
+// ============================================================================
+
 const TOKEN_KEY = 'nutmeg_token';
 const USER_KEY = 'nutmeg_user';
 
-// 3. Security & HTML Sanitization (Prevents Stored XSS)
-function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
-// 4. Token & Session Management
 function getToken() {
     return localStorage.getItem(TOKEN_KEY);
 }
@@ -107,10 +113,29 @@ async function checkAuth() {
     }
 }
 
-// 5. Authenticated Fetch Client (Handles Auto 401 Interception)
+// ============================================================================
+// 3. SECURITY & HTML SANITIZATION (Prevents Stored XSS)
+// ============================================================================
+
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// ============================================================================
+// 4. AUTHENTICATED FETCH CLIENT
+// ============================================================================
+
 async function authFetch(endpoint, options = {}) {
     const token = getToken();
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const url = endpoint.startsWith('http')
+        ? endpoint
+        : `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
     const headers = {
         'Content-Type': 'application/json',
@@ -128,73 +153,279 @@ async function authFetch(endpoint, options = {}) {
         });
 
         if (response.status === 401) {
-            showToast('Session expired. Please log in again.', 'warning');
+            showToast('Session expired. Redirecting to login...', 'warning');
             removeToken();
             removeCurrentUser();
             setTimeout(() => {
                 window.location.href = 'login.html';
-            }, 1000);
+            }, 1200);
             return null;
         }
 
         return response;
     } catch (error) {
-        console.error(`Fetch error on ${url}:`, error);
+        console.error(`Fetch network error on ${url}:`, error);
         throw error;
     }
 }
 
-// 6. Formatting & UI Helpers (DRY Across All Pages)
-function getFirstName(email) {
-    if (!email) return 'User';
-    const namePart = email.split('@')[0];
-    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
-}
+// ============================================================================
+// 5. TOAST NOTIFICATION SYSTEM (Stacked, Accessible & Smooth)
+// ============================================================================
 
-function getAvatarColor(email) {
-    if (!email) return 'bg-neutral-800 text-gray-400 border-white/10';
-    const colors = [
-        'bg-orange-500/20 text-orange-400 border-orange-500/30',
-        'bg-blue-500/20 text-blue-400 border-blue-500/30',
-        'bg-green-500/20 text-green-400 border-green-500/30',
-        'bg-purple-500/20 text-purple-400 border-purple-500/30',
-        'bg-pink-500/20 text-pink-400 border-pink-500/30',
-        'bg-indigo-500/20 text-indigo-400 border-indigo-500/30',
-        'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-        'bg-teal-500/20 text-teal-400 border-teal-500/30'
-    ];
-    let hash = 0;
-    for (let i = 0; i < email.length; i++) {
-        hash = email.charCodeAt(i) + ((hash << 5) - hash);
+function getToastContainer() {
+    let container = document.getElementById('nexus-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'nexus-toast-container';
+        container.setAttribute('aria-live', 'polite');
+        container.className = 'fixed top-6 right-6 z-[100] flex flex-col gap-3 max-w-sm w-full pointer-events-none';
+        document.body.appendChild(container);
     }
-    return colors[Math.abs(hash) % colors.length];
+    return container;
 }
 
-function getDaysUntil(dateString) {
-    if (!dateString) return { text: 'No deadline', color: 'text-gray-500', urgency: 'low' };
-    const deadline = new Date(dateString);
-    const now = new Date();
-    const diffMs = deadline - now;
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+function showToast(message, type = 'info', duration = 4000) {
+    const container = getToastContainer();
 
-    if (diffDays < 0) return { text: `${Math.abs(diffDays)}d overdue`, color: 'text-red-400', urgency: 'high' };
-    if (diffDays === 0) return { text: 'Due today', color: 'text-red-400', urgency: 'high' };
-    if (diffDays === 1) return { text: 'Tomorrow', color: 'text-yellow-400', urgency: 'medium' };
-    if (diffDays <= 3) return { text: `${diffDays}d left`, color: 'text-yellow-400', urgency: 'medium' };
-    return { text: `${diffDays}d left`, color: 'text-gray-400', urgency: 'low' };
+    const toast = document.createElement('div');
+    toast.className = 'pointer-events-auto transform translate-x-12 opacity-0 transition-all duration-300 ease-out';
+    toast.setAttribute('role', type === 'error' || type === 'warning' ? 'alert' : 'status');
+
+    const config = {
+        success: {
+            border: 'border-emerald-500/40',
+            bg: 'bg-neutral-900/95',
+            text: 'text-emerald-400',
+            icon: 'check-circle',
+            glow: 'shadow-[0_4px_24px_-4px_rgba(16,185,129,0.25)]'
+        },
+        error: {
+            border: 'border-rose-500/40',
+            bg: 'bg-neutral-900/95',
+            text: 'text-rose-400',
+            icon: 'alert-circle',
+            glow: 'shadow-[0_4px_24px_-4px_rgba(244,63,94,0.25)]'
+        },
+        warning: {
+            border: 'border-amber-500/40',
+            bg: 'bg-neutral-900/95',
+            text: 'text-amber-400',
+            icon: 'alert-triangle',
+            glow: 'shadow-[0_4px_24px_-4px_rgba(245,158,11,0.25)]'
+        },
+        info: {
+            border: 'border-blue-500/40',
+            bg: 'bg-neutral-900/95',
+            text: 'text-blue-400',
+            icon: 'info',
+            glow: 'shadow-[0_4px_24px_-4px_rgba(59,130,246,0.25)]'
+        }
+    };
+
+    const style = config[type] || config.info;
+
+    toast.innerHTML = `
+        <div class="${style.bg} backdrop-blur-xl border ${style.border} ${style.glow} p-4 rounded-xl flex items-start gap-3 relative overflow-hidden">
+            <div class="flex-shrink-0 mt-0.5">
+                <i data-lucide="${style.icon}" class="w-5 h-5 ${style.text}"></i>
+            </div>
+            <div class="flex-1 min-w-0 pr-2">
+                <p class="text-sm font-medium text-gray-200 leading-snug break-words">${escapeHtml(message)}</p>
+            </div>
+            <button type="button" aria-label="Close notification" class="text-gray-500 hover:text-white transition-colors p-1 -mr-1 -mt-1 rounded-lg hover:bg-white/5 flex-shrink-0">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+    `;
+
+    const closeBtn = toast.querySelector('button');
+    const dismiss = () => {
+        toast.classList.add('translate-x-12', 'opacity-0');
+        setTimeout(() => {
+            if (container.contains(toast)) {
+                toast.remove();
+            }
+        }, 250);
+    };
+
+    closeBtn.addEventListener('click', dismiss);
+
+    let dismissTimer = setTimeout(dismiss, duration);
+
+    // Pause on hover
+    toast.addEventListener('mouseenter', () => clearTimeout(dismissTimer));
+    toast.addEventListener('mouseleave', () => {
+        dismissTimer = setTimeout(dismiss, duration / 2);
+    });
+
+    container.appendChild(toast);
+
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-x-12', 'opacity-0');
+    });
+}
+
+// ============================================================================
+// 6. ACCESSIBLE CONFIRM MODAL (Keyboard Trapped & Accessible)
+// ============================================================================
+
+function showConfirm({
+    title = 'Are you sure?',
+    message = '',
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    danger = false
+} = {}) {
+    return new Promise((resolve) => {
+        const existing = document.getElementById('nexus-confirm-overlay');
+        if (existing) existing.remove();
+
+        const overlay = document.createElement('div');
+        overlay.id = 'nexus-confirm-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'confirm-modal-title');
+        overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md opacity-0 transition-opacity duration-200';
+
+        const modal = document.createElement('div');
+        modal.className = 'bg-neutral-900 border border-white/10 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 opacity-0 transition-all duration-200 relative';
+
+        const accentColor = danger ? 'bg-rose-500' : 'bg-amber-500';
+        const iconColor = danger ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+        const iconName = danger ? 'alert-triangle' : 'help-circle';
+        const confirmBtnClass = danger
+            ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-rose-950/50'
+            : 'bg-amber-500 hover:bg-amber-400 text-black shadow-amber-950/50';
+
+        modal.innerHTML = `
+            <div class="h-1 w-full ${accentColor}"></div>
+            <div class="p-6">
+                <div class="flex items-start gap-4 mb-4">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center border ${iconColor} flex-shrink-0">
+                        <i data-lucide="${iconName}" class="w-5 h-5"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 id="confirm-modal-title" class="text-lg font-bold text-white mb-1 tracking-tight">${escapeHtml(title)}</h3>
+                        ${message ? `<p class="text-sm text-gray-400 leading-relaxed">${escapeHtml(message)}</p>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-white/5 px-6 py-4 bg-black/40 flex items-center justify-end gap-3">
+                <button type="button" id="confirm-cancel-btn" class="px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 hover:text-white text-sm font-medium transition-colors">
+                    ${escapeHtml(cancelText)}
+                </button>
+                <button type="button" id="confirm-action-btn" class="px-5 py-2.5 rounded-xl ${confirmBtnClass} text-sm font-bold shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]">
+                    ${escapeHtml(confirmText)}
+                </button>
+            </div>
+        `;
+
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+
+        const cancelBtn = modal.querySelector('#confirm-cancel-btn');
+        const actionBtn = modal.querySelector('#confirm-action-btn');
+
+        requestAnimationFrame(() => {
+            overlay.classList.remove('opacity-0');
+            modal.classList.remove('scale-95', 'opacity-0');
+            actionBtn.focus();
+        });
+
+        const close = (result) => {
+            overlay.classList.add('opacity-0');
+            modal.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                if (document.body.contains(overlay)) {
+                    overlay.remove();
+                }
+            }, 200);
+            document.removeEventListener('keydown', keyHandler);
+            resolve(result);
+        };
+
+        const keyHandler = (e) => {
+            if (e.key === 'Escape') close(false);
+            if (e.key === 'Enter' && document.activeElement !== cancelBtn) close(true);
+        };
+
+        document.addEventListener('keydown', keyHandler);
+        cancelBtn.addEventListener('click', () => close(false));
+        actionBtn.addEventListener('click', () => close(true));
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close(false);
+        });
+    });
+}
+
+// ============================================================================
+// 7. DEFENSIVE DATE & TIME FORMATTING HELPERS
+// ============================================================================
+
+function isValidDate(d) {
+    return d instanceof Date && !isNaN(d.getTime());
 }
 
 function formatDate(dateString) {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (!isValidDate(date)) return '-';
+    return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+    });
+}
+
+function getDaysUntil(dateString) {
+    if (!dateString) {
+        return { text: 'No deadline', color: 'text-gray-500', urgency: 'low', diffDays: null };
+    }
+    const deadline = new Date(dateString);
+    if (!isValidDate(deadline)) {
+        return { text: 'No deadline', color: 'text-gray-500', urgency: 'low', diffDays: null };
+    }
+
+    const now = new Date();
+    const diffMs = deadline.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+        return {
+            text: `${Math.abs(diffDays)}d overdue`,
+            color: 'text-rose-400',
+            urgency: 'high',
+            diffDays
+        };
+    }
+    if (diffDays === 0) {
+        return { text: 'Due today', color: 'text-rose-400', urgency: 'high', diffDays: 0 };
+    }
+    if (diffDays === 1) {
+        return { text: 'Tomorrow', color: 'text-amber-400', urgency: 'medium', diffDays: 1 };
+    }
+    if (diffDays <= 3) {
+        return { text: `${diffDays}d left`, color: 'text-amber-400', urgency: 'medium', diffDays };
+    }
+    return { text: `${diffDays}d left`, color: 'text-gray-400', urgency: 'low', diffDays };
 }
 
 function getRelativeTime(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
+    if (!isValidDate(date)) return '';
+
     const now = new Date();
-    const diffMs = now - date;
+    const diffMs = now.getTime() - date.getTime();
     const diffSecs = Math.max(0, Math.floor(diffMs / 1000));
     const diffMins = Math.floor(diffSecs / 60);
     const diffHours = Math.floor(diffMins / 60);
@@ -205,7 +436,36 @@ function getRelativeTime(dateString) {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays === 1) return 'yesterday';
     if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString();
+    return formatDate(dateString);
+}
+
+// ============================================================================
+// 8. UI & AVATAR HELPERS
+// ============================================================================
+
+function getFirstName(email) {
+    if (!email) return 'User';
+    const namePart = email.split('@')[0];
+    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+}
+
+function getAvatarColor(email) {
+    if (!email) return 'bg-neutral-800 text-gray-400 border-white/10';
+    const colors = [
+        'bg-amber-500/20 text-amber-300 border-amber-500/30',
+        'bg-blue-500/20 text-blue-300 border-blue-500/30',
+        'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+        'bg-purple-500/20 text-purple-300 border-purple-500/30',
+        'bg-rose-500/20 text-rose-300 border-rose-500/30',
+        'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+        'bg-teal-500/20 text-teal-300 border-teal-500/30',
+        'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+    ];
+    let hash = 0;
+    for (let i = 0; i < email.length; i++) {
+        hash = email.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
 }
 
 function showSkeletons(containerId, count = 3, heightClass = 'h-20') {
@@ -214,228 +474,7 @@ function showSkeletons(containerId, count = 3, heightClass = 'h-20') {
     container.innerHTML = '';
     for (let i = 0; i < count; i++) {
         const skeleton = document.createElement('div');
-        skeleton.className = `skeleton ${heightClass} rounded-xl opacity-20 mb-3`;
+        skeleton.className = `w-full ${heightClass} rounded-xl bg-neutral-900/60 border border-white/5 animate-pulse mb-3`;
         container.appendChild(skeleton);
     }
 }
-
-// 7. Toast Notification System
-function getIconName(type) {
-    const iconMap = {
-        success: 'check-circle',
-        error: 'alert-circle',
-        warning: 'alert-triangle',
-        info: 'info'
-    };
-    return iconMap[type] || iconMap.info;
-}
-
-function getShadowColor(type) {
-    const shadowMap = {
-        success: 'rgba(34,197,94,0.6)',
-        error: 'rgba(239,68,68,0.6)',
-        warning: 'rgba(234,179,8,0.6)',
-        info: 'rgba(59,130,246,0.6)'
-    };
-    return shadowMap[type] || shadowMap.info;
-}
-
-function showToast(message, type = 'info') {
-    const existingToast = document.getElementById('toast-notification');
-    if (existingToast) {
-        existingToast.style.opacity = '0';
-        setTimeout(() => existingToast.remove(), 200);
-    }
-
-    const toast = document.createElement('div');
-    toast.id = 'toast-notification';
-    toast.className = 'fixed top-6 right-6 z-[100] transform transition-all duration-300 ease-out translate-x-12 opacity-0';
-
-    const styles = {
-        success: {
-            border: 'border-green-500/50',
-            bg: 'bg-neutral-900/90',
-            text: 'text-green-400',
-            shadow: 'shadow-[0_0_20px_-5px_rgba(34,197,94,0.3)]'
-        },
-        error: {
-            border: 'border-red-500/50',
-            bg: 'bg-neutral-900/90',
-            text: 'text-red-400',
-            shadow: 'shadow-[0_0_20px_-5px_rgba(239,68,68,0.3)]'
-        },
-        warning: {
-            border: 'border-yellow-500/50',
-            bg: 'bg-neutral-900/90',
-            text: 'text-yellow-400',
-            shadow: 'shadow-[0_0_20px_-5px_rgba(234,179,8,0.3)]'
-        },
-        info: {
-            border: 'border-blue-500/50',
-            bg: 'bg-neutral-900/90',
-            text: 'text-blue-400',
-            shadow: 'shadow-[0_0_20px_-5px_rgba(59,130,246,0.3)]'
-        }
-    };
-
-    const style = styles[type] || styles.info;
-
-    const container = document.createElement('div');
-    container.className = `${style.bg} backdrop-blur-xl border ${style.border} pl-4 pr-6 py-4 rounded-xl ${style.shadow} flex items-center gap-4 min-w-[320px] max-w-md relative overflow-hidden group`;
-
-    const glowEffect = document.createElement('div');
-    glowEffect.className = 'absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none';
-    container.appendChild(glowEffect);
-
-    const iconWrapper = document.createElement('div');
-    iconWrapper.className = 'flex-shrink-0';
-    const iconElement = document.createElement('i');
-    iconElement.setAttribute('data-lucide', getIconName(type));
-    iconElement.className = `w-5 h-5 ${style.text} drop-shadow-[0_0_8px_${getShadowColor(type)}]`;
-    iconWrapper.appendChild(iconElement);
-    container.appendChild(iconWrapper);
-
-    const messageWrapper = document.createElement('div');
-    messageWrapper.className = 'flex-1';
-    const messageText = document.createElement('p');
-    messageText.className = 'font-medium text-gray-200 text-sm leading-snug';
-    messageText.textContent = message;
-    messageWrapper.appendChild(messageText);
-    container.appendChild(messageWrapper);
-
-    const closeButton = document.createElement('button');
-    closeButton.className = 'text-gray-500 hover:text-white transition-colors flex-shrink-0 p-1 hover:bg-white/10 rounded-full';
-    closeButton.onclick = function () {
-        const toastEl = this.closest('#toast-notification');
-        if (toastEl) toastEl.remove();
-    };
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('class', 'w-4 h-4');
-    svg.setAttribute('fill', 'none');
-    svg.setAttribute('stroke', 'currentColor');
-    svg.setAttribute('viewBox', '0 0 24 24');
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('stroke-linejoin', 'round');
-    path.setAttribute('stroke-width', '2');
-    path.setAttribute('d', 'M6 18L18 6M6 6l12 12');
-    svg.appendChild(path);
-    closeButton.appendChild(svg);
-    container.appendChild(closeButton);
-
-    toast.appendChild(container);
-    document.body.appendChild(toast);
-
-    if (typeof lucide !== 'undefined') {
-        lucide.createIcons();
-    }
-
-    requestAnimationFrame(() => {
-        toast.classList.remove('translate-x-12', 'opacity-0');
-    });
-
-    setTimeout(() => {
-        if (document.body.contains(toast)) {
-            toast.classList.add('translate-x-full', 'opacity-0');
-            setTimeout(() => {
-                if (document.body.contains(toast)) toast.remove();
-            }, 300);
-        }
-    }, 5000);
-}
-
-// 8. Custom Confirm Dialog
-function showConfirm({ title = 'Are you sure?', message = '', confirmText = 'Confirm', cancelText = 'Cancel', danger = false } = {}) {
-    return new Promise((resolve) => {
-        const existing = document.getElementById('nexus-confirm-overlay');
-        if (existing) existing.remove();
-
-        const overlay = document.createElement('div');
-        overlay.id = 'nexus-confirm-overlay';
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);opacity:0;transition:opacity 0.2s ease;';
-
-        const modal = document.createElement('div');
-        modal.style.cssText = 'background:#111;border:1px solid rgba(255,255,255,0.1);border-radius:1.25rem;box-shadow:0 0 60px -10px rgba(0,0,0,1),0 0 0 1px rgba(255,255,255,0.05);width:100%;max-width:400px;overflow:hidden;transform:translateY(20px) scale(0.97);transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1),opacity 0.2s ease;opacity:0;position:relative;';
-
-        const accentLine = document.createElement('div');
-        accentLine.style.cssText = `position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right, transparent, ${danger ? 'rgba(239,68,68,0.6)' : 'rgba(234,179,8,0.5)'}, transparent);`;
-        modal.appendChild(accentLine);
-
-        const content = document.createElement('div');
-        content.style.cssText = 'padding:2rem 2rem 1.5rem;';
-
-        const iconWrap = document.createElement('div');
-        iconWrap.style.cssText = `width:48px;height:48px;border-radius:0.75rem;display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;border:1px solid ${danger ? 'rgba(239,68,68,0.3)' : 'rgba(234,179,8,0.3)'};background:${danger ? 'rgba(239,68,68,0.1)' : 'rgba(234,179,8,0.1)'};`;
-        iconWrap.innerHTML = danger
-            ? `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="rgba(239,68,68,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
-            : `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="rgba(234,179,8,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
-        content.appendChild(iconWrap);
-
-        const titleEl = document.createElement('h3');
-        titleEl.textContent = title;
-        titleEl.style.cssText = 'font-size:1.125rem;font-weight:700;color:#fff;margin-bottom:0.5rem;letter-spacing:-0.01em;';
-        content.appendChild(titleEl);
-
-        if (message) {
-            const msgEl = document.createElement('p');
-            msgEl.textContent = message;
-            msgEl.style.cssText = 'font-size:0.875rem;color:rgba(156,163,175,1);line-height:1.6;';
-            content.appendChild(msgEl);
-        }
-
-        modal.appendChild(content);
-
-        const divider = document.createElement('div');
-        divider.style.cssText = 'height:1px;background:rgba(255,255,255,0.07);';
-        modal.appendChild(divider);
-
-        const btnArea = document.createElement('div');
-        btnArea.style.cssText = 'display:flex;gap:0.75rem;padding:1.25rem 2rem;background:rgba(0,0,0,0.2);';
-
-        const cancelBtn = document.createElement('button');
-        cancelBtn.textContent = cancelText;
-        cancelBtn.style.cssText = 'flex:1;padding:0.75rem 1rem;border-radius:0.75rem;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:rgba(156,163,175,1);font-size:0.875rem;font-weight:600;cursor:pointer;transition:all 0.15s ease;';
-        cancelBtn.onmouseenter = () => { cancelBtn.style.background = 'rgba(255,255,255,0.1)'; cancelBtn.style.color = '#fff'; };
-        cancelBtn.onmouseleave = () => { cancelBtn.style.background = 'rgba(255,255,255,0.05)'; cancelBtn.style.color = 'rgba(156,163,175,1)'; };
-
-        const confirmBtn = document.createElement('button');
-        confirmBtn.textContent = confirmText;
-        const confirmColor = danger ? '#dc2626' : '#ca8a04';
-        const confirmHover = danger ? '#b91c1c' : '#a16207';
-        confirmBtn.style.cssText = `flex:1;padding:0.75rem 1rem;border-radius:0.75rem;border:none;background:${confirmColor};color:${danger ? '#fff' : '#000'};font-size:0.875rem;font-weight:700;cursor:pointer;transition:all 0.15s ease;letter-spacing:0.02em;`;
-        confirmBtn.onmouseenter = () => { confirmBtn.style.background = confirmHover; confirmBtn.style.transform = 'scale(1.02)'; };
-        confirmBtn.onmouseleave = () => { confirmBtn.style.background = confirmColor; confirmBtn.style.transform = 'scale(1)'; };
-
-        btnArea.appendChild(cancelBtn);
-        btnArea.appendChild(confirmBtn);
-        modal.appendChild(btnArea);
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-
-        requestAnimationFrame(() => {
-            overlay.style.opacity = '1';
-            modal.style.opacity = '1';
-            modal.style.transform = 'translateY(0) scale(1)';
-        });
-
-        function close(result) {
-            overlay.style.opacity = '0';
-            modal.style.transform = 'translateY(10px) scale(0.97)';
-            modal.style.opacity = '0';
-            setTimeout(() => overlay.remove(), 200);
-            document.removeEventListener('keydown', keyHandler);
-            resolve(result);
-        }
-
-        function keyHandler(e) {
-            if (e.key === 'Escape') close(false);
-            if (e.key === 'Enter') close(true);
-        }
-
-        document.addEventListener('keydown', keyHandler);
-        cancelBtn.addEventListener('click', () => close(false));
-        confirmBtn.addEventListener('click', () => close(true));
-        overlay.addEventListener('click', (e) => { if (e.target === overlay) close(false); });
-    });
-}
-
