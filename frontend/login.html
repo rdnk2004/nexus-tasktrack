@@ -4,175 +4,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Nutmeg Task Tracker</title>
+    <title>Sign In - Nutmeg Workspace</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #050507;
+        }
+
         @keyframes shake {
-
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-
-            10%,
-            30%,
-            50%,
-            70%,
-            90% {
-                transform: translateX(-10px);
-            }
-
-            20%,
-            40%,
-            60%,
-            80% {
-                transform: translateX(10px);
-            }
+            0%, 100% { transform: translateX(0); }
+            15%, 45%, 75% { transform: translateX(-8px); }
+            30%, 60%, 90% { transform: translateX(8px); }
         }
 
         .shake {
-            animation: shake 0.5s;
+            animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
         }
 
-        @keyframes slideIn {
+        @keyframes cardFadeIn {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(16px) scale(0.98);
             }
-
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
         }
 
-        .slide-in {
-            animation: slideIn 0.5s ease-out;
+        .login-card-enter {
+            animation: cardFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        @keyframes fadeSlideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-8px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .account-pill {
+            transition: all 0.15s ease;
         }
-
-        .hint-appear {
-            animation: fadeSlideIn 0.4s ease-out;
+        .account-pill:hover {
+            transform: translateY(-1px);
+        }
+        .account-pill:active {
+            transform: translateY(0);
         }
     </style>
 </head>
 
-<body class="min-h-screen bg-black flex items-center justify-center p-4 selection:bg-yellow-500/30">
+<body class="min-h-screen flex items-center justify-center p-4 selection:bg-amber-500/30">
 
-    <!-- Login Card -->
-    <div id="loginCard"
-        class="relative z-10 bg-neutral-900/80 backdrop-blur-[20px] border border-white/10 rounded-3xl shadow-[0_0_40px_-10px_rgba(0,0,0,0.7)] w-full max-w-md p-10 slide-in overflow-hidden">
+    <!-- Login Card Container -->
+    <main class="w-full max-w-md relative z-10">
+        <div id="loginCard"
+            class="login-card-enter bg-neutral-900/80 backdrop-blur-2xl border border-white/10 rounded-3xl shadow-[0_16px_50px_-12px_rgba(0,0,0,0.8)] p-8 sm:p-10 relative overflow-hidden">
+            
+            <!-- Ambient Top Highlight -->
+            <div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-amber-500/50 to-transparent"></div>
 
-        <!-- Shine Effect -->
-        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-white/20 to-transparent">
-        </div>
-
-        <!-- Logo and Title -->
-        <div class="text-center mb-10">
-            <h1
-                class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-200 to-gray-500 mb-2 tracking-tight">
-                NEXUS</h1>
-            <p class="text-gray-400 text-sm tracking-widest uppercase">Project NLP &amp; RAG • Internal</p>
-        </div>
-
-        <!-- Login Form -->
-        <form id="loginForm" class="space-y-6">
-            <!-- Email Dropdown -->
-            <div>
-                <label for="email" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    Identity
-                </label>
-                <div class="relative group">
-                    <select id="email" name="email" required
-                        class="w-full px-4 py-4 bg-black/50 border border-neutral-800 text-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 transition-all duration-300 appearance-none cursor-pointer outline-none hover:border-gray-700">
-                        <option value="" class="bg-neutral-900 text-gray-500">Select Access ID</option>
-                        <option value="nikhil@nutmeg.com" class="bg-neutral-900 text-white">nikhil@nutmeg.com</option>
-                        <option value="jayasree@nutmeg.com" class="bg-neutral-900 text-white">jayasree@nutmeg.com
-                        </option>
-                        <option value="nandana@nutmeg.com" class="bg-neutral-900 text-white">nandana@nutmeg.com</option>
-                        <option value="hafeez@nutmeg.com" class="bg-neutral-900 text-white">hafeez@nutmeg.com</option>
-                        <option value="aldrin@nutmeg.com" class="bg-neutral-900 text-white">aldrin@nutmeg.com</option>
-                        <option value="sreeraj@nutmeg.com" class="bg-neutral-900 text-white">sreeraj@nutmeg.com</option>
-                        <option value="gopika@nutmeg.com" class="bg-neutral-900 text-white">gopika@nutmeg.com</option>
-                        <option value="aswin@nutmeg.com" class="bg-neutral-900 text-white">aswin@nutmeg.com</option>
-
-                    </select>
-                    <i data-lucide="chevron-down"
-                        class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 group-hover:text-yellow-500 transition-colors duration-300 w-5 h-5 pointer-events-none"></i>
+            <!-- Brand Header -->
+            <header class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-4 shadow-[0_0_20px_rgba(245,158,11,0.15)]">
+                    <i data-lucide="layers" class="w-7 h-7 text-amber-400"></i>
                 </div>
-            </div>
+                <h1 class="text-3xl font-extrabold text-white tracking-tight">
+                    NUTMEG
+                </h1>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-widest mt-1">
+                    Task &amp; Sprint Management
+                </p>
+            </header>
 
-            <!-- Password Input -->
-            <div>
-                <label for="password" class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                    Key Code
-                </label>
-                <div class="relative group">
-                    <input type="password" id="password" name="password" required placeholder="Enter key code"
-                        class="w-full px-4 py-4 pr-12 bg-black/50 border border-neutral-800 text-gray-200 rounded-xl focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 transition-all duration-300 placeholder-gray-700 outline-none hover:border-gray-700" />
-                    <button type="button" id="togglePassword"
-                        class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-white transition-colors duration-200 focus:outline-none p-1"
-                        aria-label="Toggle password visibility">
-                        <i data-lucide="eye" id="eyeIcon" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-5" novalidate>
+                <!-- Email Input Field -->
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="email" class="block text-xs font-bold text-gray-400 uppercase tracking-wider">
+                            Email Address
+                        </label>
+                        <span class="text-[11px] text-gray-500">Select or type below</span>
+                    </div>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">
+                            <i data-lucide="mail" class="w-4 h-4"></i>
+                        </div>
+                        <input type="email" id="email" name="email" required autocomplete="username"
+                            placeholder="name@nutmeg.com"
+                            class="w-full pl-11 pr-4 py-3.5 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all text-sm placeholder-gray-600 outline-none hover:border-neutral-700" />
+                    </div>
 
-            <!-- Master Password Hint (shown after a failed attempt) -->
-            <div id="masterHint" class="hidden hint-appear">
-                <div class="bg-yellow-500/8 border border-yellow-500/30 rounded-xl p-4 flex gap-3 items-start">
-                    <i data-lucide="key" class="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5"></i>
-                    <div>
-                        <p class="text-yellow-400/90 text-xs font-semibold leading-relaxed">
-                            Forgot your password? Use the <span class="font-black text-yellow-300">master
-                                passphrase</span> to log in,
-                            then update your password from the <span class="font-bold text-yellow-300">Profile</span>
-                            page.
+                    <!-- Quick Account Selector Pills -->
+                    <div class="mt-2.5">
+                        <p class="text-[11px] font-medium text-gray-500 mb-1.5 flex items-center gap-1">
+                            <i data-lucide="users" class="w-3 h-3"></i> Quick Switch
                         </p>
+                        <div id="quickAccounts" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1 py-0.5">
+                            <!-- Injected dynamically -->
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Login Button -->
-            <button type="submit" id="loginButton"
-                class="w-full bg-gradient-to-r from-yellow-700 via-yellow-500 to-yellow-700 hover:from-yellow-600 hover:via-yellow-400 hover:to-yellow-600 text-black font-extrabold py-4 px-4 rounded-xl transition-all duration-500 transform hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_20px_rgba(255,190,0,0.2)] hover:shadow-[0_0_30px_rgba(255,215,0,0.4)] flex items-center justify-center gap-3 mt-8">
-                <span id="buttonText" class="tracking-wide">INITIALIZE</span>
-                <i data-lucide="arrow-right" id="loginIcon" class="w-5 h-5"></i>
-                <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-black"
-                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                    </path>
-                </svg>
-            </button>
-        </form>
+                <!-- Password Input Field -->
+                <div>
+                    <label for="password" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                        Password
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-500">
+                            <i data-lucide="lock" class="w-4 h-4"></i>
+                        </div>
+                        <input type="password" id="password" name="password" required autocomplete="current-password"
+                            placeholder="Enter your password"
+                            class="w-full pl-11 pr-12 py-3.5 bg-black/50 border border-neutral-800 text-white rounded-xl focus:ring-2 focus:ring-amber-500/40 focus:border-amber-500/60 transition-all text-sm placeholder-gray-600 outline-none hover:border-neutral-700" />
+                        <button type="button" id="togglePassword"
+                            class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-200 transition-colors focus:outline-none"
+                            aria-label="Toggle password visibility">
+                            <i data-lucide="eye" id="eyeIcon" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
 
-        <!-- Footer -->
-        <div class="mt-8 text-center border-t border-white/5 pt-6">
-            <p class="text-gray-600 text-[10px] tracking-widest uppercase">
-                Nexus System v2.0 • 2026
-            </p>
+                <!-- Master Passphrase Hint Card (Shown on Failed Login) -->
+                <div id="masterHint" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 flex gap-3 items-start">
+                    <i data-lucide="key-round" class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5"></i>
+                    <div class="text-xs text-amber-200/90 leading-relaxed">
+                        Forgot your password? Use the <strong class="text-amber-300 font-bold">master passphrase</strong> to log in, then update your password from the <strong class="text-amber-300 font-bold">Profile</strong> settings.
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="loginButton"
+                    class="w-full bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-neutral-950 font-bold py-3.5 px-4 rounded-xl transition-all duration-200 transform hover:scale-[1.01] active:scale-[0.99] shadow-[0_4px_20px_rgba(245,158,11,0.25)] hover:shadow-[0_6px_24px_rgba(245,158,11,0.35)] flex items-center justify-center gap-2 mt-6">
+                    <span id="buttonText">Sign In</span>
+                    <i data-lucide="arrow-right" id="loginIcon" class="w-4 h-4"></i>
+                    <svg id="loadingSpinner" class="hidden animate-spin h-4 w-4 text-neutral-950"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Card Footer -->
+            <footer class="mt-8 text-center border-t border-white/5 pt-4">
+                <p class="text-gray-500 text-[11px] font-medium tracking-wide">
+                    Nutmeg Workspace • Internal Team Access
+                </p>
+            </footer>
         </div>
-    </div>
+    </main>
 
     <script src="utils.js"></script>
     <script>
+        const KNOWN_USERS = [
+            "nikhil@nutmeg.com",
+            "jayasree@nutmeg.com",
+            "nandana@nutmeg.com",
+            "hafeez@nutmeg.com",
+            "aldrin@nutmeg.com",
+            "sreeraj@nutmeg.com",
+            "gopika@nutmeg.com",
+            "aswin@nutmeg.com"
+        ];
+
         let failedAttempts = 0;
 
         const loginCard = document.getElementById('loginCard');
+        const emailInput = document.getElementById('email');
         const passwordInput = document.getElementById('password');
         const eyeIcon = document.getElementById('eyeIcon');
         const loginButton = document.getElementById('loginButton');
@@ -180,33 +182,50 @@
         const loginIcon = document.getElementById('loginIcon');
         const loadingSpinner = document.getElementById('loadingSpinner');
         const masterHint = document.getElementById('masterHint');
+        const quickAccounts = document.getElementById('quickAccounts');
 
-        // ===== Password Toggle =====
+        // Render Quick Account Selectors
+        function renderQuickAccounts() {
+            quickAccounts.innerHTML = '';
+            KNOWN_USERS.forEach(email => {
+                const name = getFirstName(email);
+                const pill = document.createElement('button');
+                pill.type = 'button';
+                pill.className = 'account-pill text-[11px] font-medium px-2.5 py-1 rounded-lg bg-neutral-800/80 hover:bg-amber-500/20 text-gray-300 hover:text-amber-300 border border-white/5 hover:border-amber-500/30 flex items-center gap-1.5';
+                pill.innerHTML = `
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>${name}</span>
+                `;
+                pill.onclick = () => {
+                    emailInput.value = email;
+                    passwordInput.focus();
+                };
+                quickAccounts.appendChild(pill);
+            });
+        }
+
+        // Toggle Password Visibility
         document.getElementById('togglePassword').addEventListener('click', () => {
-            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-            passwordInput.setAttribute('type', type);
-            eyeIcon.setAttribute('data-lucide', type === 'password' ? 'eye' : 'eye-off');
+            const isPassword = passwordInput.getAttribute('type') === 'password';
+            passwordInput.setAttribute('type', isPassword ? 'text' : 'password');
+            eyeIcon.setAttribute('data-lucide', isPassword ? 'eye-off' : 'eye');
             lucide.createIcons();
         });
 
-        // ===== Login Form Submission =====
+        // Form Submission
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const email = document.getElementById('email').value;
+            const email = emailInput.value.trim();
             const password = passwordInput.value;
 
             if (!email || !password) {
-                showToast('Please fill in all fields', 'error');
-                loginCard.classList.add('shake');
-                setTimeout(() => loginCard.classList.remove('shake'), 500);
+                showToast('Please enter both email and password', 'warning');
+                triggerShake();
                 return;
             }
 
-            loginButton.disabled = true;
-            buttonText.textContent = 'Logging in...';
-            loginIcon.classList.add('hidden');
-            loadingSpinner.classList.remove('hidden');
+            setLoading(true);
 
             try {
                 const response = await fetch(`${API_BASE_URL}/login`, {
@@ -218,12 +237,13 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Success — store auth and redirect
                     setToken(data.access_token);
                     setCurrentUser({ email: data.email });
                     failedAttempts = 0;
-                    showToast('Login successful! Redirecting...', 'success');
-                    setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+                    showToast('Signed in successfully. Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 800);
                 } else {
                     throw new Error(data.detail || 'Invalid credentials');
                 }
@@ -232,34 +252,42 @@
                 console.error('Login error:', error);
 
                 if (error.message.includes('Failed to fetch')) {
-                    showToast('Cannot connect to server. Please check if the backend is running.', 'error');
+                    showToast('Cannot connect to API server. Please check backend status.', 'error');
                 } else {
-                    showToast(error.message || 'Login failed. Please try again.', 'error');
+                    showToast(error.message || 'Login failed. Please verify credentials.', 'error');
                 }
 
-                // Show master password hint after first failed attempt
                 if (failedAttempts >= 1) {
                     masterHint.classList.remove('hidden');
-                    // Reset animation so it re-plays each time
-                    masterHint.classList.remove('hint-appear');
-                    void masterHint.offsetWidth; // force reflow
-                    masterHint.classList.add('hint-appear');
                     lucide.createIcons();
                 }
 
-                loginCard.classList.add('shake');
-                setTimeout(() => loginCard.classList.remove('shake'), 500);
-
-                // Reset button state
-                loginButton.disabled = false;
-                buttonText.textContent = 'INITIALIZE';
-                loginIcon.classList.remove('hidden');
-                loadingSpinner.classList.add('hidden');
+                triggerShake();
+                setLoading(false);
             }
         });
 
-        // ===== Check if Already Logged In (with token validation) =====
+        function setLoading(isLoading) {
+            loginButton.disabled = isLoading;
+            buttonText.textContent = isLoading ? 'Signing In...' : 'Sign In';
+            if (isLoading) {
+                loginIcon.classList.add('hidden');
+                loadingSpinner.classList.remove('hidden');
+            } else {
+                loginIcon.classList.remove('hidden');
+                loadingSpinner.classList.add('hidden');
+            }
+        }
+
+        function triggerShake() {
+            loginCard.classList.remove('shake');
+            void loginCard.offsetWidth; // Force DOM reflow
+            loginCard.classList.add('shake');
+        }
+
+        // Initialization & Auto-Redirect if Already Logged In
         window.addEventListener('DOMContentLoaded', async () => {
+            renderQuickAccounts();
             lucide.createIcons();
 
             const token = getToken();
@@ -276,7 +304,7 @@
                     removeCurrentUser();
                 }
             } catch (_) {
-                // Backend unreachable — stay on login page
+                // Offline or server down
             }
         });
     </script>
