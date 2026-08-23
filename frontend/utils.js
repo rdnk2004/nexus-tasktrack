@@ -20,12 +20,20 @@ function resolveApiBaseUrl() {
     if (window.NUTMEG_API_URL) {
         return window.NUTMEG_API_URL.replace(/\/+$/, '');
     }
-    const { hostname, origin } = window.location;
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://' + hostname + ':8000';
+    const { hostname, port, origin } = window.location;
+    // If accessing FastAPI directly on backend port 8000
+    if (port === '8000') {
+        return origin;
     }
-    // In production container (Nginx reverse proxy or cloud domain)
-    return origin.replace(/\/+$/, '');
+    // If accessed through Nginx container proxy (port 80, 443, or default HTTP/HTTPS)
+    if (port === '80' || port === '443' || port === '') {
+        return `${origin}/api`;
+    }
+    // If running under a local dev server (e.g. Live Server 5500, Vite 5173)
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return `http://${hostname}:8000`;
+    }
+    return `${origin}/api`;
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
