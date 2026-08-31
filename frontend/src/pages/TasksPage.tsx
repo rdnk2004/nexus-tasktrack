@@ -7,8 +7,14 @@ import {
 import {
   useProjectTasksQuery,
   useOptimisticTaskStatusMutation,
+  useCreateTaskMutation,
+  useUpdateTaskMutation,
+  useDeleteTaskMutation,
 } from '@/hooks/useTasks';
+import { Task } from '@/types/task';
 import { KanbanBoard } from '@/components/kanban/KanbanBoard';
+import { TaskModal } from '@/components/kanban/TaskModal';
+import { TaskDetailModal } from '@/components/kanban/TaskDetailModal';
 import { Avatar } from '@/components/common/Avatar';
 import { Badge } from '@/components/common/Badge';
 import { Skeleton } from '@/components/common/Skeleton';
@@ -19,6 +25,7 @@ import {
   Calendar,
   Layers,
   ArrowLeft,
+  Plus,
 } from 'lucide-react';
 
 export const TasksPage: React.FC = () => {
@@ -31,6 +38,11 @@ export const TasksPage: React.FC = () => {
 
   const parsedId = routeProjectId ? parseInt(routeProjectId, 10) : undefined;
   const [selectedProjectId, setSelectedProjectId] = useState<number | undefined>(parsedId);
+
+  // Modal States
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [selectedTaskForDetail, setSelectedTaskForDetail] = useState<Task | null>(null);
 
   // If no route parameter is provided, default to the first active project
   useEffect(() => {
@@ -46,11 +58,29 @@ export const TasksPage: React.FC = () => {
   const { data: tasks, isLoading: isTasksLoading } = useProjectTasksQuery(currentProjectId);
 
   const statusMutation = useOptimisticTaskStatusMutation(currentProjectId);
+  const createMutation = useCreateTaskMutation(currentProjectId);
+  const updateMutation = useUpdateTaskMutation(currentProjectId);
+  const deleteMutation = useDeleteTaskMutation(currentProjectId);
 
   const handleSelectProjectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newId = parseInt(e.target.value, 10);
     setSelectedProjectId(newId);
     navigate(`/projects/${newId}/tasks`);
+  };
+
+  const handleOpenCreateModal = () => {
+    setTaskToEdit(null);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleOpenEditModal = (task: Task) => {
+    setTaskToEdit(task);
+    setIsTaskModalOpen(true);
+  };
+
+  const handleCloseTaskModal = () => {
+    setIsTaskModalOpen(false);
+    setTaskToEdit(null);
   };
 
   return (
@@ -106,10 +136,10 @@ export const TasksPage: React.FC = () => {
           )}
         </div>
 
-        {/* Project Selector Dropdown */}
-        <div className="flex items-center gap-3 self-start md:self-auto">
-          {activeProjects && activeProjects.length > 0 && (
-            <div className="min-w-[200px]">
+        {/* Project Selector & Add Directive Action */}
+        <div className="flex items-center gap-3 self-start md:self-auto flex-wrap sm:flex-nowrap">
+          {activeProjects && activeProjects.length > 1 && (
+            <div className="min-w-[180px]">
               <Select
                 value={currentProjectId}
                 onChange={handleSelectProjectChange}
@@ -122,6 +152,16 @@ export const TasksPage: React.FC = () => {
                 ))}
               </Select>
             </div>
+          )}
+
+          {project && (
+            <Button
+              variant="primary"
+              onClick={handleOpenCreateModal}
+              leftIcon={<Plus className="w-4 h-4" />}
+            >
+              Add Directive
+            </Button>
           )}
         </div>
       </div>
@@ -156,8 +196,44 @@ export const TasksPage: React.FC = () => {
           onUpdateStatus={(taskId, newStatus) =>
             statusMutation.mutate({ taskId, status: newStatus })
           }
+          onTaskClick={(task) => setSelectedTaskForDetail(task)}
         />
       )}
+
+      {/* Task Create / Edit Modal */}
+      {project && (
+        <TaskModal
+          isOpen={isTaskModalOpen}
+          onClose={handleCloseTaskModal}
+          project={project}
+          taskToEdit={taskToEdit}
+          onSubmitCreate={async (data) => {
+            await createMutation.mutateAsync(data);
+            handleCloseTaskModal();
+          }}
+          onSubmitUpdate={async (taskId, data) => {
+            await updateMutation.mutateAsync({ taskId, data });
+            handleCloseTaskModal();
+          }}
+          isLoading={createMutation.isPending || updateMutation.isPending}
+        />
+      )}
+
+      {/* Task Detail Inspector Modal */}
+      <TaskDetailModal
+        task={selectedTaskForDetail}
+        isOpen={!!selectedTaskForDetail}
+        onClose={() => setSelectedTaskForDetail(null)}
+        onEdit={(task) => {
+          setSelectedTaskForDetail(null);
+          handleOpenEditModal(task);
+        }}
+        onDelete={(taskId) => {
+          deleteMutation.mutate(taskId);
+          setSelectedTaskForDetail(null);
+        }}
+        isDeleting={deleteMutation.isPending}
+      />
     </div>
   );
 };
