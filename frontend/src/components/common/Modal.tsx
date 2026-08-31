@@ -52,51 +52,61 @@ export const Modal: React.FC<ModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+      className="fixed inset-0 z-[100] overflow-y-auto"
     >
-      {/* Backdrop */}
+      {/* Darkened Blur Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity duration-200"
+        className="fixed inset-0 bg-black/90 backdrop-blur-md transition-opacity duration-200 z-0"
+        aria-hidden="true"
       />
 
-      {/* Modal Card */}
+      {/* Top-aligned Scrollable Wrapper with Generous Headroom */}
       <div
-        className={twMerge(
-          clsx(
-            'relative w-full bg-[#111116] border border-white/10 rounded-2xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] p-6 sm:p-7 text-left z-10 animate-slide-up overflow-hidden',
-            maxWidthStyles[maxWidth]
-          )
-        )}
+        onClick={onClose}
+        className="relative z-10 min-h-full flex items-start justify-center px-4 pt-16 sm:pt-24 pb-16 text-center"
       >
-        {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="flex items-start justify-between gap-4 mb-5">
-            <div>
-              {title && (
-                <h3 className="text-lg font-bold text-white tracking-tight leading-snug">
-                  {title}
-                </h3>
-              )}
-              {description && (
-                <p className="text-xs text-gray-400 mt-1 leading-relaxed">{description}</p>
+        {/* Modal Card */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className={twMerge(
+            clsx(
+              'relative w-full max-h-[min(78vh,680px)] flex flex-col bg-[#0e0e13] border border-white/15 rounded-3xl shadow-[0_30px_90px_-15px_rgba(0,0,0,0.95)] p-6 sm:p-8 text-left animate-slide-up',
+              maxWidthStyles[maxWidth]
+            )
+          )}
+        >
+          {/* Header */}
+          {(title || showCloseButton) && (
+            <div className="flex items-start justify-between gap-4 mb-4 pb-3 border-b border-white/10 shrink-0">
+              <div className="min-w-0 flex-1">
+                {title && (
+                  <h3 className="text-lg font-bold text-white tracking-tight leading-snug">
+                    {title}
+                  </h3>
+                )}
+                {description && (
+                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">{description}</p>
+                )}
+              </div>
+              {showCloseButton && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors shrink-0 -mr-1"
+                  aria-label="Close dialog"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               )}
             </div>
-            {showCloseButton && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="text-gray-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors shrink-0"
-                aria-label="Close dialog"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        )}
+          )}
 
-        {/* Content Body */}
-        <div>{children}</div>
+          {/* Content Body (Scrollable) */}
+          <div className="overflow-y-auto flex-1 pr-1.5 -mr-1.5 space-y-1">
+            {children}
+          </div>
+        </div>
       </div>
     </div>
   );

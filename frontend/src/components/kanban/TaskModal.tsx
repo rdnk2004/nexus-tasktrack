@@ -260,7 +260,7 @@ export const TaskModal: React.FC<TaskModalProps> = ({
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5">
+        <div className="sticky bottom-0 bg-[#111116] pt-4 pb-1 -mx-1 px-1 border-t border-white/5 flex items-center justify-end gap-3 z-10 mt-4">
           <Button variant="secondary" size="sm" type="button" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
