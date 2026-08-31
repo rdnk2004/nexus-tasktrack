@@ -24,7 +24,7 @@ class Settings:
     JWT_EXPIRATION_MINUTES: int = int(os.getenv("JWT_EXPIRATION_MINUTES", os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 8))))
     
     # Application Defaults & Flags
-    DEFAULT_PASSWORD: str = os.getenv("DEFAULT_PASSWORD", "nexus123")
+    DEFAULT_PASSWORD: str = os.getenv("DEFAULT_PASSWORD", "password123")
     ALLOW_MASTER_PASSWORD_LOGIN: bool = os.getenv("ALLOW_MASTER_PASSWORD_LOGIN", "true").lower() == "true"
     CORS_ORIGINS: List[str] = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "*").split(",") if origin.strip()]
 
