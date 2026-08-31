@@ -3,7 +3,6 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 declare global {
   interface Window {
     NEXUS_API_URL?: string;
-    NUTMEG_API_URL?: string;
   }
 }
 
@@ -11,8 +10,8 @@ export function resolveApiBaseUrl(): string {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL.replace(/\/+$/, '');
   }
-  if (typeof window !== 'undefined' && (window.NEXUS_API_URL || window.NUTMEG_API_URL)) {
-    return (window.NEXUS_API_URL || window.NUTMEG_API_URL)!.replace(/\/+$/, '');
+  if (typeof window !== 'undefined' && window.NEXUS_API_URL) {
+    return window.NEXUS_API_URL.replace(/\/+$/, '');
   }
   if (typeof window !== 'undefined') {
     const { hostname, port, origin } = window.location;
@@ -49,7 +48,7 @@ export const apiClient = axios.create({
 // Request Interceptor: Attach JWT Token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('nexus_token') || localStorage.getItem('nutmeg_token');
+    const token = localStorage.getItem('nexus_token');
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -67,8 +66,6 @@ apiClient.interceptors.response.use(
       if (!isAuthEndpoint) {
         localStorage.removeItem('nexus_token');
         localStorage.removeItem('nexus_user');
-        localStorage.removeItem('nutmeg_token');
-        localStorage.removeItem('nutmeg_user');
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }

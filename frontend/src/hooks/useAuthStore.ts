@@ -4,8 +4,6 @@ import { authApi } from '@/api/auth';
 
 const TOKEN_KEY = 'nexus_token';
 const USER_KEY = 'nexus_user';
-const LEGACY_TOKEN_KEY = 'nutmeg_token';
-const LEGACY_USER_KEY = 'nutmeg_user';
 
 interface AuthState {
   token: string | null;
@@ -21,12 +19,12 @@ interface AuthState {
 }
 
 function getStoredToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(LEGACY_TOKEN_KEY);
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 function getStoredUser(): User | null {
   try {
-    const data = localStorage.getItem(USER_KEY) || localStorage.getItem(LEGACY_USER_KEY);
+    const data = localStorage.getItem(USER_KEY);
     return data ? JSON.parse(data) : null;
   } catch {
     return null;
@@ -58,8 +56,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(LEGACY_TOKEN_KEY);
-    localStorage.removeItem(LEGACY_USER_KEY);
     set({
       token: null,
       user: null,
@@ -84,8 +80,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
-      localStorage.removeItem(LEGACY_TOKEN_KEY);
-      localStorage.removeItem(LEGACY_USER_KEY);
       set({ isAuthenticated: false, isLoading: false, user: null, token: null });
       return null;
     }

@@ -50,16 +50,6 @@ FIXED_USERS = [
     "gopika@nexus.com",
     "aswin@nexus.com",
     "test@nexus.com",
-    # Legacy Nutmeg aliases
-    "nikhil@nutmeg.com",
-    "jayasree@nutmeg.com",
-    "nandana@nutmeg.com",
-    "hafeez@nutmeg.com",
-    "aldrin@nutmeg.com",
-    "sreeraj@nutmeg.com",
-    "gopika@nutmeg.com",
-    "aswin@nutmeg.com",
-    "test@nutmeg.com",
 ]
 MAX_ACTIVE_PROJECTS = 2
 MIN_PROJECT_DAYS = 1
