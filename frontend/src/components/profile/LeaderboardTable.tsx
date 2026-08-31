@@ -16,10 +16,10 @@ export const LeaderboardTable: React.FC<LeaderboardTableProps> = ({
   currentUserEmail,
   isLoading,
 }) => {
-  // Sort by completed tasks this week descending
-  const sortedMembers = [...members].sort(
-    (a, b) => b.completed_tasks_this_week - a.completed_tasks_this_week
-  );
+  // Filter out any legacy nutmeg emails and sort by completed tasks this week descending
+  const sortedMembers = members
+    .filter((m) => !m.email.toLowerCase().includes('@nutmeg.com'))
+    .sort((a, b) => b.completed_tasks_this_week - a.completed_tasks_this_week);
 
   const getRankBadge = (index: number) => {
     if (index === 0) {

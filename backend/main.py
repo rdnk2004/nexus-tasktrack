@@ -167,8 +167,12 @@ def check_project_membership(session: Session, project_id: int, user_email: str)
 def on_startup():
     SQLModel.metadata.create_all(engine)
 
-    # Seed and reset fixed default users
+    # Seed and reset fixed default users & purge legacy accounts
     with Session(engine) as session:
+        legacy_users = session.exec(select(User).where(User.email.ilike("%@nutmeg.com"))).all()
+        for lu in legacy_users:
+            session.delete(lu)
+
         for email in FIXED_USERS:
             clean_email = email.strip().lower()
             existing = session.exec(select(User).where(func.lower(User.email) == clean_email)).first()
@@ -1067,7 +1071,7 @@ def get_dashboard_stats(
         select(func.count(Task.id)).where(Task.status == TaskStatus.DONE.value)
     ).one() or 0
     
-    all_users = session.exec(select(User)).all()
+    all_users = session.exec(select(User).where(User.email.notilike("%@nutmeg.com"))).all()
     one_week_ago = get_utc_now() - timedelta(days=7)
     
     # Active projects count per user
