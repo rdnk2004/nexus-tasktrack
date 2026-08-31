@@ -10,19 +10,19 @@ import { Layers, Mail, Lock, Eye, EyeOff, ShieldCheck, ArrowRight } from 'lucide
 import { clsx } from 'clsx';
 
 const PRESET_ACCOUNTS = [
-  'nikhil@nutmeg.com',
-  'jayasree@nutmeg.com',
-  'nandana@nutmeg.com',
-  'hafeez@nutmeg.com',
-  'aldrin@nutmeg.com',
-  'sreeraj@nutmeg.com',
-  'gopika@nutmeg.com',
-  'aswin@nutmeg.com',
-  'test@nutmeg.com',
+  'nikhil@nexus.com',
+  'jayasree@nexus.com',
+  'nandana@nexus.com',
+  'hafeez@nexus.com',
+  'aldrin@nexus.com',
+  'sreeraj@nexus.com',
+  'gopika@nexus.com',
+  'aswin@nexus.com',
+  'test@nexus.com',
 ];
 
 export const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('nikhil@nutmeg.com');
+  const [email, setEmail] = useState('nikhil@nexus.com');
   const [password, setPassword] = useState('password123');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -93,7 +93,7 @@ export const LoginPage: React.FC = () => {
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 mb-4 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
               <Layers className="w-7 h-7 text-amber-400" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">NUTMEG</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">NEXUS</h1>
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mt-1">
               Task &amp; Project Governance
             </p>
@@ -114,7 +114,7 @@ export const LoginPage: React.FC = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@nutmeg.com"
+                placeholder="name@nexus.com"
                 leftIcon={<Mail className="w-4 h-4" />}
                 required
               />

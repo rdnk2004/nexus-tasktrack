@@ -73,7 +73,7 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="operator@nutmeg.com"
+          placeholder="operator@nexus.com"
           required
         />
 

@@ -32,7 +32,7 @@ export const Navbar: React.FC = () => {
               <Layers className="w-5 h-5 text-amber-400" />
             </div>
             <div>
-              <span className="text-xl font-black text-white tracking-tight">NUTMEG</span>
+              <span className="text-xl font-black text-white tracking-tight">NEXUS</span>
               <span className="hidden sm:inline-block text-[10px] uppercase font-bold tracking-widest text-amber-400/80 bg-amber-400/10 px-2 py-0.5 rounded ml-2 border border-amber-400/20">
                 Workspace
               </span>

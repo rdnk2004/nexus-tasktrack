@@ -21,7 +21,7 @@ This project is a web application with a **Python/FastAPI** backend and a **HTML
 
 ## Project Structure
 ```
-nutmeg/
+nexus/
 ├── backend/
 │   ├── main.py       # FastAPI application entry point
 │   ├── app/          # Application package (currently empty)
@@ -67,7 +67,7 @@ uvicorn main:app --reload
 Since the frontend uses standard HTML/JS, you can open it directly or serve it.
 
 **Option A: Direct Open**
-- Open `nutmeg/frontend/index.html` in your browser.
+- Open `nexus/frontend/index.html` in your browser.
 
 **Option B: Serve via Python (Recommended)**
 From the `frontend` directory:
@@ -77,7 +77,7 @@ python -m http.server 5500
 - Open `http://localhost:5500` in your browser.
 
 ## API Endpoints (Current)
-- `GET /` : Health check ("Nutmeg backend running")
+- `GET /` : Health check ("Nexus backend running")
 - `POST /login` : (Referenced in frontend code, meant to handle login)
 
 

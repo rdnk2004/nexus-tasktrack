@@ -56,7 +56,7 @@ docker-compose ps
 ## 📁 Project Structure
 
 ```
-nutmeg/
+nexus/
 ├── backend/
 │   ├── app/
 │   │   ├── config.py         # App configuration & settings

@@ -8,23 +8,23 @@ load_dotenv()
 class Settings:
     # Database Configuration
     DATABASE_TYPE: str = os.getenv("DATABASE_TYPE", "postgresql")  # "sqlite" or "postgresql"
-    SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "./nutmeg.db")
+    SQLITE_DB_PATH: str = os.getenv("SQLITE_DB_PATH", "./nexus.db")
     DB_ECHO: bool = os.getenv("DB_ECHO", "false").lower() == "true"
     
     # PostgreSQL Configuration (for local / containerized development)
-    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "nutmeg_user")
-    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "nutmeg123")
+    POSTGRES_USER: str = os.getenv("POSTGRES_USER", "nexus_user")
+    POSTGRES_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "nexus123")
     POSTGRES_HOST: str = os.getenv("POSTGRES_HOST", "localhost")
     POSTGRES_PORT: str = os.getenv("POSTGRES_PORT", "5432")
-    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "nutmeg_db")
+    POSTGRES_DB: str = os.getenv("POSTGRES_DB", "nexus_db")
     
     # JWT Authentication
-    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "nutmeg-super-secret-key-change-in-production"))
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", os.getenv("SECRET_KEY", "nexus-super-secret-key-change-in-production"))
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", os.getenv("ALGORITHM", "HS256"))
     JWT_EXPIRATION_MINUTES: int = int(os.getenv("JWT_EXPIRATION_MINUTES", os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", str(60 * 8))))
     
     # Application Defaults & Flags
-    DEFAULT_PASSWORD: str = os.getenv("DEFAULT_PASSWORD", "nutmeg123")
+    DEFAULT_PASSWORD: str = os.getenv("DEFAULT_PASSWORD", "nexus123")
     ALLOW_MASTER_PASSWORD_LOGIN: bool = os.getenv("ALLOW_MASTER_PASSWORD_LOGIN", "true").lower() == "true"
     CORS_ORIGINS: List[str] = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "*").split(",") if origin.strip()]
 

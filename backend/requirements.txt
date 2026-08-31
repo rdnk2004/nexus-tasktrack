@@ -1,4 +1,4 @@
-# Nutmeg Backend - Python Dependencies
+# Nexus Backend - Python Dependencies
 
 # Core Framework
 fastapi==0.104.1

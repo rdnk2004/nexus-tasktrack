@@ -25,8 +25,8 @@ from app.models import (
 )
 
 app = FastAPI(
-    title="Nutmeg Backend",
-    description="API for Nutmeg Project Management",
+    title="Nexus Backend",
+    description="API for Nexus Project Management",
     version="2.1.0"
 )
 
@@ -41,6 +41,16 @@ app.add_middleware(
 
 # -------- Constants --------
 FIXED_USERS = [
+    "nikhil@nexus.com",
+    "jayasree@nexus.com",
+    "nandana@nexus.com",
+    "hafeez@nexus.com",
+    "aldrin@nexus.com",
+    "sreeraj@nexus.com",
+    "gopika@nexus.com",
+    "aswin@nexus.com",
+    "test@nexus.com",
+    # Legacy Nutmeg aliases
     "nikhil@nutmeg.com",
     "jayasree@nutmeg.com",
     "nandana@nutmeg.com",
@@ -179,7 +189,7 @@ def on_startup():
 
 @app.get("/", tags=["Health"])
 def root():
-    return {"status": "Nutmeg backend running 🚀"}
+    return {"status": "Nexus backend running 🚀"}
 
 
 # ==========================================

@@ -2,8 +2,10 @@ import { create } from 'zustand';
 import { User, LoginResponse } from '@/types/auth';
 import { authApi } from '@/api/auth';
 
-const TOKEN_KEY = 'nutmeg_token';
-const USER_KEY = 'nutmeg_user';
+const TOKEN_KEY = 'nexus_token';
+const USER_KEY = 'nexus_user';
+const LEGACY_TOKEN_KEY = 'nutmeg_token';
+const LEGACY_USER_KEY = 'nutmeg_user';
 
 interface AuthState {
   token: string | null;
@@ -18,9 +20,13 @@ interface AuthState {
   setUser: (user: User) => void;
 }
 
+function getStoredToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(LEGACY_TOKEN_KEY);
+}
+
 function getStoredUser(): User | null {
   try {
-    const data = localStorage.getItem(USER_KEY);
+    const data = localStorage.getItem(USER_KEY) || localStorage.getItem(LEGACY_USER_KEY);
     return data ? JSON.parse(data) : null;
   } catch {
     return null;
@@ -28,9 +34,9 @@ function getStoredUser(): User | null {
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-  token: localStorage.getItem(TOKEN_KEY),
+  token: getStoredToken(),
   user: getStoredUser(),
-  isAuthenticated: !!localStorage.getItem(TOKEN_KEY),
+  isAuthenticated: !!getStoredToken(),
   isLoading: true,
 
   login: (authData: LoginResponse) => {
@@ -52,6 +58,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(LEGACY_TOKEN_KEY);
+    localStorage.removeItem(LEGACY_USER_KEY);
     set({
       token: null,
       user: null,
@@ -61,7 +69,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   checkAuth: async () => {
-    const token = get().token || localStorage.getItem(TOKEN_KEY);
+    const token = get().token || getStoredToken();
     if (!token) {
       set({ isAuthenticated: false, isLoading: false, user: null, token: null });
       return null;
@@ -76,6 +84,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       localStorage.removeItem(TOKEN_KEY);
       localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(LEGACY_TOKEN_KEY);
+      localStorage.removeItem(LEGACY_USER_KEY);
       set({ isAuthenticated: false, isLoading: false, user: null, token: null });
       return null;
     }
