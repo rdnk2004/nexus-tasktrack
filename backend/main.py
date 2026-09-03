@@ -1,10 +1,11 @@
 import json
+from contextlib import asynccontextmanager
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 
 from fastapi import FastAPI, Depends, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, text
 from sqlmodel import SQLModel, Session, select
 from pydantic import BaseModel
 
@@ -24,21 +25,6 @@ from app.models import (
     PasswordChange
 )
 
-app = FastAPI(
-    title="Nexus Backend",
-    description="API for Nexus Project Management",
-    version="2.1.0"
-)
-
-# -------- Middleware --------
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS != ["*"] else ["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # -------- Constants --------
 FIXED_USERS = [
     "nikhil@nexus.com",
@@ -54,6 +40,54 @@ FIXED_USERS = [
 MAX_ACTIVE_PROJECTS = 2
 MIN_PROJECT_DAYS = 1
 MAX_PROJECT_DAYS = 14
+
+
+# -------- Application Lifespan (Pre-warm & Optimized Seeding) --------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Ensure database schema exists
+    SQLModel.metadata.create_all(engine)
+
+    # 2. Pre-warm database pool & seed users with single-pass hash computation
+    with Session(engine) as session:
+        try:
+            session.exec(text("SELECT 1"))
+        except Exception:
+            pass
+
+        legacy_users = session.exec(select(User).where(User.email.ilike("%@nutmeg.com"))).all()
+        for lu in legacy_users:
+            session.delete(lu)
+
+        cached_default_hash = hash_password(settings.DEFAULT_PASSWORD)
+        for email in FIXED_USERS:
+            clean_email = email.strip().lower()
+            existing = session.exec(select(User).where(func.lower(User.email) == clean_email)).first()
+            if not existing:
+                user = User(email=clean_email, password=cached_default_hash)
+                session.add(user)
+            else:
+                existing.password = cached_default_hash
+                session.add(existing)
+        session.commit()
+    yield
+
+
+app = FastAPI(
+    title="Nexus Backend",
+    description="API for Nexus Project Management",
+    version="2.1.0",
+    lifespan=lifespan
+)
+
+# -------- Middleware --------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS if settings.CORS_ORIGINS != ["*"] else ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # -------- Request Models --------
@@ -160,29 +194,6 @@ def check_project_membership(session: Session, project_id: int, user_email: str)
         .where(ProjectMember.user_email == user_email)
     ).first()
     return member is not None
-
-
-# -------- Startup --------
-@app.on_event("startup")
-def on_startup():
-    SQLModel.metadata.create_all(engine)
-
-    # Seed and reset fixed default users & purge legacy accounts
-    with Session(engine) as session:
-        legacy_users = session.exec(select(User).where(User.email.ilike("%@nutmeg.com"))).all()
-        for lu in legacy_users:
-            session.delete(lu)
-
-        for email in FIXED_USERS:
-            clean_email = email.strip().lower()
-            existing = session.exec(select(User).where(func.lower(User.email) == clean_email)).first()
-            if not existing:
-                user = User(email=clean_email, password=hash_password(settings.DEFAULT_PASSWORD))
-                session.add(user)
-            else:
-                existing.password = hash_password(settings.DEFAULT_PASSWORD)
-                session.add(existing)
-        session.commit()
 
 
 @app.get("/", tags=["Health"])

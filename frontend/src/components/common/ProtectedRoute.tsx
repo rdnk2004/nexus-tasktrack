@@ -7,12 +7,14 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  const { isAuthenticated, isLoading, checkAuth, token } = useAuthStore();
   const location = useLocation();
 
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (token) {
+      checkAuth();
+    }
+  }, [token, checkAuth]);
 
   if (isLoading) {
     return (

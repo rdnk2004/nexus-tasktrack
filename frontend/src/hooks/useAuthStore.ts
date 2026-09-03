@@ -31,11 +31,15 @@ function getStoredUser(): User | null {
   }
 }
 
+const initialToken = getStoredToken();
+const initialUser = getStoredUser();
+
 export const useAuthStore = create<AuthState>((set, get) => ({
-  token: getStoredToken(),
-  user: getStoredUser(),
-  isAuthenticated: !!getStoredToken(),
-  isLoading: true,
+  token: initialToken,
+  user: initialUser,
+  isAuthenticated: !!initialToken,
+  // Never block UI on initial load if token/user already cached, or if unauthenticated
+  isLoading: false,
 
   login: (authData: LoginResponse) => {
     localStorage.setItem(TOKEN_KEY, authData.access_token);
@@ -71,8 +75,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       return null;
     }
 
-    try {
+    // Only set loading if we don't have cached user data yet
+    if (!get().user) {
       set({ isLoading: true });
+    }
+
+    try {
       const user = await authApi.getCurrentUser();
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       set({ user, isAuthenticated: true, isLoading: false, token });
